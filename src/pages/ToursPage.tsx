@@ -49,14 +49,14 @@ export const ToursPage: React.FC = () => {
       {/* Page Header — Max text-2xl on mobile, text-4xl on desktop */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
         <div className="space-y-2 max-w-2xl">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-            <Mountain className="w-3.5 h-3.5" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
+            <Mountain className="w-3.5 h-3.5 text-emerald-600" />
             <span>Gilgit-Baltistan Expeditions &amp; Packages</span>
           </span>
           <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
             Tours &amp; Travel Packages
           </h1>
-          <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+          <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
             Explore curated private and group itineraries across Hunza, Skardu, Fairy Meadows, Deosai, and Khunjerab Pass.
           </p>
         </div>
@@ -67,7 +67,7 @@ export const ToursPage: React.FC = () => {
           href={customWaUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full md:w-auto px-5 py-3 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-800 hover:to-teal-700 text-white rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 shrink-0"
+          className="w-full md:w-auto px-5 py-3 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 shrink-0"
         >
           <MessageCircle className="w-4 h-4" />
           <span>Request Custom Tour</span>
@@ -75,32 +75,32 @@ export const ToursPage: React.FC = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl p-4 md:p-6 shadow-lg shadow-slate-900/5">
+      <div className="bg-white border border-slate-200 rounded-3xl p-4 md:p-6 shadow-lg shadow-slate-900/5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               Search Keyword
             </label>
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <Search className="w-4 h-4 text-emerald-600 absolute left-3.5 top-3" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Hunza, Skardu, Trek..."
-                className="w-full pl-9 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               Destination
             </label>
             <select
               value={destinationFilter}
               onChange={(e) => setDestinationFilter(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
             >
               <option value="All">All Destinations</option>
               <option value="Hunza">Hunza Valley</option>
@@ -113,13 +113,13 @@ export const ToursPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               Duration
             </label>
             <select
               value={durationFilter}
               onChange={(e) => setDurationFilter(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
             >
               <option value="All">Any Duration</option>
               <option value="4-6 Days">4–6 Days</option>
@@ -128,13 +128,13 @@ export const ToursPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               Tour Style
             </label>
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
             >
               <option value="All">All Styles</option>
               <option value="Family Holidays">Family Holidays</option>

@@ -3,12 +3,13 @@ import { createServer as createViteServer } from 'vite';
 import nodemailer from 'nodemailer';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const PORT = 3000;
-const SHARED_STATE_FILE = path.join(process.cwd(), '.btt-shared-state.json');
+const SHARED_STATE_FILE = path.join(os.tmpdir(), 'btt-shared-state.json');
 
 interface SharedAppState {
   updatedAt: number;

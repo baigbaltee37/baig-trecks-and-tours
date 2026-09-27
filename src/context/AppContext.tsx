@@ -540,22 +540,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
 
+    // Only run initial sync once on mount — no setInterval polling
     pullFromServer();
-    const pollInterval = window.setInterval(pullFromServer, 4000);
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        refreshFromLocalStorage();
-        pullFromServer();
-      }
-    };
-    window.addEventListener('focus', handleVisibility);
-    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       window.removeEventListener('storage', handleStorageEvent);
-      window.removeEventListener('focus', handleVisibility);
-      document.removeEventListener('visibilitychange', handleVisibility);
-      window.clearInterval(pollInterval);
       if (bc) bc.close();
     };
   }, []);

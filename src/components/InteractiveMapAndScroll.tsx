@@ -165,14 +165,14 @@ export const TourCard: React.FC<{ tour: TourItem }> = ({ tour }) => {
 
           {/* Card Body */}
           <div className="p-4 md:p-5 space-y-2.5">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 font-medium">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-700 font-semibold">
               <span className="inline-flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                <Calendar className="w-3.5 h-3.5 text-emerald-600" />
                 <span>{tour.duration}</span>
               </span>
               <span aria-hidden="true">·</span>
               <span className="inline-flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-teal-600" />
+                <Users className="w-3.5 h-3.5 text-emerald-600" />
                 <span>{tour.tourType}</span>
               </span>
             </div>
@@ -180,13 +180,13 @@ export const TourCard: React.FC<{ tour: TourItem }> = ({ tour }) => {
             <h3 className="font-display text-lg md:text-xl font-bold tracking-tight text-slate-900 leading-snug">
               <Link
                 to={`/tours/${tour.slug}`}
-                className="hover:text-emerald-700 transition-colors"
+                className="hover:text-emerald-800 transition-colors"
               >
                 {tour.title}
               </Link>
             </h3>
 
-            <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
+            <p className="text-sm text-slate-600 font-medium line-clamp-2 leading-relaxed">
               {tour.shortDescription}
             </p>
           </div>
@@ -198,7 +198,7 @@ export const TourCard: React.FC<{ tour: TourItem }> = ({ tour }) => {
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link
                 to={`/tours/${tour.slug}`}
-                className="w-full py-2.5 px-3 text-sm font-semibold text-center text-slate-800 bg-slate-100 hover:bg-slate-200/80 rounded-2xl transition-colors block"
+                className="w-full py-2.5 px-3 text-sm font-bold text-center text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-colors block"
               >
                 View Details
               </Link>
@@ -209,7 +209,7 @@ export const TourCard: React.FC<{ tour: TourItem }> = ({ tour }) => {
               whileTap={{ scale: 0.98 }}
               type="button"
               onClick={handleBookNowClick}
-              className="w-full py-2.5 px-3 text-sm font-semibold text-center bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-800 hover:to-teal-700 text-white rounded-2xl shadow-sm flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 px-3 text-sm font-bold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm flex items-center justify-center gap-1.5"
             >
               <span>Book Now</span>
               <ArrowRight className="w-4 h-4" />
@@ -240,135 +240,131 @@ export const TourCard: React.FC<{ tour: TourItem }> = ({ tour }) => {
         </div>
       </motion.article>
 
-      {/* Instant Book Now Modal when Logged In */}
+      {/* Inline Book Now Drawer when Logged In (No full-screen fixed inset-0 black overlay) */}
       <AnimatePresence>
         {bookingModalOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="bg-white border border-slate-200 rounded-3xl shadow-2xl max-w-md w-full p-5 sm:p-6 space-y-4 relative overflow-hidden"
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            className="mt-3 bg-white border-2 border-emerald-600 rounded-3xl shadow-xl p-4 sm:p-5 space-y-4 relative overflow-hidden"
+          >
+            <button
+              type="button"
+              onClick={() => setBookingModalOpen(false)}
+              className="absolute top-3 right-3 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700"
             >
-              <button
-                type="button"
-                onClick={() => setBookingModalOpen(false)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <X className="w-4 h-4" />
+            </button>
 
-              {bookingSuccess ? (
-                <div className="text-center space-y-4 py-4">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-display text-xl font-bold text-slate-900">
-                    Tour Booked Successfully!
-                  </h3>
-                  <p className="text-sm text-slate-600">
-                    Your booking for <strong className="text-slate-900">{tour.title}</strong> has been saved to your account.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
-                    <Link
-                      to="/my-bookings"
-                      onClick={() => setBookingModalOpen(false)}
-                      className="w-full py-2.5 px-4 text-sm font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl text-center"
-                    >
-                      View My Bookings
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => setBookingModalOpen(false)}
-                      className="w-full py-2.5 px-4 text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl"
-                    >
-                      Close
-                    </button>
-                  </div>
+            {bookingSuccess ? (
+              <div className="text-center space-y-3 py-2">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 </div>
-              ) : (
-                <form onSubmit={handleConfirmBooking} className="space-y-4">
-                  <div className="pr-8">
-                    <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
-                      <Mountain className="w-3.5 h-3.5" /> Instant Tour Reservation
-                    </span>
-                    <h3 className="font-display text-xl font-bold text-slate-900 mt-0.5">
-                      {tour.title}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Booking as <strong className="text-slate-800">{user?.email || 'admin@baigtreks.com'}</strong>
-                    </p>
-                  </div>
+                <h3 className="font-display text-lg font-bold text-slate-900">
+                  Tour Booked Successfully!
+                </h3>
+                <p className="text-xs text-slate-600 font-medium">
+                  Your booking for <strong className="text-slate-900">{tour.title}</strong> has been saved to your account.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                  <Link
+                    to="/my-bookings"
+                    onClick={() => setBookingModalOpen(false)}
+                    className="w-full py-2 px-3 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-center"
+                  >
+                    View My Bookings
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setBookingModalOpen(false)}
+                    className="w-full py-2 px-3 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleConfirmBooking} className="space-y-3">
+                <div className="pr-8">
+                  <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                    <Mountain className="w-3 h-3 text-emerald-600" /> Instant Tour Reservation
+                  </span>
+                  <h3 className="font-display text-base font-bold text-slate-900 mt-1">
+                    {tour.title}
+                  </h3>
+                  <p className="text-xs text-slate-600 font-medium mt-0.5">
+                    Booking as <strong className="text-slate-900">{user?.email || 'admin@baigtreks.com'}</strong>
+                  </p>
+                </div>
 
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Preferred Travel Dates *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={travelDates}
+                    onChange={(e) => setTravelDates(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Preferred Travel Dates *
+                      Travelers *
                     </label>
                     <input
-                      type="date"
+                      type="number"
+                      min={1}
+                      max={50}
                       required
-                      value={travelDates}
-                      onChange={(e) => setTravelDates(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+                      value={travelers}
+                      onChange={(e) => setTravelers(Number(e.target.value))}
+                      className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
                     />
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Travelers *
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={50}
-                        required
-                        value={travelers}
-                        onChange={(e) => setTravelers(Number(e.target.value))}
-                        className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Phone / WhatsApp *
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        value={phoneInput}
-                        onChange={(e) => setPhoneInput(e.target.value)}
-                        placeholder="03155449778"
-                        className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
-                      />
-                    </div>
-                  </div>
-
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Special Requests / Notes
+                      Phone / WhatsApp *
                     </label>
-                    <textarea
-                      rows={2}
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Departure city, hotel preference, etc."
-                      className="w-full px-3.5 py-2 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+                    <input
+                      type="tel"
+                      required
+                      value={phoneInput}
+                      onChange={(e) => setPhoneInput(e.target.value)}
+                      placeholder="03155449778"
+                      className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
                     />
                   </div>
+                </div>
 
-                  <motion.button
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full py-3 px-4 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-800 hover:to-teal-700 text-white rounded-2xl shadow-md"
-                  >
-                    {submitting ? 'Saving Booking...' : 'Confirm & Save Booking'}
-                  </motion.button>
-                </form>
-              )}
-            </motion.div>
-          </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Special Requests / Notes
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Departure city, hotel preference, etc."
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full py-2.5 px-4 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl shadow-sm"
+                >
+                  {submitting ? 'Saving Booking...' : 'Confirm & Save Booking'}
+                </button>
+              </form>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
     </>
@@ -438,14 +434,14 @@ export const CinematicDestinationScroller: React.FC = () => {
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
           <div className="lg:col-span-6 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-              <Mountain className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
+              <Mountain className="w-3.5 h-3.5 text-emerald-600" />
               <span>Signature Route Preview</span>
             </div>
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
               Journey Through Gilgit-Baltistan
             </h2>
-            <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+            <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
               Select each stop below to explore how our road trips and expeditions connect the iconic valleys, lakes, and mountain passes of Northern Pakistan.
             </p>
 
@@ -456,15 +452,15 @@ export const CinematicDestinationScroller: React.FC = () => {
                 referrerPolicy="no-referrer"
                 className="w-full h-auto min-h-full object-cover transition-all duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/25 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 space-y-1 text-white">
-                <div className="text-xs font-semibold text-emerald-300">
+                <div className="text-xs font-bold text-emerald-300">
                   Stop {currentStop.step} · {currentStop.subtitle}
                 </div>
-                <div className="font-display text-xl md:text-2xl font-bold tracking-tight">
+                <div className="font-display text-xl md:text-2xl font-bold tracking-tight text-white">
                   {currentStop.name}
                 </div>
-                <p className="text-xs sm:text-sm text-slate-200 max-w-xl">
+                <p className="text-xs sm:text-sm text-white font-medium max-w-xl">
                   {currentStop.description}
                 </p>
               </div>
@@ -480,8 +476,8 @@ export const CinematicDestinationScroller: React.FC = () => {
                   onClick={() => setActiveIndex(idx)}
                   className={`cursor-pointer p-4 md:p-5 rounded-3xl border transition-all duration-300 ${
                     isActive
-                      ? 'bg-emerald-50/80 border-emerald-600 shadow-sm'
-                      : 'bg-gray-50/80 border-slate-200 hover:bg-white hover:border-slate-300'
+                      ? 'bg-emerald-50 border-emerald-600 shadow-sm'
+                      : 'bg-gray-50 border-slate-200 hover:bg-white hover:border-slate-300'
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -489,8 +485,8 @@ export const CinematicDestinationScroller: React.FC = () => {
                       <span
                         className={`text-xs font-bold px-2.5 py-1 rounded-xl ${
                           isActive
-                            ? 'bg-emerald-800 text-white'
-                            : 'bg-slate-200 text-slate-700'
+                            ? 'bg-emerald-700 text-white'
+                            : 'bg-slate-200 text-slate-800'
                         }`}
                       >
                         {stop.step}
@@ -499,13 +495,13 @@ export const CinematicDestinationScroller: React.FC = () => {
                         <h3 className="font-display text-base md:text-lg font-bold tracking-tight text-slate-900">
                           {stop.name}
                         </h3>
-                        <p className="text-xs md:text-sm text-slate-500">{stop.subtitle}</p>
+                        <p className="text-xs md:text-sm text-slate-600 font-medium">{stop.subtitle}</p>
                       </div>
                     </div>
                     <Link
                       to={`/destinations/${stop.slug}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-xs md:text-sm font-semibold text-emerald-800 hover:text-emerald-900 inline-flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold inline-flex items-center gap-1 transition-colors"
                     >
                       <span>Explore</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -557,15 +553,15 @@ export const InteractiveGilgitBaltistanMap: React.FC = () => {
     <section className="max-w-7xl mx-auto px-4 md:px-6 space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-2 max-w-2xl">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold">
-            <MapPin className="w-3.5 h-3.5" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
+            <MapPin className="w-3.5 h-3.5 text-emerald-600" />
             <span>Interactive Destination Map</span>
           </span>
           <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
             Explore 14 Iconic Destinations
           </h2>
         </div>
-        <p className="text-sm md:text-base text-slate-600 max-w-md">
+        <p className="text-sm md:text-base text-slate-600 font-medium max-w-md">
           Tap any marker or destination below to inspect regional highlights and available tours.
         </p>
       </div>
@@ -579,10 +575,10 @@ export const InteractiveGilgitBaltistanMap: React.FC = () => {
               key={dest.id}
               type="button"
               onClick={() => setSelectedSlug(dest.slug)}
-              className={`px-3.5 py-2 rounded-2xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-2 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all ${
                 isSelected
-                  ? 'bg-emerald-800 text-white shadow-sm'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:border-emerald-500'
+                  ? 'bg-emerald-700 text-white shadow-sm'
+                  : 'bg-white text-slate-800 border border-slate-300 hover:border-emerald-600'
               }`}
             >
               {dest.name}
@@ -593,19 +589,21 @@ export const InteractiveGilgitBaltistanMap: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Topographical SVG Map */}
-        <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 relative overflow-hidden flex flex-col justify-between min-h-[300px] sm:min-h-[420px] shadow-xl">
-          <div className="flex items-center justify-between text-xs text-slate-300 z-10 pb-2">
+        <div className="lg:col-span-7 bg-gradient-to-b from-emerald-50/70 via-white to-teal-50/60 border border-slate-200 rounded-3xl p-4 sm:p-6 relative overflow-hidden flex flex-col justify-between min-h-[300px] sm:min-h-[420px] shadow-xl">
+          <div className="flex items-center justify-between text-xs text-slate-700 font-semibold z-10 pb-2">
             <span className="flex items-center gap-1.5">
-              <Mountain className="w-3.5 h-3.5 text-emerald-400" />
+              <Mountain className="w-3.5 h-3.5 text-emerald-600" />
               <span>Karakoram · Himalaya · Hindu Kush</span>
             </span>
-            <span className="text-emerald-400 font-medium">Tap a Pin to Inspect</span>
+            <span className="text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full font-bold">
+              Tap a Pin to Inspect
+            </span>
           </div>
 
           <div className="relative w-full aspect-[16/11] my-auto">
             <svg
               viewBox="0 0 100 70"
-              className="w-full h-full stroke-slate-700 fill-none"
+              className="w-full h-full stroke-slate-300 fill-none"
               aria-label="Topographical Map of Gilgit-Baltistan"
             >
               <path d="M 5 20 Q 35 10, 65 18 T 95 15" strokeWidth="0.3" />
@@ -613,14 +611,14 @@ export const InteractiveGilgitBaltistanMap: React.FC = () => {
               <path d="M 10 50 Q 45 42, 75 52 T 96 48" strokeWidth="0.3" />
               <path
                 d="M 22 65 C 32 50, 38 38, 48 24 C 53 20, 56 15, 61 9"
-                stroke="#10B981"
-                strokeWidth="0.6"
+                stroke="#059669"
+                strokeWidth="0.7"
                 strokeDasharray="1.5 1"
               />
               <path
                 d="M 39 34 C 48 40, 54 44, 60 46 C 67 46, 72 45, 76 45"
-                stroke="#F59E0B"
-                strokeWidth="0.5"
+                stroke="#0D9488"
+                strokeWidth="0.6"
                 strokeDasharray="1.2 1.2"
               />
             </svg>
@@ -640,15 +638,15 @@ export const InteractiveGilgitBaltistanMap: React.FC = () => {
                   <span
                     className={`flex items-center justify-center rounded-full transition-all ${
                       isSelected
-                        ? 'w-5 h-5 bg-amber-400 text-slate-900 ring-4 ring-amber-400/30 scale-110'
-                        : 'w-3.5 h-3.5 bg-emerald-400 hover:bg-white ring-2 ring-slate-900'
+                        ? 'w-5 h-5 bg-emerald-700 text-white ring-4 ring-emerald-500/30 scale-110'
+                        : 'w-3.5 h-3.5 bg-emerald-500 hover:bg-emerald-700 ring-2 ring-white shadow-xs'
                     }`}
                   />
                   <span
-                    className={`hidden sm:block absolute left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap pointer-events-none transition-opacity ${
+                    className={`hidden sm:block absolute left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap pointer-events-none transition-opacity shadow-xs ${
                       isSelected
-                        ? 'bg-amber-400 text-slate-950 opacity-100'
-                        : 'bg-slate-900/90 text-white opacity-80 group-hover:opacity-100'
+                        ? 'bg-emerald-800 text-white opacity-100'
+                        : 'bg-white text-slate-800 border border-slate-200 opacity-90 group-hover:opacity-100'
                     }`}
                   >
                     {dest.name}
@@ -658,12 +656,12 @@ export const InteractiveGilgitBaltistanMap: React.FC = () => {
             })}
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 pt-2 border-t border-slate-800 z-10">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-700 font-semibold pt-2 border-t border-slate-200 z-10">
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Selected Destination
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-700" /> Selected Destination
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" /> Available Stop
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Available Stop
             </span>
           </div>
         </div>
@@ -691,20 +689,20 @@ export const InteractiveGilgitBaltistanMap: React.FC = () => {
               </div>
 
               <div className="p-4 md:p-6 space-y-4">
-                <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+                <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
                   {activeDestination.description}
                 </p>
 
                 <div className="space-y-1.5">
-                  <div className="text-xs font-semibold text-slate-500">Key Attractions</div>
-                  <p className="text-xs md:text-sm text-slate-700 font-medium">
+                  <div className="text-xs font-bold text-slate-800">Key Attractions</div>
+                  <p className="text-xs md:text-sm text-slate-700 font-semibold">
                     {(activeDestination.attractions || ['Scenic Viewpoints', 'Mountain Panoramas']).join(' · ')}
                   </p>
                 </div>
 
                 {matchingTours.length > 0 && (
                   <div className="pt-2 border-t border-slate-100 space-y-2">
-                    <div className="text-xs font-semibold text-slate-500">
+                    <div className="text-xs font-bold text-slate-800">
                       Available Tours ({matchingTours.length})
                     </div>
                     <div className="space-y-1.5">
@@ -712,10 +710,10 @@ export const InteractiveGilgitBaltistanMap: React.FC = () => {
                         <Link
                           key={t.id}
                           to={`/tours/${t.slug}`}
-                          className="p-2.5 rounded-2xl bg-gray-50 hover:bg-emerald-50/60 border border-slate-200/80 text-xs font-semibold text-slate-800 flex items-center justify-between transition-colors"
+                          className="p-2.5 rounded-2xl bg-gray-50 hover:bg-emerald-50 border border-slate-200 text-xs font-bold text-slate-900 flex items-center justify-between transition-colors"
                         >
                           <span className="truncate pr-2">{t.title}</span>
-                          <span className="text-emerald-700 shrink-0">{t.duration}</span>
+                          <span className="text-slate-700 font-semibold shrink-0">{t.duration}</span>
                         </Link>
                       ))}
                     </div>
@@ -727,7 +725,7 @@ export const InteractiveGilgitBaltistanMap: React.FC = () => {
             <div className="p-4 md:p-6 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <Link
                 to={`/destinations/${activeDestination.slug}`}
-                className="w-full py-2.5 px-4 text-sm font-semibold text-center bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl transition-colors"
+                className="w-full py-2.5 px-4 text-sm font-bold text-center bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-2xl transition-colors"
               >
                 Explore Guide
               </Link>
@@ -738,7 +736,7 @@ export const InteractiveGilgitBaltistanMap: React.FC = () => {
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-2.5 px-4 text-sm font-semibold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl transition-colors flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 px-4 text-sm font-bold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl transition-colors flex items-center justify-center gap-1.5"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>Inquire on WhatsApp</span>
@@ -838,15 +836,15 @@ export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDes
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1.5">
-              <Compass className="w-3.5 h-3.5" />
+          <div className="space-y-1.5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
+              <Compass className="w-3.5 h-3.5 text-emerald-600" />
               <span>Custom Itinerary &amp; Quote Request</span>
             </span>
             <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               Plan Your Gilgit-Baltistan Trip
             </h3>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-600 font-medium">
               Share your travel preferences below or message us directly on WhatsApp at {business.phone}.
             </p>
           </div>
@@ -983,7 +981,7 @@ export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDes
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={submitting}
-              className="w-full sm:w-auto px-6 py-3 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-800 hover:to-teal-700 text-white rounded-2xl shadow-sm transition-all disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-3 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm transition-all disabled:opacity-50"
             >
               {submitting ? 'Submitting Request...' : 'Send Trip Inquiry'}
             </motion.button>
@@ -993,7 +991,7 @@ export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDes
               href={directWaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto px-5 py-3 text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 rounded-2xl transition-colors flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-5 py-3 text-sm font-bold bg-emerald-800 hover:bg-emerald-900 text-white rounded-2xl transition-colors flex items-center justify-center gap-2"
             >
               <MessageCircle className="w-4 h-4" />
               <span>Instant WhatsApp Quote</span>

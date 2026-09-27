@@ -13,14 +13,14 @@ export const DestinationsPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-8 overflow-x-hidden">
       <div className="max-w-3xl space-y-2 border-b border-slate-200 pb-6">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-          <MapPin className="w-3.5 h-3.5" />
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
+          <MapPin className="w-3.5 h-3.5 text-emerald-600" />
           <span>Gilgit-Baltistan Destination Directory</span>
         </span>
         <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
           Explore 14 Iconic Destinations
         </h1>
-        <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+        <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
           From the terraced orchards of Hunza and the turquoise glacial waters of Attabad Lake to the alpine meadows of Deosai and Skardu Valley.
         </p>
       </div>
@@ -71,11 +71,11 @@ export const DestinationsPage: React.FC = () => {
                 </div>
 
                 <div className="p-4 md:p-5 space-y-3">
-                  <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">
+                  <p className="text-sm text-slate-600 font-medium leading-relaxed line-clamp-3">
                     {dest.description}
                   </p>
-                  <div className="text-xs text-slate-500">
-                    <span className="text-slate-800 font-semibold">Highlights: </span>
+                  <div className="text-xs text-slate-700 font-semibold">
+                    <span className="text-slate-900 font-bold">Highlights: </span>
                     {(dest.attractions || ['Scenic Viewpoints', 'Mountain Panoramas']).join(' · ')}
                   </div>
                 </div>
@@ -84,7 +84,7 @@ export const DestinationsPage: React.FC = () => {
               <div className="px-4 md:px-5 pb-4 md:pb-5 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Link
                   to={`/destinations/${dest.slug}`}
-                  className="w-full py-2.5 px-3 text-sm font-semibold text-center bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl transition-colors"
+                  className="w-full py-2.5 px-3 text-sm font-bold text-center bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-2xl transition-colors"
                 >
                   Explore Guide
                 </Link>
@@ -92,7 +92,7 @@ export const DestinationsPage: React.FC = () => {
                   href={waUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-2.5 px-3 text-sm font-semibold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl transition-colors flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 px-3 text-sm font-bold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl transition-colors flex items-center justify-center gap-1.5"
                 >
                   <span>Inquire</span>
                   <ArrowRight className="w-4 h-4" />
@@ -145,20 +145,21 @@ export const DestinationDetailPage: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 md:px-6 pt-6 space-y-5">
         <Link
           to="/destinations"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-emerald-700"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-slate-900"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4 text-emerald-600" />
           <span>All Destinations</span>
         </Link>
 
         <div className="space-y-2">
-          <div className="text-xs sm:text-sm font-semibold text-emerald-800">
-            {destination.region} · Best Season: {destination.bestSeason || 'April to October'}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-xs sm:text-sm font-bold text-emerald-800">
+            <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{destination.region} · Best Season: {destination.bestSeason || 'April to October'}</span>
           </div>
           <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
             {destination.name}
           </h1>
-          <p className="text-sm md:text-base text-slate-600 max-w-2xl">
+          <p className="text-sm md:text-base text-slate-600 font-medium max-w-2xl">
             {destination.shortDescription}
           </p>
         </div>
@@ -179,21 +180,21 @@ export const DestinationDetailPage: React.FC = () => {
             <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               About {destination.name}
             </h2>
-            <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+            <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
               {destination.description}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
             <div className="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200 space-y-2 shadow-sm">
-              <div className="text-xs font-semibold text-emerald-800">Key Attractions</div>
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <div className="text-xs font-bold text-slate-900">Key Attractions</div>
+              <p className="text-sm text-slate-600 font-medium leading-relaxed">
                 {(destination.attractions || ['Scenic Viewpoints', 'Mountain Panoramas']).join(' · ')}
               </p>
             </div>
             <div className="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200 space-y-2 shadow-sm">
-              <div className="text-xs font-semibold text-teal-700">Ideal For</div>
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <div className="text-xs font-bold text-slate-900">Ideal For</div>
+              <p className="text-sm text-slate-600 font-medium leading-relaxed">
                 {(destination.idealFor || ['Families', 'Couples', 'Adventure Travelers']).join(' · ')}
               </p>
             </div>
@@ -220,14 +221,14 @@ export const DestinationDetailPage: React.FC = () => {
             <h3 className="font-display text-lg font-bold tracking-tight text-slate-900">
               Plan Your Visit to {destination.name}
             </h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 font-medium leading-relaxed">
               {business.name} organizes private and group tours to {destination.name} with customized transport and accommodation.
             </p>
             <a
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3 px-4 text-sm font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3 px-4 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl flex items-center justify-center gap-2 transition-colors"
             >
               <MessageCircle className="w-4 h-4" />
               <span>Inquire on WhatsApp</span>

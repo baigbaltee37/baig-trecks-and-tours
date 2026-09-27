@@ -175,19 +175,19 @@ export const TourDetailPage: React.FC = () => {
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-semibold text-emerald-800">
+            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-semibold text-slate-700">
               <span className="inline-flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
+                <MapPin className="w-4 h-4 text-emerald-600" />
                 <span>{tour.destination}</span>
               </span>
               <span>·</span>
               <span className="inline-flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-4 h-4 text-emerald-600" />
                 <span>{tour.duration}</span>
               </span>
               <span>·</span>
               <span className="inline-flex items-center gap-1">
-                <Users className="w-4 h-4" />
+                <Users className="w-4 h-4 text-emerald-600" />
                 <span>{tour.tourType}</span>
               </span>
             </div>
@@ -201,7 +201,7 @@ export const TourDetailPage: React.FC = () => {
             whileTap={{ scale: 0.97 }}
             type="button"
             onClick={handleBookNowAction}
-            className="w-full md:w-auto px-6 py-3 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 text-white rounded-2xl shadow-md flex items-center justify-center gap-2 shrink-0"
+            className="w-full md:w-auto px-6 py-3 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-md flex items-center justify-center gap-2 shrink-0"
           >
             <Calendar className="w-4 h-4" />
             <span>Book Now</span>
@@ -225,26 +225,26 @@ export const TourDetailPage: React.FC = () => {
           {/* Quick Facts Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 md:p-5 rounded-3xl bg-white border border-slate-200 shadow-sm">
             <div>
-              <div className="text-xs text-slate-500">Start / End</div>
-              <div className="text-sm font-semibold text-slate-900 mt-0.5">
+              <div className="text-xs font-semibold text-slate-700">Start / End</div>
+              <div className="text-sm font-bold text-slate-900 mt-0.5">
                 {tour.startingLocation}
               </div>
             </div>
             <div>
-              <div className="text-xs text-slate-500">Group Size</div>
-              <div className="text-sm font-semibold text-slate-900 mt-0.5">
+              <div className="text-xs font-semibold text-slate-700">Group Size</div>
+              <div className="text-sm font-bold text-slate-900 mt-0.5">
                 {tour.groupSize}
               </div>
             </div>
             <div>
-              <div className="text-xs text-slate-500">Difficulty</div>
-              <div className="text-sm font-semibold text-slate-900 mt-0.5">
+              <div className="text-xs font-semibold text-slate-700">Difficulty</div>
+              <div className="text-sm font-bold text-slate-900 mt-0.5">
                 {tour.difficulty}
               </div>
             </div>
             <div>
-              <div className="text-xs text-slate-500">Best Season</div>
-              <div className="text-sm font-semibold text-emerald-800 mt-0.5">
+              <div className="text-xs font-semibold text-slate-700">Best Season</div>
+              <div className="text-sm font-bold text-slate-900 mt-0.5">
                 {tour.bestSeason}
               </div>
             </div>
@@ -255,7 +255,7 @@ export const TourDetailPage: React.FC = () => {
             <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               Tour Overview
             </h2>
-            <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+            <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
               {tour.overview}
             </p>
           </section>
@@ -272,23 +272,23 @@ export const TourDetailPage: React.FC = () => {
                     key={idx}
                     className="p-4 rounded-2xl bg-gray-50 border border-slate-200/80 space-y-1"
                   >
-                    <div className="text-xs font-bold text-emerald-800">
+                    <div className="text-xs font-bold text-slate-900">
                       {day.dayTitle || day.dayNumber || `Day ${idx + 1}`} · {day.route}
                     </div>
-                    <p className="text-sm text-slate-600">{day.description}</p>
+                    <p className="text-sm text-slate-600 font-medium">{day.description}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2">
-                <p className="text-sm text-slate-700 leading-relaxed">
+              <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200 space-y-2">
+                <p className="text-sm text-slate-700 font-medium leading-relaxed">
                   To ensure your trip matches current seasonal road conditions, flight or road preferences, and your group’s pace, <strong>{business.name}</strong> prepares a personalized day-by-day itinerary upon booking or inquiry.
                 </p>
                 <a
                   href={waUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 hover:underline"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   <span>Request detailed day-by-day plan on WhatsApp ({business.phone})</span>
@@ -300,42 +300,42 @@ export const TourDetailPage: React.FC = () => {
           {/* Inclusions & Exclusions */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div className="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200 space-y-3 shadow-sm">
-              <div className="flex items-center gap-2 text-sm font-bold text-emerald-800">
-                <CheckCircle2 className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>Inclusions</span>
               </div>
               {tour.inclusions && tour.inclusions.length > 0 ? (
-                <ul className="space-y-2 text-sm text-slate-600">
+                <ul className="space-y-2 text-sm text-slate-600 font-medium">
                   {tour.inclusions.map((inc, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-emerald-700 font-bold">•</span>
+                      <span className="text-emerald-600 font-bold">•</span>
                       <span>{inc}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-slate-600 leading-relaxed">
+                <p className="text-sm text-slate-600 font-medium leading-relaxed">
                   Inclusions (transport, hotel category, meals, and 4x4 jeeps) are customized according to your selected package tier.
                 </p>
               )}
             </div>
 
             <div className="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200 space-y-3 shadow-sm">
-              <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                <XCircle className="w-4 h-4 text-slate-400" />
+              <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <XCircle className="w-4 h-4 text-slate-500" />
                 <span>Exclusions</span>
               </div>
               {tour.exclusions && tour.exclusions.length > 0 ? (
-                <ul className="space-y-2 text-sm text-slate-600">
+                <ul className="space-y-2 text-sm text-slate-600 font-medium">
                   {tour.exclusions.map((exc, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-slate-400">•</span>
+                      <span className="text-slate-500">•</span>
                       <span>{exc}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-slate-600 leading-relaxed">
+                <p className="text-sm text-slate-600 font-medium leading-relaxed">
                   Personal expenses, optional activities, and items not specified in your written confirmation are excluded.
                 </p>
               )}
@@ -358,21 +358,21 @@ export const TourDetailPage: React.FC = () => {
                 : 'border-slate-200'
             }`}
           >
-            <div className="space-y-1 border-b border-slate-100 pb-4">
-              <span className="text-xs font-semibold text-emerald-800 flex items-center gap-1">
-                <Mountain className="w-3.5 h-3.5" />
+            <div className="space-y-1.5 border-b border-slate-100 pb-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-xs font-bold text-emerald-800">
+                <Mountain className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Package Pricing &amp; Booking</span>
               </span>
               {tour.pricePerPerson > 0 ? (
                 <div className="space-y-1 pt-1">
                   <div className="font-mono-num text-2xl font-bold text-slate-900">
                     PKR {tour.pricePerPerson.toLocaleString()}{' '}
-                    <span className="text-xs text-slate-500 font-normal">/ person</span>
+                    <span className="text-xs text-slate-600 font-semibold">/ person</span>
                   </div>
                   {tour.couplePrice > 0 && (
-                    <div className="text-xs text-slate-600">
+                    <div className="text-xs text-slate-600 font-medium">
                       Couple Package:{' '}
-                      <span className="font-mono-num font-semibold text-slate-900">
+                      <span className="font-mono-num font-bold text-slate-900">
                         PKR {tour.couplePrice.toLocaleString()}
                       </span>
                     </div>
@@ -383,7 +383,7 @@ export const TourDetailPage: React.FC = () => {
                   <div className="font-display text-lg font-bold text-slate-900">
                     Contact us for current pricing
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-slate-600 font-medium mt-1">
                     Rates depend on travel dates, group size, and hotel tier.
                   </p>
                 </div>
@@ -392,11 +392,11 @@ export const TourDetailPage: React.FC = () => {
 
             {/* Book Now Section: Requires Login First */}
             {!user && !isAdmin ? (
-              <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-3">
+              <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200 space-y-3">
                 <div className="text-sm font-bold text-slate-900">
                   Book This Tour Online
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 font-medium leading-relaxed">
                   Please log in or create an account first to book <strong>{tour.title}</strong> and track it in your My Bookings page.
                 </p>
                 <motion.button
@@ -404,23 +404,23 @@ export const TourDetailPage: React.FC = () => {
                   whileTap={{ scale: 0.98 }}
                   type="button"
                   onClick={handleBookNowAction}
-                  className="w-full py-3 px-4 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 text-white rounded-2xl shadow-sm"
+                  className="w-full py-3 px-4 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm"
                 >
                   Login to Book Now
                 </motion.button>
               </div>
             ) : bookingSubmitted ? (
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 space-y-3">
-                <div className="flex items-center gap-2 font-bold text-sm text-emerald-900">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-slate-900 space-y-3">
+                <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>Booking Saved to Your Account!</span>
                 </div>
-                <p className="leading-relaxed">
-                  Your reservation for <strong>{tour.title}</strong> has been saved to localStorage. You can view it anytime in <strong>My Bookings</strong>.
+                <p className="leading-relaxed text-slate-700 font-medium">
+                  Your reservation for <strong>{tour.title}</strong> has been saved. You can view it anytime in <strong>My Bookings</strong>.
                 </p>
                 <Link
                   to="/my-bookings"
-                  className="w-full py-2.5 px-4 text-xs font-semibold bg-emerald-700 text-white rounded-xl block text-center"
+                  className="w-full py-2.5 px-4 text-xs font-bold bg-emerald-700 text-white rounded-xl block text-center"
                 >
                   Go to My Bookings
                 </Link>
@@ -428,7 +428,7 @@ export const TourDetailPage: React.FC = () => {
             ) : (
               <form onSubmit={handleBookingSubmit} className="space-y-3">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                  <Calendar className="w-4 h-4 text-emerald-700" />
+                  <Calendar className="w-4 h-4 text-emerald-600" />
                   <span>Book Now ({user?.email || 'Admin'})</span>
                 </div>
                 <input

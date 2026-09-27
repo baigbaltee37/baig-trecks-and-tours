@@ -28,14 +28,14 @@ export const ExperiencesPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-10 overflow-x-hidden">
       <div className="max-w-3xl space-y-2 border-b border-slate-200 pb-6">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-          <Mountain className="w-3.5 h-3.5" />
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
+          <Mountain className="w-3.5 h-3.5 text-emerald-600" />
           <span>Travel Styles &amp; Expeditions</span>
         </span>
         <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
           Gilgit-Baltistan Experiences
         </h1>
-        <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+        <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
           From multi-day mountain trekking and high-altitude jeep safaris to family holidays, honeymoon escapes, and cultural exploration.
         </p>
       </div>
@@ -56,21 +56,21 @@ export const ExperiencesPage: React.FC = () => {
               className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200 flex flex-col justify-between space-y-5 shadow-lg shadow-slate-900/5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5"
             >
               <div className="space-y-2.5">
-                <div className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl">
-                  <Users className="w-3.5 h-3.5" />
-                  <span>{exp.idealFor}</span>
+                <div className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-xl">
+                  <Users className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{exp.idealFor || exp.subtitle}</span>
                 </div>
                 <h2 className="font-display text-xl font-bold tracking-tight text-slate-900">
                   {exp.title}
                 </h2>
-                <p className="text-sm text-slate-600 leading-relaxed">{exp.description}</p>
+                <p className="text-sm text-slate-600 font-medium leading-relaxed">{exp.description}</p>
               </div>
 
               <a
                 href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-2.5 px-4 text-sm font-semibold text-center bg-slate-100 hover:bg-emerald-700 hover:text-white text-slate-800 rounded-2xl transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 text-sm font-bold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl transition-colors flex items-center justify-center gap-2"
               >
                 <span>Inquire on WhatsApp</span>
                 <ArrowRight className="w-4 h-4" />
@@ -96,23 +96,23 @@ export const AboutPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-12 overflow-x-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         <div className="lg:col-span-7 space-y-5">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-            <Mountain className="w-3.5 h-3.5" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
+            <Mountain className="w-3.5 h-3.5 text-emerald-600" />
             <span>About Baig Treks &amp; Tours</span>
           </span>
           <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
             Authentic Mountain Travel Across Gilgit-Baltistan
           </h1>
-          <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+          <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
             <strong>Baig Treks &amp; Tours</strong> is dedicated to connecting travelers with the valleys, mountain passes, alpine plateaus, and living cultures of Gilgit-Baltistan, Northern Pakistan.
           </p>
-          <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+          <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
             Whether you are planning a family holiday in Hunza, a scenic expedition through Skardu and Deosai, or a trek toward Fairy Meadows and Nanga Parbat Base Camp, our focus is on honest seasonal guidance, reliable mountain logistics, and tailored itineraries.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Link
               to="/tours"
-              className="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-center bg-gradient-to-r from-emerald-700 to-teal-600 text-white rounded-2xl shadow-sm"
+              className="w-full sm:w-auto px-6 py-3 text-sm font-bold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm"
             >
               Explore Our Tours
             </Link>
@@ -120,9 +120,9 @@ export const AboutPage: React.FC = () => {
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-center bg-white border border-slate-300 text-slate-800 hover:bg-slate-50 rounded-2xl flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 text-sm font-bold text-center bg-slate-900 hover:bg-slate-800 text-white rounded-2xl flex items-center justify-center gap-2"
             >
-              <MessageCircle className="w-4 h-4 text-emerald-700" />
+              <MessageCircle className="w-4 h-4 text-emerald-400" />
               <span>Chat on WhatsApp</span>
             </a>
           </div>
@@ -143,38 +143,38 @@ export const AboutPage: React.FC = () => {
       {/* Policies & Safety */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="p-5 sm:p-8 rounded-3xl bg-white border border-slate-200 space-y-3 shadow-lg shadow-slate-900/5">
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
-            <ShieldCheck className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>Safety, Comfort &amp; Local Expertise</span>
           </div>
           <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Responsible Mountain Operations
           </h2>
-          <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+          <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
             Mountain travel in Gilgit-Baltistan involves high-altitude passes, changing weather windows, and remote valley roads. We prioritize well-maintained vehicles, experienced local drivers familiar with the Karakoram Highway and Skardu road network, and realistic daily driving times.
           </p>
         </div>
 
         <div className="p-5 sm:p-8 rounded-3xl bg-white border border-slate-200 space-y-3 shadow-lg shadow-slate-900/5">
-          <div className="flex items-center gap-2 text-xs font-bold text-teal-700">
-            <Compass className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+            <Compass className="w-4 h-4 text-emerald-600" />
             <span>Booking &amp; JazzCash Policy</span>
           </div>
           <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Transparent Confirmations
           </h2>
-          <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+          <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
             {business.bookingPolicy}
           </p>
           <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs space-y-1">
             <div className="text-amber-900 font-bold">Official JazzCash Account</div>
-            <div className="text-slate-700">
+            <div className="text-slate-700 font-medium">
               Account / Number:{' '}
               <span className="font-mono-num text-slate-900 font-bold">
                 {business.jazzcashNumber}
               </span>
             </div>
-            <div className="text-slate-700">
+            <div className="text-slate-700 font-medium">
               Account Name:{' '}
               <span className="text-slate-900 font-bold">{business.jazzcashName}</span>
             </div>
@@ -203,7 +203,7 @@ export const GalleryPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-8 overflow-x-hidden">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
         <div className="space-y-2">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
             Visual Portfolio
           </span>
           <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
@@ -217,10 +217,10 @@ export const GalleryPage: React.FC = () => {
               key={cat}
               type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-2 rounded-2xl text-xs font-semibold transition-colors ${
+              className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-colors ${
                 selectedCategory === cat
-                  ? 'bg-emerald-800 text-white shadow-xs'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:border-emerald-400'
+                  ? 'bg-emerald-700 text-white shadow-xs'
+                  : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
               }`}
             >
               {cat}
@@ -254,50 +254,52 @@ export const GalleryPage: React.FC = () => {
       </div>
 
       {lightboxIndex !== null && filtered[lightboxIndex] && (
-        <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
-          <button
-            type="button"
-            onClick={() => setLightboxIndex(null)}
-            aria-label="Close Lightbox"
-            className="absolute top-5 right-5 p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20"
-          >
-            <X className="w-6 h-6" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              setLightboxIndex((lightboxIndex - 1 + filtered.length) % filtered.length)
-            }
-            aria-label="Previous Image"
-            className="absolute left-4 p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-
-          <div className="max-w-4xl w-full space-y-3 text-center">
-            <img
-              src={filtered[lightboxIndex].imageUrl}
-              alt={filtered[lightboxIndex].altText}
-              referrerPolicy="no-referrer"
-              className="max-h-[75vh] w-auto mx-auto rounded-3xl border border-white/15 object-contain"
-            />
-            <div className="text-sm font-semibold text-white">
-              {filtered[lightboxIndex].caption}
+        <div className="bg-white border-2 border-emerald-600 rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+                {filtered[lightboxIndex].destination} · {lightboxIndex + 1} of {filtered.length}
+              </span>
+              <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900 mt-1">
+                {filtered[lightboxIndex].caption}
+              </h2>
             </div>
-            <div className="text-xs text-emerald-300">
-              {filtered[lightboxIndex].destination} · {lightboxIndex + 1} of {filtered.length}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setLightboxIndex((lightboxIndex - 1 + filtered.length) % filtered.length)
+                }
+                aria-label="Previous Image"
+                className="p-2 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setLightboxIndex((lightboxIndex + 1) % filtered.length)}
+                aria-label="Next Image"
+                className="p-2 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setLightboxIndex(null)}
+                aria-label="Close Preview"
+                className="p-2 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setLightboxIndex((lightboxIndex + 1) % filtered.length)}
-            aria-label="Next Image"
-            className="absolute right-4 p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
+          <img
+            src={filtered[lightboxIndex].imageUrl}
+            alt={filtered[lightboxIndex].altText}
+            referrerPolicy="no-referrer"
+            className="max-h-[65vh] w-auto mx-auto rounded-2xl border border-slate-200 object-contain"
+          />
         </div>
       )}
     </div>
@@ -310,13 +312,13 @@ export const TravelGuidesPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-8 overflow-x-hidden">
       <div className="max-w-3xl space-y-2 border-b border-slate-200 pb-6">
-        <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+        <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
           Gilgit-Baltistan Travel Resource
         </span>
         <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
           Travel Guides &amp; Seasonal Advice
         </h1>
-        <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+        <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
           Practical planning guides for Hunza, Skardu, Fairy Meadows, Deosai, packing checklists, and road trip routes.
         </p>
       </div>
@@ -338,8 +340,8 @@ export const TravelGuidesPage: React.FC = () => {
                 />
               </div>
               <div className="p-4 md:p-5 space-y-2.5">
-                <div className="text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
+                <div className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-emerald-600" />
                   <span>
                     {post.category} · {post.readTime}
                   </span>
@@ -347,18 +349,18 @@ export const TravelGuidesPage: React.FC = () => {
                 <h2 className="font-display text-xl font-bold tracking-tight text-slate-900 leading-snug">
                   <Link
                     to={`/travel-guides/${post.slug}`}
-                    className="hover:text-emerald-700 transition-colors"
+                    className="hover:text-slate-700 transition-colors"
                   >
                     {post.title}
                   </Link>
                 </h2>
-                <p className="text-sm text-slate-600 leading-relaxed">{post.excerpt}</p>
+                <p className="text-sm text-slate-600 font-medium leading-relaxed">{post.excerpt}</p>
               </div>
             </div>
             <div className="px-4 md:px-5 pb-4 md:pb-5 pt-2">
               <Link
                 to={`/travel-guides/${post.slug}`}
-                className="inline-flex items-center gap-1.5 text-xs md:text-sm font-semibold text-emerald-800 hover:text-emerald-900"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors"
               >
                 <span>Read Full Article</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -385,7 +387,7 @@ export const TravelGuideDetailPage: React.FC = () => {
         </h1>
         <Link
           to="/travel-guides"
-          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-emerald-700 text-white rounded-2xl"
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold bg-emerald-700 text-white rounded-2xl"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Travel Guides</span>
@@ -398,14 +400,14 @@ export const TravelGuideDetailPage: React.FC = () => {
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-8 overflow-x-hidden">
       <Link
         to="/travel-guides"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-emerald-700"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-slate-900"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-4 h-4 text-emerald-600" />
         <span>Back to Travel Guides</span>
       </Link>
 
       <div className="space-y-3">
-        <div className="text-xs sm:text-sm font-semibold text-emerald-800">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-xs sm:text-sm font-bold text-emerald-800">
           {post.category} · {post.readTime} · Published {post.publishedDate}
         </div>
         <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
@@ -422,16 +424,16 @@ export const TravelGuideDetailPage: React.FC = () => {
         />
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 space-y-4 text-slate-700 leading-relaxed text-sm md:text-base whitespace-pre-line shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 space-y-4 text-slate-700 font-medium leading-relaxed text-sm md:text-base whitespace-pre-line shadow-sm">
         {post.content}
       </div>
 
-      <div className="p-5 sm:p-6 rounded-3xl bg-emerald-50/70 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="font-display text-lg font-bold text-slate-900">
             Ready to Plan This Journey With Baig Treks &amp; Tours?
           </div>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 font-medium">
             Message our team on WhatsApp for seasonal road updates and custom packages.
           </p>
         </div>
@@ -442,7 +444,7 @@ export const TravelGuideDetailPage: React.FC = () => {
           )}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full sm:w-auto px-5 py-3 text-sm font-semibold bg-emerald-700 text-white rounded-2xl flex items-center justify-center gap-2 shrink-0"
+          className="w-full sm:w-auto px-5 py-3 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl flex items-center justify-center gap-2 shrink-0"
         >
           <MessageCircle className="w-4 h-4" />
           <span>Inquire on WhatsApp</span>
@@ -462,13 +464,13 @@ export const ContactPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-10 overflow-x-hidden">
       <div className="max-w-3xl space-y-2 border-b border-slate-200 pb-6">
-        <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+        <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
           Get in Touch
         </span>
         <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
           Contact Baig Treks &amp; Tours
         </h1>
-        <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+        <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
           Connect directly with our team via WhatsApp, phone, email, or Instagram, or submit a custom trip inquiry below.
         </p>
       </div>
@@ -485,13 +487,13 @@ export const ContactPage: React.FC = () => {
                 href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-slate-900 hover:bg-emerald-100/70 transition-colors"
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 border border-slate-200 text-slate-900 hover:bg-slate-100 transition-colors"
               >
-                <span className="flex items-center gap-2.5 font-medium">
-                  <MessageCircle className="w-4 h-4 text-emerald-700" />
+                <span className="flex items-center gap-2.5 text-slate-700 font-semibold">
+                  <MessageCircle className="w-4 h-4 text-emerald-600" />
                   <span>WhatsApp / Phone</span>
                 </span>
-                <span className="font-mono-num font-bold text-emerald-800">
+                <span className="font-mono-num font-bold text-slate-900">
                   {business.phone}
                 </span>
               </a>
@@ -500,22 +502,22 @@ export const ContactPage: React.FC = () => {
                 href={`tel:+92${business.phone.replace(/^0/, '')}`}
                 className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 border border-slate-200 text-slate-900 hover:bg-slate-100 transition-colors"
               >
-                <span className="flex items-center gap-2.5 font-medium">
-                  <Phone className="w-4 h-4 text-teal-600" />
+                <span className="flex items-center gap-2.5 text-slate-700 font-semibold">
+                  <Phone className="w-4 h-4 text-emerald-600" />
                   <span>Direct Call</span>
                 </span>
-                <span className="font-mono-num font-bold">{business.phone}</span>
+                <span className="font-mono-num font-bold text-slate-900">{business.phone}</span>
               </a>
 
               <a
                 href={`mailto:${business.email}`}
                 className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 border border-slate-200 text-slate-900 hover:bg-slate-100 transition-colors break-all"
               >
-                <span className="flex items-center gap-2.5 font-medium">
-                  <Mail className="w-4 h-4 text-emerald-700" />
+                <span className="flex items-center gap-2.5 text-slate-700 font-semibold">
+                  <Mail className="w-4 h-4 text-emerald-600" />
                   <span>Email</span>
                 </span>
-                <span className="text-xs font-semibold">{business.email}</span>
+                <span className="text-xs font-bold text-slate-900">{business.email}</span>
               </a>
 
               {business.instagram.map((ig) => (
@@ -526,11 +528,11 @@ export const ContactPage: React.FC = () => {
                   rel="noopener noreferrer"
                   className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 border border-slate-200 text-slate-900 hover:bg-slate-100 transition-colors"
                 >
-                  <span className="flex items-center gap-2.5 font-medium">
-                    <Instagram className="w-4 h-4 text-teal-600" />
+                  <span className="flex items-center gap-2.5 text-slate-700 font-semibold">
+                    <Instagram className="w-4 h-4 text-emerald-600" />
                     <span>Instagram</span>
                   </span>
-                  <span className="text-xs font-bold text-emerald-800">{ig.handle}</span>
+                  <span className="text-xs font-bold text-slate-900">{ig.handle}</span>
                 </a>
               ))}
             </div>
@@ -538,17 +540,17 @@ export const ContactPage: React.FC = () => {
 
           <div className="p-5 sm:p-6 rounded-3xl bg-amber-50/70 border border-amber-200 space-y-2">
             <div className="text-xs font-bold text-amber-900">JazzCash Payment</div>
-            <div className="text-sm text-slate-800">
+            <div className="text-sm text-slate-800 font-medium">
               Account / Number:{' '}
               <span className="font-mono-num text-slate-900 font-bold">
                 {business.jazzcashNumber}
               </span>
             </div>
-            <div className="text-sm text-slate-800">
+            <div className="text-sm text-slate-800 font-medium">
               Account Name:{' '}
               <span className="text-slate-900 font-bold">{business.jazzcashName}</span>
             </div>
-            <p className="text-xs text-slate-600 pt-1 leading-relaxed">
+            <p className="text-xs text-slate-600 font-medium pt-1 leading-relaxed">
               {business.paymentInstructions}
             </p>
           </div>
@@ -565,23 +567,25 @@ export const ContactPage: React.FC = () => {
 export const NotFoundPage: React.FC = () => {
   return (
     <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-4">
-      <div className="text-xs font-semibold text-emerald-800">404 — Page Not Found</div>
+      <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-xs font-bold text-emerald-800">
+        404 — Page Not Found
+      </div>
       <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
         Trail Off the Map
       </h1>
-      <p className="text-sm md:text-base text-slate-600">
+      <p className="text-sm md:text-base text-slate-600 font-medium">
         The page you are looking for does not exist or has moved. Return to our homepage or browse active Gilgit-Baltistan tour packages.
       </p>
       <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
         <Link
           to="/"
-          className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold bg-emerald-700 text-white rounded-2xl"
+          className="w-full sm:w-auto px-5 py-2.5 text-sm font-bold bg-emerald-700 text-white rounded-2xl"
         >
           Return Home
         </Link>
         <Link
           to="/tours"
-          className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold bg-white border border-slate-300 text-slate-800 rounded-2xl"
+          className="w-full sm:w-auto px-5 py-2.5 text-sm font-bold bg-white border border-slate-300 text-slate-800 rounded-2xl"
         >
           Browse Tours
         </Link>

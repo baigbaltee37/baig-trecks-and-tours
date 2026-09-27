@@ -104,7 +104,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           {/* Desktop Navigation Links */}
           <nav
             aria-label="Main Navigation"
-            className="hidden lg:flex items-center gap-1 xl:gap-1.5 text-sm font-medium text-slate-600"
+            className="hidden lg:flex items-center gap-1 xl:gap-1.5 text-sm font-semibold text-slate-700"
           >
             {navItems.map((item) => {
               const active = location.pathname === item.to;
@@ -114,8 +114,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   to={item.to}
                   className={`px-3 py-2 rounded-2xl transition-all duration-200 whitespace-nowrap ${
                     active
-                      ? 'text-emerald-800 bg-emerald-50 font-semibold shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                      ? 'text-white bg-emerald-700 font-bold shadow-2xs'
+                      : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   {item.label}

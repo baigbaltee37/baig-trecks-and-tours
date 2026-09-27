@@ -80,8 +80,8 @@ export const BrandLogo3D: React.FC<BrandLogo3DProps> = ({
           Baig Treks &amp; Tours
         </span>
         <span
-          className={`text-[10px] font-medium tracking-wide ${
-            variant === 'dark' ? 'text-emerald-300' : 'text-emerald-800'
+          className={`text-[10px] font-semibold tracking-wide ${
+            variant === 'dark' ? 'text-slate-300' : 'text-slate-600'
           }`}
         >
           Gilgit-Baltistan
