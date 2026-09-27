@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Link,
+  Navigate,
+  useNavigate,
+  useLocation,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   Shield,
   Plus,
@@ -10,22 +16,49 @@ import {
   Download,
   RotateCcw,
   Image as ImageIcon,
+  Menu,
+  X,
+  Eye,
+  EyeOff,
+  Star,
+  AlertOctagon,
+  LayoutDashboard,
+  Compass,
+  MapPin,
+  Calendar,
+  MessageSquare,
+  Users,
+  Settings,
+  FileText,
+  UserCheck,
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp, ADMIN_EMAIL } from '../context/AppContext';
 import {
   TourItem,
-  BlogPostItem,
-  GalleryImageItem,
-  ReviewItem,
+  DestinationItem,
   VISUAL_ASSETS,
 } from '../data/initialData';
+import {
+  DeleteConfirmModal,
+  ConfirmDialogState,
+  AdminBookingsSection,
+  AdminInquiriesSection,
+  AdminCustomersSection,
+  AdminGallerySection,
+  AdminReviewsSection,
+  AdminSettingsSection,
+  AdminUsersSection,
+  AdminAuditLogsSection,
+} from '../components/AdminSubModules';
 
 export const AdminLoginPage: React.FC = () => {
-  const { isAdmin, loginAdminSecret, business } = useApp();
+  const { isAdmin, loginAdminSecret } = useApp();
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   if (isAdmin) {
     return <Navigate to="/admin" replace />;
@@ -34,55 +67,57 @@ export const AdminLoginPage: React.FC = () => {
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-
-    const trimmedUsername = username.trim();
-    const trimmedPassword = password.trim();
-    console.log('Attempted admin username:', trimmedUsername);
-
-    const res = await loginAdminSecret(trimmedUsername, trimmedPassword);
-    if (res.success) {
-      navigate('/admin', { replace: true });
-    } else {
-      setErrorMsg(res.error || 'Invalid credentials');
+    setLoading(true);
+    try {
+      const res = await loginAdminSecret(email.trim(), password);
+      if (res.success) {
+        navigate('/admin', { replace: true });
+      } else {
+        setErrorMsg('Invalid admin credentials.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="max-w-md mx-auto px-4 py-12 md:py-16">
       <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
-        <div className="space-y-2 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto">
-            <Shield className="w-6 h-6 text-emerald-600" />
+        <div className="space-y-1.5 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto mb-2">
+            <Shield className="w-6 h-6 text-emerald-700" />
           </div>
-          <div className="text-xs font-bold text-emerald-800">
-            {business.name} Security Portal
+          <div className="text-xs font-bold tracking-wider text-emerald-800">
+            BAIG TRECKS &amp; TOURS
           </div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-            Administrator Access
+            ADMIN PORTAL
           </h1>
-          <p className="text-xs sm:text-sm text-slate-600 font-medium">
-            Sign in with your administrator username and password.
+          <p className="text-xs text-slate-600 font-medium">
+            Authorized Super Admin &amp; Administrator Sign In
           </p>
         </div>
 
         <form onSubmit={handleAdminLogin} className="space-y-4" noValidate>
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Username
+              Email
             </label>
             <input
               type="text"
-              name="username"
+              name="email"
               autoComplete="username"
-              value={username}
+              required
+              value={email}
               onChange={(e) => {
-                setUsername(e.target.value);
+                setEmail(e.target.value);
                 if (errorMsg) setErrorMsg(null);
               }}
-              placeholder="Username"
+              placeholder="Email"
               className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
             />
           </div>
+
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Password
@@ -91,6 +126,7 @@ export const AdminLoginPage: React.FC = () => {
               type="password"
               name="password"
               autoComplete="current-password"
+              required
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -102,19 +138,41 @@ export const AdminLoginPage: React.FC = () => {
           </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-xs font-medium text-red-700">
+            <div
+              role="alert"
+              className="p-3 rounded-2xl bg-red-50 border border-red-200 text-xs font-bold text-red-700 text-center"
+            >
               {errorMsg}
             </div>
           )}
 
           <button
             type="submit"
-            disabled={false}
-            className="w-full py-3 px-4 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm transition-all cursor-pointer"
+            disabled={loading}
+            className="w-full py-3 px-4 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-60"
           >
-            Sign In to Admin Dashboard
+            {loading ? 'VERIFYING...' : 'SIGN IN'}
           </button>
+
+          <div className="text-center pt-1">
+            <button
+              type="button"
+              onClick={() => setForgotOpen(!forgotOpen)}
+              className="text-xs font-semibold text-slate-600 hover:text-slate-900 underline"
+            >
+              FORGOT PASSWORD
+            </button>
+          </div>
         </form>
+
+        {forgotOpen && (
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1.5">
+            <div className="font-bold text-slate-900">Admin Password Recovery</div>
+            <p>
+              For security reasons, administrator passwords cannot be reset publicly. Contact the primary Super Administrator or update your password from the Admin Users panel while signed in.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -137,6 +195,7 @@ const EMPTY_TOUR_TEMPLATE: TourItem = {
   overview: '',
   badge: '',
   featured: true,
+  published: true,
   bookingStatus: 'Available',
   pricePerPerson: 0,
   couplePrice: 0,
@@ -148,56 +207,95 @@ const EMPTY_TOUR_TEMPLATE: TourItem = {
   exclusions: [],
   transportation: '',
   accommodation: '',
+  faqs: [],
+  seoTitle: '',
+  seoDescription: '',
+  seoKeywords: '',
 };
+
+const EMPTY_DEST_TEMPLATE: DestinationItem = {
+  id: '',
+  slug: '',
+  name: '',
+  region: 'Gilgit-Baltistan',
+  shortDescription: '',
+  description: '',
+  attractions: ['Scenic Viewpoints', 'Local Heritage'],
+  bestSeason: 'April to October',
+  idealFor: ['Families', 'Adventure Travelers'],
+  imageUrl: VISUAL_ASSETS.attabadPassu,
+  galleryImages: [],
+  relatedTourIds: [],
+  seoTitle: '',
+  seoDescription: '',
+  published: true,
+  activeTourOffering: true,
+};
+
+type AdminSectionKey =
+  | 'dashboard'
+  | 'tours'
+  | 'destinations'
+  | 'bookings'
+  | 'inquiries'
+  | 'customers'
+  | 'gallery'
+  | 'reviews'
+  | 'settings'
+  | 'users'
+  | 'audit-logs';
+
+function resolveSectionFromPath(pathname: string): AdminSectionKey {
+  if (pathname.startsWith('/admin/tours')) return 'tours';
+  if (pathname.startsWith('/admin/destinations')) return 'destinations';
+  if (pathname.startsWith('/admin/bookings')) return 'bookings';
+  if (pathname.startsWith('/admin/inquiries')) return 'inquiries';
+  if (pathname.startsWith('/admin/customers')) return 'customers';
+  if (pathname.startsWith('/admin/gallery')) return 'gallery';
+  if (pathname.startsWith('/admin/reviews')) return 'reviews';
+  if (pathname.startsWith('/admin/settings')) return 'settings';
+  if (pathname.startsWith('/admin/users')) return 'users';
+  if (pathname.startsWith('/admin/audit-logs')) return 'audit-logs';
+  return 'dashboard';
+}
 
 export const AdminDashboardPage: React.FC = () => {
   const {
+    user,
+    adminUser,
+    authReady,
     isAdmin,
-    business,
-    tours,
-    destinations,
-    blogPosts,
-    gallery,
-    reviews,
+    allTours,
+    allDestinations,
     inquiries,
     bookings,
     allUsers,
+    auditLogs,
     signOut,
     saveTourAdmin,
     deleteTourAdmin,
+    togglePublishTourAdmin,
+    toggleFeatureTourAdmin,
     exportToursAsJson,
-    importToursFromJson,
     resetToursToDefault,
     saveDestinationAdmin,
     deleteDestinationAdmin,
-    saveBlogPostAdmin,
-    deleteBlogPostAdmin,
-    saveGalleryImageAdmin,
-    deleteGalleryImageAdmin,
-    saveReviewAdmin,
-    deleteReviewAdmin,
-    updateInquiryAdmin,
-    updateBookingAdmin,
-    saveSiteSettingsAdmin,
+    togglePublishDestinationAdmin,
   } = useApp();
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
+    open: false,
+    title: 'ARE YOU SURE?',
+    message: '',
+    onConfirm: () => {},
+  });
 
-  const [activeSection, setActiveSection] = useState<
-    | 'tours'
-    | 'overview'
-    | 'destinations'
-    | 'inquiries'
-    | 'bookings'
-    | 'reviews'
-    | 'gallery'
-    | 'blog'
-    | 'users'
-    | 'settings'
-  >('tours');
-
-  const [statusBanner, setStatusBanner] = useState<string | null>(null);
+  const activeSection = resolveSectionFromPath(location.pathname);
 
   // Tour Editor State
   const [editingTour, setEditingTour] = useState<TourItem>(EMPTY_TOUR_TEMPLATE);
@@ -205,124 +303,197 @@ export const AdminDashboardPage: React.FC = () => {
   const [exclusionsText, setExclusionsText] = useState('');
   const [itineraryDayRoute, setItineraryDayRoute] = useState('');
   const [itineraryDayDesc, setItineraryDayDesc] = useState('');
+  const [faqQ, setFaqQ] = useState('');
+  const [faqA, setFaqA] = useState('');
+  const [tourSearch, setTourSearch] = useState('');
+
+  // Destination Editor State
+  const [editingDest, setEditingDest] = useState<DestinationItem>(EMPTY_DEST_TEMPLATE);
+  const [destGalleryText, setDestGalleryText] = useState('');
+  const [destRelatedToursText, setDestRelatedToursText] = useState('');
 
   useEffect(() => {
     const editId = searchParams.get('editTour');
     if (editId) {
-      const found = tours.find((t) => t.id === editId || t.slug === editId);
+      const found = allTours.find((t) => t.id === editId || t.slug === editId);
       if (found) {
         setEditingTour(found);
         setInclusionsText((found.inclusions || []).join('\n'));
         setExclusionsText((found.exclusions || []).join('\n'));
-        setActiveSection('tours');
       }
     }
-  }, [searchParams, tours]);
+  }, [searchParams, allTours]);
 
-  // Destination Editor State
-  const [newDestName, setNewDestName] = useState('');
-  const [newDestSlug, setNewDestSlug] = useState('');
-  const [newDestRegion, setNewDestRegion] = useState('Gilgit-Baltistan');
-  const [newDestShort, setNewDestShort] = useState('');
-  const [newDestDesc, setNewDestDesc] = useState('');
-  const [newDestImage, setNewDestImage] = useState(VISUAL_ASSETS.attabadPassu);
-  const [newDestOffering, setNewDestOffering] = useState(true);
+  const notify = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => {
+      setToastMsg((curr) => (curr === msg ? null : curr));
+    }, 4500);
+  };
 
-  // Review Editor State
-  const [revName, setRevName] = useState('');
-  const [revRating, setRevRating] = useState(5);
-  const [revDate, setRevDate] = useState('2026');
-  const [revText, setRevText] = useState('');
-  const [revVerified, setRevVerified] = useState(true);
+  const askConfirm = (
+    message: string,
+    onConfirm: () => void,
+    confirmLabel = 'DELETE'
+  ) => {
+    setConfirmDialog({
+      open: true,
+      title: 'ARE YOU SURE?',
+      message,
+      confirmLabel,
+      onConfirm,
+    });
+  };
 
-  // Gallery Editor State
-  const [galUrl, setGalUrl] = useState(VISUAL_ASSETS.heroKarakoram);
-  const [galCaption, setGalCaption] = useState('');
-  const [galAlt, setGalAlt] = useState('');
-  const [galCategory, setGalCategory] = useState('Hunza');
-  const [galDest, setGalDest] = useState('Hunza');
-
-  // Blog Editor State
-  const [blogTitle, setBlogTitle] = useState('');
-  const [blogSlug, setBlogSlug] = useState('');
-  const [blogCategory, setBlogCategory] = useState('Travel Planning');
-  const [blogExcerpt, setBlogExcerpt] = useState('');
-  const [blogContent, setBlogContent] = useState('');
-
-  // Settings Editor State
-  const [settingsForm, setSettingsForm] = useState({
-    name: business.name,
-    phone: business.phone,
-    whatsapp: business.whatsapp,
-    email: business.email,
-    signupNotificationEmail: business.signupNotificationEmail,
-    jazzcashNumber: business.jazzcashNumber,
-    jazzcashName: business.jazzcashName,
-    tagline: business.tagline,
-    heroHeadline: business.heroHeadline,
-    heroDescription: business.heroDescription,
-    address: business.address,
-    businessHours: business.businessHours,
-    cancellationPolicy: business.cancellationPolicy,
-    refundPolicy: business.refundPolicy,
-    bookingPolicy: business.bookingPolicy,
-    paymentInstructions: business.paymentInstructions,
-  });
-
-  // Strict Route Protection: Only opens if localStorage isAdmin === 'true', otherwise redirects to /baig-admin-secure-786
-  const isStorageAdmin =
-    typeof window !== 'undefined' && window.localStorage.getItem('isAdmin') === 'true';
-
-  if (!isAdmin && !isStorageAdmin) {
-    return <Navigate to="/baig-admin-secure-786" replace />;
+  if (!authReady) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center text-sm font-semibold text-slate-600">
+        Verifying administrator session...
+      </div>
+    );
   }
 
-  const pendingInquiriesCount = inquiries.filter((i) => i.status === 'pending').length;
+  // Case 1: Authenticated as a normal CUSTOMER -> Show explicit ACCESS DENIED
+  if (user && !isAdmin) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <div className="bg-white border-2 border-red-200 rounded-3xl p-8 space-y-4 shadow-xl">
+          <div className="w-14 h-14 rounded-2xl bg-red-100 text-red-700 flex items-center justify-center mx-auto">
+            <AlertOctagon className="w-7 h-7" />
+          </div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-red-700 tracking-tight">
+            ACCESS DENIED
+          </h1>
+          <p className="text-sm text-slate-700 font-medium">
+            Your customer account ({user.email}) does not have administrator privileges to access the Baig Trecks &amp; Tours Admin Portal.
+          </p>
+          <div className="pt-2 flex flex-col sm:flex-row gap-2.5 justify-center">
+            <Link
+              to="/my-bookings"
+              className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold"
+            >
+              Return to Customer Dashboard
+            </Link>
+            <Link
+              to="/"
+              className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold"
+            >
+              Back to Public Website
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Case 2: Unauthenticated visitor -> Redirect to /admin/login
+  if (!isAdmin) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  const totalCustomers = allUsers.length;
+  const totalTours = allTours.length;
+  const publishedToursCount = allTours.filter((t) => t.published !== false).length;
+  const pendingInquiriesCount = inquiries.filter(
+    (i) => i.status === 'NEW' || i.status === 'pending' || i.status === 'IN PROGRESS'
+  ).length;
+  const pendingBookingsCount = bookings.filter(
+    (b) =>
+      b.bookingStatus === 'PENDING' ||
+      b.bookingStatus === 'UNDER REVIEW' ||
+      b.bookingStatus === 'PAYMENT PENDING' ||
+      b.bookingStatus === 'pending_confirmation'
+  ).length;
+  const confirmedBookingsCount = bookings.filter(
+    (b) =>
+      b.bookingStatus === 'CONFIRMED' ||
+      b.bookingStatus === 'COMPLETED' ||
+      b.bookingStatus === 'confirmed' ||
+      b.bookingStatus === 'completed'
+  ).length;
+
+  const sidebarItems: { id: AdminSectionKey; label: string; to: string; icon: React.ReactNode }[] =
+    [
+      {
+        id: 'dashboard',
+        label: 'Dashboard',
+        to: '/admin/dashboard',
+        icon: <LayoutDashboard className="w-4 h-4" />,
+      },
+      {
+        id: 'tours',
+        label: 'Tours',
+        to: '/admin/tours',
+        icon: <Compass className="w-4 h-4" />,
+      },
+      {
+        id: 'destinations',
+        label: 'Destinations',
+        to: '/admin/destinations',
+        icon: <MapPin className="w-4 h-4" />,
+      },
+      {
+        id: 'bookings',
+        label: 'Bookings',
+        to: '/admin/bookings',
+        icon: <Calendar className="w-4 h-4" />,
+      },
+      {
+        id: 'inquiries',
+        label: 'Inquiries',
+        to: '/admin/inquiries',
+        icon: <MessageSquare className="w-4 h-4" />,
+      },
+      {
+        id: 'customers',
+        label: 'Customers',
+        to: '/admin/customers',
+        icon: <Users className="w-4 h-4" />,
+      },
+      {
+        id: 'gallery',
+        label: 'Gallery',
+        to: '/admin/gallery',
+        icon: <ImageIcon className="w-4 h-4" />,
+      },
+      {
+        id: 'reviews',
+        label: 'Reviews',
+        to: '/admin/reviews',
+        icon: <Star className="w-4 h-4" />,
+      },
+      {
+        id: 'settings',
+        label: 'Website Settings',
+        to: '/admin/settings',
+        icon: <Settings className="w-4 h-4" />,
+      },
+      {
+        id: 'users',
+        label: 'Admin Users',
+        to: '/admin/users',
+        icon: <UserCheck className="w-4 h-4" />,
+      },
+      {
+        id: 'audit-logs',
+        label: 'Audit Logs',
+        to: '/admin/audit-logs',
+        icon: <FileText className="w-4 h-4" />,
+      },
+    ];
 
   const handleSelectTourToEdit = (t: TourItem) => {
     setEditingTour(t);
     setInclusionsText((t.inclusions || []).join('\n'));
     setExclusionsText((t.exclusions || []).join('\n'));
-    setTimeout(() => {
-      const el = document.getElementById('tour-editor-panel');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 60);
+    const el = document.getElementById('tour-editor-panel');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleClearTourForm = () => {
     setEditingTour(EMPTY_TOUR_TEMPLATE);
     setInclusionsText('');
     setExclusionsText('');
-    setTimeout(() => {
-      const el = document.getElementById('tour-editor-panel');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 60);
-  };
-
-  const handleImportJsonUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        const result = importToursFromJson(reader.result);
-        if (result.success) {
-          setStatusBanner(
-            `Imported ${result.count} tours from JSON and synced across mobile, tablet, and laptop!`
-          );
-        } else {
-          setStatusBanner(result.error || 'Could not import JSON file.');
-        }
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
   };
 
   const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -362,7 +533,7 @@ export const AdminDashboardPage: React.FC = () => {
     };
 
     await saveTourAdmin(updatedTour);
-    setStatusBanner(`Tour "${updatedTour.title}" saved to localStorage!`);
+    notify(`Tour "${updatedTour.title}" saved.`);
     setEditingTour(EMPTY_TOUR_TEMPLATE);
     setInclusionsText('');
     setExclusionsText('');
@@ -384,322 +555,488 @@ export const AdminDashboardPage: React.FC = () => {
     setItineraryDayDesc('');
   };
 
+  const handleAddTourFaq = () => {
+    if (!faqQ.trim() || !faqA.trim()) return;
+    setEditingTour((prev) => ({
+      ...prev,
+      faqs: [...(prev.faqs || []), { question: faqQ.trim(), answer: faqA.trim() }],
+    }));
+    setFaqQ('');
+    setFaqA('');
+  };
+
+  const filteredAdminTours = allTours.filter(
+    (t) =>
+      !tourSearch.trim() ||
+      t.title.toLowerCase().includes(tourSearch.toLowerCase()) ||
+      t.destination.toLowerCase().includes(tourSearch.toLowerCase())
+  );
+
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10 space-y-6 overflow-x-hidden">
-      {/* Top Admin Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+    <div className="min-h-screen bg-slate-100 flex flex-col lg:flex-row">
+      <DeleteConfirmModal
+        state={confirmDialog}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+      />
+
+      {/* Mobile Top Bar */}
+      <div className="lg:hidden bg-slate-900 text-white px-4 py-3 flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
-            <Shield className="w-4 h-4" />
-            <span>{business.name} — Admin Dashboard (LocalStorage CMS)</span>
+          <div className="text-[10px] font-bold text-emerald-400">BAIG TRECKS &amp; TOURS</div>
+          <div className="text-sm font-bold">ADMIN DASHBOARD</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
+          className="p-2 rounded-xl bg-slate-800 text-white"
+          aria-label="Toggle Admin Sidebar"
+        >
+          {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* Sidebar */}
+      <aside
+        className={`${
+          mobileDrawerOpen ? 'block' : 'hidden'
+        } lg:block w-full lg:w-64 bg-slate-900 text-slate-100 shrink-0 lg:min-h-screen p-4 space-y-6`}
+      >
+        <div className="border-b border-slate-800 pb-4">
+          <div className="text-[11px] font-bold tracking-wider text-emerald-400">
+            BAIG TRECKS &amp; TOURS
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mt-1">
-            Administrator Dashboard
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
-            Signed in as <span className="text-slate-900 font-mono-num font-semibold">{ADMIN_EMAIL}</span> · Changes persist in localStorage and sync across mobile, tablet &amp; laptop.
-          </p>
+          <div className="font-display text-lg font-bold text-white mt-0.5">
+            ADMIN DASHBOARD
+          </div>
+          <div className="text-[11px] text-slate-400 font-mono-num mt-1 truncate">
+            {adminUser?.email || ADMIN_EMAIL} ({adminUser?.role || 'SUPER_ADMIN'})
+          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5">
-          <button
-            type="button"
-            onClick={exportToursAsJson}
-            className="w-full sm:w-auto px-4 py-2.5 text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            <span>Export Tours as JSON</span>
-          </button>
-
-          <label className="w-full sm:w-auto px-4 py-2.5 text-xs sm:text-sm font-semibold bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 rounded-xl cursor-pointer flex items-center justify-center gap-1.5">
-            <span>Import Tours JSON</span>
-            <input
-              type="file"
-              accept="application/json,.json"
-              onChange={handleImportJsonUpload}
-              className="hidden"
-            />
-          </label>
-
-          <Link
-            to="/"
-            className="w-full sm:w-auto px-4 py-2.5 text-xs sm:text-sm font-semibold text-center bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl"
-          >
-            View Home
-          </Link>
+        <nav className="space-y-1">
+          {sidebarItems.map((item) => {
+            const isActive = activeSection === item.id;
+            return (
+              <Link
+                key={item.id}
+                to={item.to}
+                onClick={() => setMobileDrawerOpen(false)}
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                  isActive
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
 
           <button
             type="button"
             onClick={async () => {
               await signOut();
-              navigate('/login');
+              navigate('/admin/login', { replace: true });
             }}
-            className="w-full sm:w-auto px-4 py-2.5 text-xs sm:text-sm font-semibold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-xl flex items-center justify-center gap-1.5"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-red-300 hover:bg-red-950/60 hover:text-red-200 transition-colors mt-4"
           >
             <LogOut className="w-4 h-4" />
             <span>Logout</span>
           </button>
+        </nav>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-x-hidden">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+          <div>
+            <div className="text-xs font-bold text-emerald-800">
+              BAIG TRECKS &amp; TOURS
+            </div>
+            <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900">
+              ADMIN DASHBOARD
+            </h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={exportToursAsJson}
+              className="px-3.5 py-2 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl flex items-center gap-1.5"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export JSON</span>
+            </button>
+            <Link
+              to="/"
+              className="px-3.5 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl"
+            >
+              Public Website
+            </Link>
+          </div>
         </div>
-      </div>
 
-      {statusBanner && (
-        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs sm:text-sm text-emerald-900 flex items-center justify-between gap-4">
-          <span className="flex items-center gap-2 font-medium">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>{statusBanner}</span>
-          </span>
-          <button
-            type="button"
-            onClick={() => setStatusBanner(null)}
-            className="text-emerald-700 hover:text-emerald-950 font-semibold"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
+        {toastMsg && (
+          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-900 flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+              <span>{toastMsg}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setToastMsg(null)}
+              className="text-emerald-800 underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">
-        {[
-          { id: 'tours', label: `Tours (${tours.length})` },
-          { id: 'overview', label: 'Overview' },
-          { id: 'destinations', label: `Destinations (${destinations.length})` },
-          { id: 'inquiries', label: `Inquiries (${inquiries.length})` },
-          { id: 'bookings', label: `Bookings (${bookings.length})` },
-          { id: 'reviews', label: `Reviews (${reviews.length})` },
-          { id: 'gallery', label: `Gallery (${gallery.length})` },
-          { id: 'blog', label: `Guides (${blogPosts.length})` },
-          { id: 'users', label: `Users (${allUsers.length})` },
-          { id: 'settings', label: 'Settings' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveSection(tab.id as typeof activeSection)}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${
-              activeSection === tab.id
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 1. TOURS MANAGEMENT */}
-      {activeSection === 'tours' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Existing Tours List */}
-          <div className="lg:col-span-5 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-display text-lg font-bold text-slate-900">
-                All Tours ({tours.length})
-              </h2>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleClearTourForm}
-                  className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-xl flex items-center gap-1"
+        {/* SECTION 1: DASHBOARD OVERVIEW & REAL STATISTICS */}
+        {activeSection === 'dashboard' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[
+                { label: 'Total Customers', val: totalCustomers, to: '/admin/customers' },
+                { label: 'Total Tours', val: totalTours, to: '/admin/tours' },
+                { label: 'Published Tours', val: publishedToursCount, to: '/admin/tours' },
+                { label: 'Pending Inquiries', val: pendingInquiriesCount, to: '/admin/inquiries' },
+                { label: 'Pending Bookings', val: pendingBookingsCount, to: '/admin/bookings' },
+                { label: 'Confirmed Bookings', val: confirmedBookingsCount, to: '/admin/bookings' },
+              ].map((stat) => (
+                <Link
+                  key={stat.label}
+                  to={stat.to}
+                  className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 transition-colors shadow-xs space-y-1"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>New Tour</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetToursToDefault();
-                    setStatusBanner('Reset tours to default Gilgit-Baltistan catalog.');
-                  }}
-                  className="px-2.5 py-1.5 text-xs font-medium bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl flex items-center gap-1"
-                  title="Reset to default tours"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>Reset</span>
-                </button>
-              </div>
+                  <div className="text-xs font-semibold text-slate-500">{stat.label}</div>
+                  <div className="font-mono-num text-2xl font-bold text-slate-900">
+                    {stat.val}
+                  </div>
+                </Link>
+              ))}
             </div>
 
-            <div className="space-y-3">
-              {tours.map((t) => {
-                const isBeingEdited = editingTour.id === t.id && Boolean(t.id);
-                return (
-                  <div
-                    key={t.id}
-                    className={`p-4 rounded-2xl border transition-all space-y-3 ${
-                      isBeingEdited
-                        ? 'bg-emerald-50/70 border-emerald-500 shadow-xs'
-                        : 'bg-white border-slate-200 shadow-xs'
-                    }`}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display text-base font-bold text-slate-900">
+                    Recent Bookings ({bookings.length})
+                  </h2>
+                  <Link
+                    to="/admin/bookings"
+                    className="text-xs font-bold text-emerald-700 hover:underline"
                   >
-                    <div className="flex items-start gap-3">
-                      <img
-                        src={t.imageUrl || VISUAL_ASSETS.heroKarakoram}
-                        alt={t.title}
-                        className="w-20 h-16 rounded-xl object-cover shrink-0 border border-slate-200"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold text-emerald-700">
-                          {t.destination} · {t.duration}
+                    View All
+                  </Link>
+                </div>
+                {bookings.length === 0 ? (
+                  <p className="text-xs text-slate-500">0 booking requests recorded.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {bookings.slice(0, 5).map((b) => (
+                      <div
+                        key={b.id}
+                        className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs"
+                      >
+                        <div>
+                          <div className="font-bold text-slate-900">{b.customerName}</div>
+                          <div className="text-slate-600">{b.tourTitle}</div>
                         </div>
-                        <div className="text-sm font-bold text-slate-900 truncate">
-                          {t.title}
-                        </div>
-                        <div className="text-xs font-mono-num text-slate-700 font-semibold mt-0.5">
-                          {t.pricePerPerson > 0
-                            ? `PKR ${t.pricePerPerson.toLocaleString()} / person`
-                            : 'Custom Quote (PKR 0)'}
+                        <div className="text-right font-mono-num">
+                          <div className="font-bold text-emerald-800">{b.bookingStatus}</div>
+                          <div className="text-slate-500">{b.paymentStatus}</div>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
-                      <button
-                        type="button"
-                        onClick={() => handleSelectTourToEdit(t)}
-                        className="flex-1 py-2 px-3 text-xs font-semibold bg-slate-100 hover:bg-emerald-600 hover:text-white text-slate-800 rounded-xl flex items-center justify-center gap-1.5 transition-colors"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        <span>Edit Tour / Price / Image</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          deleteTourAdmin(t.id);
-                          setStatusBanner(`Deleted tour "${t.title}".`);
-                        }}
-                        className="py-2 px-3 text-xs font-semibold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-xl flex items-center gap-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete</span>
-                      </button>
-                    </div>
+                    ))}
                   </div>
-                );
-              })}
+                )}
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display text-base font-bold text-slate-900">
+                    Recent Audit Activity ({auditLogs.length})
+                  </h2>
+                  <Link
+                    to="/admin/audit-logs"
+                    className="text-xs font-bold text-emerald-700 hover:underline"
+                  >
+                    Full Log
+                  </Link>
+                </div>
+                {auditLogs.length === 0 ? (
+                  <p className="text-xs text-slate-500">0 audit events recorded.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {auditLogs.slice(0, 5).map((log) => (
+                      <div
+                        key={log.id}
+                        className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs"
+                      >
+                        <div>
+                          <div className="font-bold text-slate-900">{log.action}</div>
+                          <div className="text-slate-600">{log.targetName}</div>
+                        </div>
+                        <div className="text-right font-mono-num text-[11px] text-slate-500">
+                          {new Date(log.timestamp).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Right Column: Add / Edit Tour Form */}
-          <form
-            id="tour-editor-panel"
-            onSubmit={handleSaveTourSubmit}
-            className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-5 shadow-sm scroll-mt-24"
-          >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div>
-                <span className="text-xs font-semibold text-emerald-700">
-                  {editingTour.id ? 'Editing Existing Tour' : 'Create New Tour'}
-                </span>
-                <h3 className="font-display text-xl font-bold text-slate-900">
-                  {editingTour.id ? editingTour.title : 'Add New Tour Package'}
+        {/* SECTION 2: TOUR MANAGEMENT (/admin/tours) */}
+        {activeSection === 'tours' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="lg:col-span-5 space-y-4">
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="font-display text-base font-bold text-slate-900">
+                    Tours ({allTours.length})
+                  </h2>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleClearTourForm}
+                      className="px-3 py-1.5 text-xs font-bold bg-emerald-700 text-white rounded-xl flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>ADD TOUR</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        askConfirm(
+                          'Reset tour catalog to default Gilgit-Baltistan packages?',
+                          () => {
+                            resetToursToDefault();
+                            notify('Reset tours to default catalog.');
+                          },
+                          'RESET'
+                        )
+                      }
+                      className="px-2.5 py-1.5 text-xs font-semibold bg-slate-100 text-slate-700 rounded-xl flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  value={tourSearch}
+                  onChange={(e) => setTourSearch(e.target.value)}
+                  placeholder="Filter tours by title or destination..."
+                  className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                />
+              </div>
+
+              <div className="space-y-3">
+                {filteredAdminTours.map((t) => {
+                  const isPublished = t.published !== false;
+                  return (
+                    <div
+                      key={t.id}
+                      className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-xs"
+                    >
+                      <div className="flex items-start gap-3">
+                        <img
+                          src={t.imageUrl || VISUAL_ASSETS.heroKarakoram}
+                          alt={t.title}
+                          className="w-20 h-16 rounded-xl object-cover shrink-0 border border-slate-200"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-semibold text-slate-600">
+                            {t.destination} · {t.duration} ·{' '}
+                            <span className="font-bold text-slate-900">
+                              {isPublished ? 'Published' : 'Unpublished'}
+                            </span>
+                            {t.featured ? ' · Featured' : ''}
+                          </div>
+                          <div className="text-sm font-bold text-slate-900 truncate">
+                            {t.title}
+                          </div>
+                          <div className="text-xs font-mono-num text-emerald-800 font-bold mt-0.5">
+                            {t.pricePerPerson > 0
+                              ? `PKR ${t.pricePerPerson.toLocaleString()}`
+                              : 'Custom Quote (PKR 0)'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => handleSelectTourToEdit(t)}
+                          className="px-2.5 py-1.5 text-xs font-bold bg-slate-100 hover:bg-emerald-700 hover:text-white text-slate-800 rounded-lg flex items-center gap-1"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>EDIT</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await togglePublishTourAdmin(t.id);
+                            notify(
+                              isPublished
+                                ? `Unpublished "${t.title}".`
+                                : `Published "${t.title}".`
+                            );
+                          }}
+                          className="px-2.5 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg flex items-center gap-1"
+                        >
+                          {isPublished ? (
+                            <>
+                              <EyeOff className="w-3.5 h-3.5" />
+                              <span>UNPUBLISH</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>PUBLISH</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await toggleFeatureTourAdmin(t.id);
+                            notify(
+                              t.featured
+                                ? `Unfeatured "${t.title}".`
+                                : `Featured "${t.title}".`
+                            );
+                          }}
+                          className="px-2.5 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg flex items-center gap-1"
+                        >
+                          <Star className="w-3.5 h-3.5" />
+                          <span>{t.featured ? 'UNFEATURE' : 'FEATURE'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            askConfirm(`Delete tour "${t.title}" permanently?`, async () => {
+                              await deleteTourAdmin(t.id);
+                              notify(`Deleted tour "${t.title}".`);
+                            })
+                          }
+                          className="ml-auto px-2.5 py-1.5 text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 rounded-lg flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>DELETE</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <form
+              id="tour-editor-panel"
+              onSubmit={handleSaveTourSubmit}
+              className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-display text-lg font-bold text-slate-900">
+                  {editingTour.id ? `Edit Tour: ${editingTour.title}` : 'Add New Tour Package'}
                 </h3>
+                {editingTour.id && (
+                  <button
+                    type="button"
+                    onClick={handleClearTourForm}
+                    className="text-xs font-semibold text-slate-600"
+                  >
+                    Cancel Edit
+                  </button>
+                )}
               </div>
-              {editingTour.id && (
-                <button
-                  type="button"
-                  onClick={handleClearTourForm}
-                  className="px-3 py-1.5 text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl"
-                >
-                  Cancel Edit
-                </button>
-              )}
-            </div>
 
-            {/* Title & Destination */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Tour Title *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editingTour.title}
-                  onChange={(e) =>
-                    setEditingTour({ ...editingTour, title: e.target.value })
-                  }
-                  placeholder="e.g. Hunza & Khunjerab Luxury Tour"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Tour Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingTour.title}
+                    onChange={(e) => setEditingTour({ ...editingTour, title: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Destination *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingTour.destination}
+                    onChange={(e) =>
+                      setEditingTour({ ...editingTour, destination: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Destination
-                </label>
-                <input
-                  type="text"
-                  value={editingTour.destination}
-                  onChange={(e) =>
-                    setEditingTour({ ...editingTour, destination: e.target.value })
-                  }
-                  placeholder="Hunza, Skardu, Fairy Meadows..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
-                />
-              </div>
-            </div>
 
-            {/* Duration, Category & Style */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Duration Label
-                </label>
-                <input
-                  type="text"
-                  value={editingTour.duration}
-                  onChange={(e) =>
-                    setEditingTour({ ...editingTour, duration: e.target.value })
-                  }
-                  placeholder="5 Days / 4 Nights"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Duration
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTour.duration}
+                    onChange={(e) => setEditingTour({ ...editingTour, duration: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Tour Type
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTour.tourType}
+                    onChange={(e) => setEditingTour({ ...editingTour, tourType: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Season
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTour.bestSeason || ''}
+                    onChange={(e) =>
+                      setEditingTour({ ...editingTour, bestSeason: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Difficulty
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTour.difficulty || ''}
+                    onChange={(e) =>
+                      setEditingTour({ ...editingTour, difficulty: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Duration Filter
-                </label>
-                <select
-                  value={editingTour.durationCategory}
-                  onChange={(e) =>
-                    setEditingTour({
-                      ...editingTour,
-                      durationCategory: e.target.value,
-                    })
-                  }
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
-                >
-                  <option value="1-3 Days">1-3 Days</option>
-                  <option value="4-6 Days">4-6 Days</option>
-                  <option value="7-10 Days">7-10 Days</option>
-                  <option value="10+ Days">10+ Days</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Tour Type
-                </label>
-                <select
-                  value={editingTour.tourType}
-                  onChange={(e) =>
-                    setEditingTour({ ...editingTour, tourType: e.target.value })
-                  }
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
-                >
-                  <option value="Family Holidays">Family Holidays</option>
-                  <option value="Road Trips">Road Trips</option>
-                  <option value="Adventure & Trekking">Adventure &amp; Trekking</option>
-                  <option value="Custom Private Tours">Custom Private Tours</option>
-                </select>
-              </div>
-            </div>
 
-            {/* Pricing Controls */}
-            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-3">
-              <div className="text-xs font-bold text-emerald-800">
-                Pricing Controls (Set 0 to show &ldquo;Custom Quote&rdquo;)
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Price Per Person (PKR)
@@ -714,7 +1051,7 @@ export const AdminDashboardPage: React.FC = () => {
                         pricePerPerson: Number(e.target.value),
                       })
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 font-mono-num"
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs font-mono-num text-slate-900"
                   />
                 </div>
                 <div>
@@ -731,798 +1068,478 @@ export const AdminDashboardPage: React.FC = () => {
                         couplePrice: Number(e.target.value),
                       })
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 font-mono-num"
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs font-mono-num text-slate-900"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Optional Badge
+                    Availability
                   </label>
-                  <input
-                    type="text"
-                    value={editingTour.badge}
+                  <select
+                    value={editingTour.bookingStatus}
                     onChange={(e) =>
-                      setEditingTour({ ...editingTour, badge: e.target.value })
+                      setEditingTour({
+                        ...editingTour,
+                        bookingStatus: e.target.value as TourItem['bookingStatus'],
+                      })
                     }
-                    placeholder="e.g. Best Seller"
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm text-slate-900"
-                  />
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                  >
+                    <option value="Available">Available</option>
+                    <option value="Limited Availability">Limited Availability</option>
+                    <option value="Sold Out">Sold Out</option>
+                    <option value="Inquiry Only">Inquiry Only</option>
+                  </select>
+                </div>
+                <div className="flex flex-col justify-end gap-1.5">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                    <input
+                      type="checkbox"
+                      checked={editingTour.published !== false}
+                      onChange={(e) =>
+                        setEditingTour({ ...editingTour, published: e.target.checked })
+                      }
+                    />
+                    <span>Published</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                    <input
+                      type="checkbox"
+                      checked={editingTour.featured}
+                      onChange={(e) =>
+                        setEditingTour({ ...editingTour, featured: e.target.checked })
+                      }
+                    />
+                    <span>Featured</span>
+                  </label>
                 </div>
               </div>
-            </div>
 
-            {/* Image Controls */}
-            <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <ImageIcon className="w-4 h-4 text-emerald-600" />
-                  <span>Tour Image (URL, Preset, or Upload File)</span>
-                </label>
-                <label className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold cursor-pointer hover:bg-emerald-700 transition-colors">
-                  Upload Image File
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageFileUpload}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3.5 rounded-xl bg-gray-50 border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">Tour Cover Image</span>
+                  <label className="px-3 py-1 rounded-lg bg-emerald-700 text-white text-xs font-semibold cursor-pointer">
+                    Upload Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
                 <input
                   type="text"
                   value={editingTour.imageUrl}
-                  onChange={(e) =>
-                    setEditingTour({ ...editingTour, imageUrl: e.target.value })
-                  }
-                  placeholder="Paste any image URL (https://...)"
+                  onChange={(e) => setEditingTour({ ...editingTour, imageUrl: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900"
                 />
-                <select
-                  value={
-                    Object.values(VISUAL_ASSETS).includes(editingTour.imageUrl)
-                      ? editingTour.imageUrl
-                      : ''
-                  }
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      setEditingTour({ ...editingTour, imageUrl: e.target.value });
-                    }
-                  }}
-                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900"
-                >
-                  <option value="">-- Or Choose Built-in Mountain Photo --</option>
-                  <option value={VISUAL_ASSETS.heroKarakoram}>
-                    Hunza Valley &amp; Karakoram Peaks
-                  </option>
-                  <option value={VISUAL_ASSETS.attabadPassu}>
-                    Attabad Lake &amp; Passu Cones
-                  </option>
-                  <option value={VISUAL_ASSETS.skarduValley}>
-                    Skardu Valley &amp; Cold Desert
-                  </option>
-                  <option value={VISUAL_ASSETS.fairyMeadows}>
-                    Fairy Meadows &amp; Nanga Parbat
-                  </option>
-                  <option value={VISUAL_ASSETS.deosaiPlains}>
-                    Deosai High-Altitude Plains
-                  </option>
-                </select>
               </div>
 
-              {editingTour.imageUrl && (
-                <div className="flex items-center gap-3 pt-1">
-                  <img
-                    src={editingTour.imageUrl}
-                    alt="Preview"
-                    className="w-24 h-16 object-cover rounded-xl border border-slate-200"
-                  />
-                  <span className="text-xs text-slate-500">
-                    Live preview of selected tour card photo
-                  </span>
-                </div>
-              )}
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Short Summary *
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  value={editingTour.shortDescription}
+                  onChange={(e) =>
+                    setEditingTour({ ...editingTour, shortDescription: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                />
+              </div>
 
-            {/* Descriptions */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Short Card Summary *
-              </label>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Full Description / Overview *
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={editingTour.overview}
+                  onChange={(e) => setEditingTour({ ...editingTour, overview: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Included Services (One per line)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={inclusionsText}
+                    onChange={(e) => setInclusionsText(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Excluded Services (One per line)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={exclusionsText}
+                    onChange={(e) => setExclusionsText(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-gray-50 border border-slate-200 space-y-2">
+                <div className="text-xs font-bold text-slate-800">
+                  Itinerary ({editingTour.itinerary?.length || 0} days)
+                </div>
+                {editingTour.itinerary?.map((d, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs"
+                  >
+                    <span>
+                      <strong>{d.dayTitle}:</strong> {d.route} — {d.description}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingTour((prev) => ({
+                          ...prev,
+                          itinerary: prev.itinerary.filter((_, i) => i !== idx),
+                        }))
+                      }
+                      className="text-red-600 font-semibold"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    value={itineraryDayRoute}
+                    onChange={(e) => setItineraryDayRoute(e.target.value)}
+                    placeholder="Day Route"
+                    className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={itineraryDayDesc}
+                    onChange={(e) => setItineraryDayDesc(e.target.value)}
+                    placeholder="Day Description"
+                    className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddItineraryDay}
+                    className="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-xs font-bold text-slate-800"
+                  >
+                    + Add Day
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-gray-50 border border-slate-200 space-y-2">
+                <div className="text-xs font-bold text-slate-800">
+                  Tour FAQs ({editingTour.faqs?.length || 0}) &amp; SEO Metadata
+                </div>
+                {editingTour.faqs?.map((f, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs"
+                  >
+                    <span>
+                      <strong>Q: {f.question}</strong> — {f.answer}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingTour((prev) => ({
+                          ...prev,
+                          faqs: (prev.faqs || []).filter((_, i) => i !== idx),
+                        }))
+                      }
+                      className="text-red-600 font-semibold"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    value={faqQ}
+                    onChange={(e) => setFaqQ(e.target.value)}
+                    placeholder="FAQ Question"
+                    className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={faqA}
+                    onChange={(e) => setFaqA(e.target.value)}
+                    placeholder="FAQ Answer"
+                    className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddTourFaq}
+                    className="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-xs font-bold text-slate-800"
+                  >
+                    + Add FAQ
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                  <input
+                    type="text"
+                    value={editingTour.seoTitle || ''}
+                    onChange={(e) =>
+                      setEditingTour({ ...editingTour, seoTitle: e.target.value })
+                    }
+                    placeholder="SEO Title"
+                    className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={editingTour.seoDescription || ''}
+                    onChange={(e) =>
+                      setEditingTour({ ...editingTour, seoDescription: e.target.value })
+                    }
+                    placeholder="SEO Meta Description"
+                    className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 px-6 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl"
+              >
+                {editingTour.id ? 'SAVE TOUR CHANGES' : 'CREATE TOUR'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* SECTION 3: DESTINATION MANAGEMENT (/admin/destinations) */}
+        {activeSection === 'destinations' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!editingDest.name.trim()) return;
+                const slug =
+                  editingDest.slug.trim() ||
+                  editingDest.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                await saveDestinationAdmin({
+                  ...editingDest,
+                  id: editingDest.id || slug,
+                  slug,
+                  galleryImages: destGalleryText
+                    .split('\n')
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                  relatedTourIds: destRelatedToursText
+                    .split(',')
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                });
+                notify(`Destination "${editingDest.name}" saved.`);
+                setEditingDest(EMPTY_DEST_TEMPLATE);
+                setDestGalleryText('');
+                setDestRelatedToursText('');
+              }}
+              className="lg:col-span-5 p-5 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-lg font-bold text-slate-900">
+                  {editingDest.id ? `Edit: ${editingDest.name}` : 'Add Destination'}
+                </h2>
+                {editingDest.id && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingDest(EMPTY_DEST_TEMPLATE)}
+                    className="text-xs font-semibold text-slate-600"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                required
+                value={editingDest.name}
+                onChange={(e) => setEditingDest({ ...editingDest, name: e.target.value })}
+                placeholder="Destination Name *"
+                className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+              <input
+                type="text"
+                value={editingDest.imageUrl}
+                onChange={(e) => setEditingDest({ ...editingDest, imageUrl: e.target.value })}
+                placeholder="Primary Image URL"
+                className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+              <input
+                type="text"
+                required
+                value={editingDest.shortDescription}
+                onChange={(e) =>
+                  setEditingDest({ ...editingDest, shortDescription: e.target.value })
+                }
+                placeholder="Short Summary *"
+                className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+              <textarea
+                rows={3}
+                required
+                value={editingDest.description}
+                onChange={(e) =>
+                  setEditingDest({ ...editingDest, description: e.target.value })
+                }
+                placeholder="Full Destination Description *"
+                className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
               <textarea
                 rows={2}
-                required
-                value={editingTour.shortDescription}
-                onChange={(e) =>
-                  setEditingTour({
-                    ...editingTour,
-                    shortDescription: e.target.value,
-                  })
-                }
-                placeholder="1-2 sentence summary shown on tour cards..."
-                className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
+                value={destGalleryText}
+                onChange={(e) => setDestGalleryText(e.target.value)}
+                placeholder="Gallery Image URLs (One per line)"
+                className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Detailed Tour Overview *
+              <input
+                type="text"
+                value={destRelatedToursText}
+                onChange={(e) => setDestRelatedToursText(e.target.value)}
+                placeholder="Related Tour Slugs (comma-separated)"
+                className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={editingDest.seoTitle || ''}
+                  onChange={(e) =>
+                    setEditingDest({ ...editingDest, seoTitle: e.target.value })
+                  }
+                  placeholder="SEO Title"
+                  className="px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs"
+                />
+                <input
+                  type="text"
+                  value={editingDest.seoDescription || ''}
+                  onChange={(e) =>
+                    setEditingDest({ ...editingDest, seoDescription: e.target.value })
+                  }
+                  placeholder="SEO Description"
+                  className="px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs"
+                />
+              </div>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={editingDest.published !== false}
+                  onChange={(e) =>
+                    setEditingDest({ ...editingDest, published: e.target.checked })
+                  }
+                />
+                <span>Published publicly</span>
               </label>
-              <textarea
-                rows={4}
-                required
-                value={editingTour.overview}
-                onChange={(e) =>
-                  setEditingTour({ ...editingTour, overview: e.target.value })
-                }
-                placeholder="Full description shown on the tour detail page..."
-                className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-              />
-            </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 text-xs font-bold bg-emerald-700 text-white rounded-xl"
+              >
+                {editingDest.id ? 'SAVE DESTINATION' : 'ADD DESTINATION'}
+              </button>
+            </form>
 
-            {/* Inclusions & Exclusions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Inclusions (One per line)
-                </label>
-                <textarea
-                  rows={3}
-                  value={inclusionsText}
-                  onChange={(e) => setInclusionsText(e.target.value)}
-                  placeholder="Private AC Transport&#10;Hotel Accommodation&#10;Daily Breakfast"
-                  className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Exclusions (One per line)
-                </label>
-                <textarea
-                  rows={3}
-                  value={exclusionsText}
-                  onChange={(e) => setExclusionsText(e.target.value)}
-                  placeholder="Personal expenses&#10;Entry tickets"
-                  className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
-                />
-              </div>
-            </div>
-
-            {/* Day-by-Day Itinerary Builder */}
-            <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200 space-y-3">
-              <div className="text-xs font-bold text-slate-800">
-                Day-by-Day Itinerary ({editingTour.itinerary?.length || 0} days added)
-              </div>
-              {editingTour.itinerary && editingTour.itinerary.length > 0 && (
-                <div className="space-y-2">
-                  {editingTour.itinerary.map((d, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white border border-slate-200 text-xs"
-                    >
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {allDestinations.map((d) => {
+                const isPub = d.published !== false;
+                return (
+                  <div
+                    key={d.id}
+                    className="p-4 rounded-2xl bg-white border border-slate-200 flex flex-col justify-between gap-3 shadow-xs"
+                  >
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={d.imageUrl}
+                        alt={d.name}
+                        className="w-16 h-14 rounded-xl object-cover shrink-0 border border-slate-200"
+                      />
                       <div>
-                        <span className="font-bold text-emerald-700">{d.dayTitle}:</span>{' '}
-                        <span className="text-slate-900 font-semibold">{d.route}</span> —{' '}
-                        <span className="text-slate-600">{d.description}</span>
+                        <div className="text-sm font-bold text-slate-900">{d.name}</div>
+                        <div className="text-xs text-slate-500">
+                          {d.region} · {isPub ? 'Published' : 'Unpublished'}
+                        </div>
                       </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-1.5 border-t border-slate-100 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingDest(d);
+                          setDestGalleryText((d.galleryImages || []).join('\n'));
+                          setDestRelatedToursText((d.relatedTourIds || []).join(', '));
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-800"
+                      >
+                        EDIT
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await togglePublishDestinationAdmin(d.id);
+                          notify(
+                            isPub
+                              ? `Unpublished ${d.name}.`
+                              : `Published ${d.name}.`
+                          );
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-800"
+                      >
+                        {isPub ? 'UNPUBLISH' : 'PUBLISH'}
+                      </button>
                       <button
                         type="button"
                         onClick={() =>
-                          setEditingTour((prev) => ({
-                            ...prev,
-                            itinerary: prev.itinerary.filter((_, i) => i !== idx),
-                          }))
+                          askConfirm(`Delete destination "${d.name}"?`, async () => {
+                            await deleteDestinationAdmin(d.id);
+                            notify(`Deleted destination "${d.name}".`);
+                          })
                         }
-                        className="text-red-600 hover:underline shrink-0 font-semibold"
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
                       >
-                        Remove
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <input
-                  type="text"
-                  value={itineraryDayRoute}
-                  onChange={(e) => setItineraryDayRoute(e.target.value)}
-                  placeholder="Route (e.g. Gilgit to Karimabad)"
-                  className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900"
-                />
-                <input
-                  type="text"
-                  value={itineraryDayDesc}
-                  onChange={(e) => setItineraryDayDesc(e.target.value)}
-                  placeholder="Activities & highlights..."
-                  className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddItineraryDay}
-                  className="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-xs font-semibold text-slate-800"
-                >
-                  + Add Itinerary Day
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3.5 px-6 text-sm font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl shadow-sm transition-all"
-            >
-              {editingTour.id
-                ? 'Save Tour Changes to LocalStorage'
-                : 'Add New Tour to LocalStorage'}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* 2. OVERVIEW */}
-      {activeSection === 'overview' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              { label: 'Total Tours', val: tours.length },
-              { label: 'Destinations', val: destinations.length },
-              { label: 'Pending Inquiries', val: pendingInquiriesCount },
-              { label: 'Total Bookings', val: bookings.length },
-              { label: 'Registered Users', val: allUsers.length },
-              { label: 'Verified Reviews', val: reviews.length },
-            ].map((stat, i) => (
-              <div
-                key={i}
-                className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1"
-              >
-                <div className="text-xs text-slate-500">{stat.label}</div>
-                <div className="font-mono-num text-2xl font-bold text-slate-900">
-                  {stat.val}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 3. DESTINATIONS */}
-      {activeSection === 'destinations' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!newDestName.trim()) return;
-              const slug =
-                newDestSlug.trim() ||
-                newDestName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-              await saveDestinationAdmin({
-                id: slug,
-                slug,
-                name: newDestName,
-                region: newDestRegion,
-                shortDescription: newDestShort,
-                description: newDestDesc,
-                attractions: ['Scenic Viewpoints', 'Local Culture'],
-                bestSeason: 'April to October',
-                idealFor: ['Families', 'Photographers', 'Adventure Travelers'],
-                activeTourOffering: newDestOffering,
-                imageUrl: newDestImage,
-              });
-              setNewDestName('');
-              setNewDestSlug('');
-              setNewDestShort('');
-              setNewDestDesc('');
-              setStatusBanner(`Destination "${newDestName}" saved.`);
-            }}
-            className="lg:col-span-5 p-5 rounded-2xl bg-white border border-slate-200 space-y-4 shadow-xs"
-          >
-            <h2 className="font-display text-lg font-bold text-slate-900">
-              Add / Update Destination
-            </h2>
-            <input
-              type="text"
-              required
-              value={newDestName}
-              onChange={(e) => setNewDestName(e.target.value)}
-              placeholder="Destination Name (e.g. Phander Valley)"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-            />
-            <input
-              type="text"
-              required
-              value={newDestShort}
-              onChange={(e) => setNewDestShort(e.target.value)}
-              placeholder="Short summary"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-            />
-            <textarea
-              rows={3}
-              required
-              value={newDestDesc}
-              onChange={(e) => setNewDestDesc(e.target.value)}
-              placeholder="Full destination description..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-            />
-            <button
-              type="submit"
-              className="w-full py-2.5 px-4 text-sm font-semibold bg-emerald-600 text-white rounded-xl"
-            >
-              Save Destination
-            </button>
-          </form>
-
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {destinations.map((d) => (
-              <div
-                key={d.id}
-                className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-2 shadow-xs"
-              >
-                <div>
-                  <div className="text-sm font-bold text-slate-900">{d.name}</div>
-                  <div className="text-xs text-slate-500">{d.region}</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => deleteDestinationAdmin(d.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-xl"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 4. INQUIRIES */}
-      {activeSection === 'inquiries' && (
-        <div className="space-y-4">
-          <h2 className="font-display text-lg font-bold text-slate-900">
-            Customer Inquiries ({inquiries.length})
-          </h2>
-          {inquiries.length === 0 ? (
-            <p className="text-sm text-slate-600">No inquiries submitted yet.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {inquiries.map((inq) => (
-                <div
-                  key={inq.id}
-                  className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-xs"
-                >
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-emerald-700">
-                      {inq.customerName} ({inq.whatsapp})
-                    </span>
-                    <select
-                      value={inq.status}
-                      onChange={(e) =>
-                        updateInquiryAdmin(
-                          inq.id,
-                          e.target.value as typeof inq.status,
-                          inq.internalNotes
-                        )
-                      }
-                      className="px-2.5 py-1 rounded-lg bg-gray-50 border border-slate-200 text-slate-800 text-xs"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="contacted">Contacted</option>
-                      <option value="resolved">Resolved</option>
-                      <option value="archived">Archived</option>
-                    </select>
                   </div>
-                  <div className="text-xs text-slate-500">
-                    Destination: {inq.destination} · Travelers: {inq.travelers} · Dates:{' '}
-                    {inq.preferredDates}
-                  </div>
-                  <p className="text-sm text-slate-700">{inq.message}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 5. BOOKINGS */}
-      {activeSection === 'bookings' && (
-        <div className="space-y-4">
-          <h2 className="font-display text-lg font-bold text-slate-900">
-            Tour Bookings ({bookings.length})
-          </h2>
-          {bookings.length === 0 ? (
-            <p className="text-sm text-slate-600">No booking requests logged yet.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {bookings.map((bk) => (
-                <div
-                  key={bk.id}
-                  className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-xs"
-                >
-                  <div className="text-sm font-bold text-slate-900">{bk.tourTitle}</div>
-                  <div className="text-xs text-slate-600">
-                    Customer: {bk.customerName} · WhatsApp: {bk.whatsapp} · Travelers:{' '}
-                    {bk.travelers}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 pt-2">
-                    <select
-                      value={bk.bookingStatus}
-                      onChange={(e) =>
-                        updateBookingAdmin(
-                          bk.id,
-                          e.target.value as typeof bk.bookingStatus,
-                          bk.paymentStatus,
-                          bk.travelDates,
-                          bk.notes
-                        )
-                      }
-                      className="px-2.5 py-1.5 rounded-lg bg-gray-50 border border-slate-200 text-xs text-slate-900"
-                    >
-                      <option value="pending_confirmation">Pending Confirmation</option>
-                      <option value="confirmed">Confirmed</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                    <select
-                      value={bk.paymentStatus}
-                      onChange={(e) =>
-                        updateBookingAdmin(
-                          bk.id,
-                          bk.bookingStatus,
-                          e.target.value as typeof bk.paymentStatus,
-                          bk.travelDates,
-                          bk.notes
-                        )
-                      }
-                      className="px-2.5 py-1.5 rounded-lg bg-gray-50 border border-slate-200 text-xs text-slate-900"
-                    >
-                      <option value="unpaid">Unpaid</option>
-                      <option value="verification_pending">Verification Pending</option>
-                      <option value="confirmed_by_admin">JazzCash Confirmed</option>
-                      <option value="refunded">Refunded</option>
-                    </select>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 6. REVIEWS */}
-      {activeSection === 'reviews' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!revName.trim() || !revText.trim()) return;
-              await saveReviewAdmin({
-                id: `rev_${Date.now()}`,
-                customerName: revName,
-                rating: Number(revRating),
-                dateText: revDate,
-                reviewText: revText,
-                verified: revVerified,
-              });
-              setRevName('');
-              setRevText('');
-              setStatusBanner('Verified review saved.');
-            }}
-            className="lg:col-span-5 p-5 rounded-2xl bg-white border border-slate-200 space-y-4 shadow-xs"
-          >
-            <h2 className="font-display text-lg font-bold text-slate-900">
-              Publish Verified Review
-            </h2>
-            <input
-              type="text"
-              required
-              value={revName}
-              onChange={(e) => setRevName(e.target.value)}
-              placeholder="Traveler Name"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-            />
-            <textarea
-              rows={3}
-              required
-              value={revText}
-              onChange={(e) => setRevText(e.target.value)}
-              placeholder="Authentic review text..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-            />
-            <button
-              type="submit"
-              className="w-full py-2.5 px-4 text-sm font-semibold bg-emerald-600 text-white rounded-xl"
-            >
-              Publish Review
-            </button>
-          </form>
-
-          <div className="lg:col-span-7 space-y-3">
-            {reviews.map((r) => (
-              <div
-                key={r.id}
-                className="p-4 rounded-2xl bg-white border border-slate-200 flex items-start justify-between gap-4 shadow-xs"
-              >
-                <div>
-                  <div className="text-sm font-bold text-slate-900">
-                    {r.customerName} ({r.rating}/5)
-                  </div>
-                  <p className="text-xs text-slate-600 mt-1">{r.reviewText}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => deleteReviewAdmin(r.id)}
-                  className="text-red-600 p-1"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 7. GALLERY */}
-      {activeSection === 'gallery' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!galCaption.trim()) return;
-              await saveGalleryImageAdmin({
-                id: `gal_${Date.now()}`,
-                imageUrl: galUrl,
-                caption: galCaption,
-                altText: galAlt || galCaption,
-                category: galCategory,
-                destination: galDest,
-              });
-              setGalCaption('');
-              setGalAlt('');
-              setStatusBanner('Gallery item added.');
-            }}
-            className="lg:col-span-5 p-5 rounded-2xl bg-white border border-slate-200 space-y-4 shadow-xs"
-          >
-            <h2 className="font-display text-lg font-bold text-slate-900">
-              Add Gallery Photo
-            </h2>
-            <input
-              type="text"
-              required
-              value={galUrl}
-              onChange={(e) => setGalUrl(e.target.value)}
-              placeholder="Image URL"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-            />
-            <input
-              type="text"
-              required
-              value={galCaption}
-              onChange={(e) => setGalCaption(e.target.value)}
-              placeholder="Caption"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-            />
-            <button
-              type="submit"
-              className="w-full py-2.5 px-4 text-sm font-semibold bg-emerald-600 text-white rounded-xl"
-            >
-              Add to Gallery
-            </button>
-          </form>
-
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {gallery.map((g) => (
-              <div
-                key={g.id}
-                className="p-3 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3 shadow-xs"
-              >
-                <div className="truncate">
-                  <div className="text-xs font-bold text-slate-900 truncate">
-                    {g.caption}
-                  </div>
-                  <div className="text-[11px] text-slate-500">{g.destination}</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => deleteGalleryImageAdmin(g.id)}
-                  className="text-red-600 p-1"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 8. TRAVEL GUIDES */}
-      {activeSection === 'blog' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!blogTitle.trim() || !blogContent.trim()) return;
-              const slug =
-                blogSlug.trim() ||
-                blogTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-              await saveBlogPostAdmin({
-                id: slug,
-                slug,
-                title: blogTitle,
-                category: blogCategory,
-                readTime: '5 min read',
-                publishedDate: '2026',
-                excerpt: blogExcerpt || blogTitle,
-                content: blogContent,
-                imageUrl: VISUAL_ASSETS.heroKarakoram,
-              });
-              setBlogTitle('');
-              setBlogSlug('');
-              setBlogExcerpt('');
-              setBlogContent('');
-              setStatusBanner('Travel guide saved.');
-            }}
-            className="lg:col-span-5 p-5 rounded-2xl bg-white border border-slate-200 space-y-4 shadow-xs"
-          >
-            <h2 className="font-display text-lg font-bold text-slate-900">
-              Publish Travel Guide
-            </h2>
-            <input
-              type="text"
-              required
-              value={blogTitle}
-              onChange={(e) => setBlogTitle(e.target.value)}
-              placeholder="Article Title"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-            />
-            <textarea
-              rows={4}
-              required
-              value={blogContent}
-              onChange={(e) => setBlogContent(e.target.value)}
-              placeholder="Article content..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-            />
-            <button
-              type="submit"
-              className="w-full py-2.5 px-4 text-sm font-semibold bg-emerald-600 text-white rounded-xl"
-            >
-              Publish Guide
-            </button>
-          </form>
-
-          <div className="lg:col-span-7 space-y-3">
-            {blogPosts.map((p) => (
-              <div
-                key={p.id}
-                className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3 shadow-xs"
-              >
-                <div>
-                  <div className="text-sm font-bold text-slate-900">{p.title}</div>
-                  <div className="text-xs text-slate-500">{p.category}</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => deleteBlogPostAdmin(p.id)}
-                  className="text-red-600 p-1"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 9. USERS */}
-      {activeSection === 'users' && (
-        <div className="space-y-4">
-          <h2 className="font-display text-lg font-bold text-slate-900">
-            Registered Customers ({allUsers.length})
-          </h2>
-          {allUsers.length === 0 ? (
-            <p className="text-sm text-slate-600">
-              No customers registered in localStorage yet.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {allUsers.map((u) => (
-                <div
-                  key={u.uid}
-                  className="p-4 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-xs"
-                >
-                  <div className="text-sm font-bold text-slate-900">{u.displayName}</div>
-                  <div className="text-xs text-emerald-700 font-semibold">{u.email}</div>
-                  {u.phone && <div className="text-xs text-slate-500">Phone: {u.phone}</div>}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 10. SETTINGS */}
-      {activeSection === 'settings' && (
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            await saveSiteSettingsAdmin(settingsForm);
-            setStatusBanner('Website settings saved to localStorage.');
-          }}
-          className="max-w-3xl p-5 sm:p-6 rounded-2xl bg-white border border-slate-200 space-y-4 shadow-xs"
-        >
-          <h2 className="font-display text-lg font-bold text-slate-900">
-            Global Website &amp; Business Settings
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Business Name
-              </label>
-              <input
-                type="text"
-                value={settingsForm.name}
-                onChange={(e) =>
-                  setSettingsForm({ ...settingsForm, name: e.target.value })
-                }
-                className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Phone / WhatsApp
-              </label>
-              <input
-                type="text"
-                value={settingsForm.phone}
-                onChange={(e) =>
-                  setSettingsForm({ ...settingsForm, phone: e.target.value })
-                }
-                className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-              />
+                );
+              })}
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                JazzCash Number
-              </label>
-              <input
-                type="text"
-                value={settingsForm.jazzcashNumber}
-                onChange={(e) =>
-                  setSettingsForm({
-                    ...settingsForm,
-                    jazzcashNumber: e.target.value,
-                  })
-                }
-                className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                JazzCash Account Name
-              </label>
-              <input
-                type="text"
-                value={settingsForm.jazzcashName}
-                onChange={(e) =>
-                  setSettingsForm({
-                    ...settingsForm,
-                    jazzcashName: e.target.value,
-                  })
-                }
-                className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900"
-              />
-            </div>
-          </div>
-          <button
-            type="submit"
-            className="w-full sm:w-auto px-6 py-3 text-sm font-semibold bg-emerald-600 text-white rounded-xl"
-          >
-            Save Settings
-          </button>
-        </form>
-      )}
+        )}
+
+        {activeSection === 'bookings' && (
+          <AdminBookingsSection notify={notify} askConfirm={askConfirm} />
+        )}
+        {activeSection === 'inquiries' && (
+          <AdminInquiriesSection notify={notify} askConfirm={askConfirm} />
+        )}
+        {activeSection === 'customers' && (
+          <AdminCustomersSection notify={notify} askConfirm={askConfirm} />
+        )}
+        {activeSection === 'gallery' && (
+          <AdminGallerySection notify={notify} askConfirm={askConfirm} />
+        )}
+        {activeSection === 'reviews' && (
+          <AdminReviewsSection notify={notify} askConfirm={askConfirm} />
+        )}
+        {activeSection === 'settings' && <AdminSettingsSection notify={notify} />}
+        {activeSection === 'users' && (
+          <AdminUsersSection notify={notify} askConfirm={askConfirm} />
+        )}
+        {activeSection === 'audit-logs' && <AdminAuditLogsSection />}
+      </div>
     </div>
   );
 };

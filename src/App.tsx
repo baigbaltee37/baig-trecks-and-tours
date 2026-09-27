@@ -53,8 +53,21 @@ export default function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/customer" element={<CustomerDashboardPage />} />
             <Route path="/customer/dashboard" element={<CustomerDashboardPage />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/baig-admin-secure-786" element={<AdminLoginPage />} />
             <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+            <Route path="/admin/tours" element={<AdminDashboardPage />} />
+            <Route path="/admin/destinations" element={<AdminDashboardPage />} />
+            <Route path="/admin/bookings" element={<AdminDashboardPage />} />
+            <Route path="/admin/inquiries" element={<AdminDashboardPage />} />
+            <Route path="/admin/customers" element={<AdminDashboardPage />} />
+            <Route path="/admin/gallery" element={<AdminDashboardPage />} />
+            <Route path="/admin/reviews" element={<AdminDashboardPage />} />
+            <Route path="/admin/settings" element={<AdminDashboardPage />} />
+            <Route path="/admin/users" element={<AdminDashboardPage />} />
+            <Route path="/admin/audit-logs" element={<AdminDashboardPage />} />
+            <Route path="/admin/*" element={<AdminDashboardPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Layout>

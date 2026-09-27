@@ -25,6 +25,11 @@ export interface ItineraryDayItem {
   transportation?: string;
 }
 
+export interface TourFAQItem {
+  question: string;
+  answer: string;
+}
+
 export interface TourItem {
   id: string;
   slug: string;
@@ -42,17 +47,23 @@ export interface TourItem {
   overview: string;
   badge: string; // Empty unless explicitly assigned by admin
   featured: boolean;
+  published?: boolean;
   bookingStatus: 'Available' | 'Limited Availability' | 'Sold Out' | 'Inquiry Only';
   pricePerPerson: number; // 0 means not yet configured -> show "Contact us for current pricing."
   couplePrice: number;
   childPrice: number;
   groupPriceNote: string;
   imageUrl: string;
+  galleryImages?: string[];
   itinerary: ItineraryDayItem[];
   inclusions: string[];
   exclusions: string[];
   transportation: string;
   accommodation: string;
+  faqs?: TourFAQItem[];
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
 }
 
 export interface DestinationItem {
@@ -68,6 +79,11 @@ export interface DestinationItem {
   bestSeason: string;
   idealFor: string[];
   imageUrl: string;
+  galleryImages?: string[];
+  relatedTourIds?: string[];
+  seoTitle?: string;
+  seoDescription?: string;
+  published?: boolean;
   isConfirmedTourOffering?: boolean;
   activeTourOffering?: boolean;
 }
@@ -76,6 +92,7 @@ export interface ExperienceCategoryItem {
   id: string;
   title: string;
   subtitle: string;
+  idealFor?: string;
   description: string;
   tourTypeFilter: string;
   imageUrl: string;
@@ -89,10 +106,11 @@ export interface BlogPostItem {
   excerpt: string;
   content: string;
   imageUrl: string;
-  published: boolean;
+  published?: boolean;
+  publishedDate?: string;
   readTime: string;
-  seoTitle: string;
-  seoDescription: string;
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
 export interface GalleryImageItem {
@@ -102,18 +120,21 @@ export interface GalleryImageItem {
   altText: string;
   category: string;
   destination: string;
-  featured: boolean;
+  featured?: boolean;
+  published?: boolean;
 }
 
 export interface ReviewItem {
   id: string;
   customerName: string;
   rating: number;
-  date: string;
+  date?: string;
+  dateText?: string;
   reviewText: string;
-  photoUrl: string;
+  photoUrl?: string;
   verified: boolean;
-  source: string;
+  published?: boolean;
+  source?: string;
 }
 
 export interface FAQItem {

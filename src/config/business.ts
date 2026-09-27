@@ -22,6 +22,10 @@ export interface BusinessConfig {
   refundPolicy: string;
   bookingPolicy: string;
   paymentInstructions: string;
+  ctaText?: string;
+  footerInfo?: string;
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
 export const defaultBusinessConfig: BusinessConfig = {
@@ -60,6 +64,13 @@ export const defaultBusinessConfig: BusinessConfig = {
     'All tour bookings and custom itineraries are confirmed directly with Baig Treks & Tours after verifying travel dates, group size, and seasonal road/weather conditions.',
   paymentInstructions:
     'Confirm your tour dates and availability with Baig Treks & Tours via WhatsApp (03155449778) or email before sending your JazzCash transfer to 03155449778 (Account Name: ESSA ALI). Share your payment confirmation screenshot on WhatsApp for verification.',
+  ctaText: 'Plan Your Custom Gilgit-Baltistan Expedition Today',
+  footerInfo:
+    'Authentic local tour operator specializing in Hunza, Skardu, Fairy Meadows, Deosai, and Karakoram expeditions.',
+  seoTitle:
+    'Baig Treks and Tours - Best Tour Packages in Pakistan | Hunza, Skardu, Naran',
+  seoDescription:
+    'Baig Treks and Tours offers affordable tour packages for Hunza, Skardu, Naran Kaghan, Kashmir. Book your northern areas tour now.',
 };
 
 export function buildWhatsAppLink(message: string, whatsappNumber = defaultBusinessConfig.whatsapp): string {
