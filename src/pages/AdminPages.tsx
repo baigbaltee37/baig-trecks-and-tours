@@ -23,7 +23,7 @@ import {
 export const AdminLoginPage: React.FC = () => {
   const { isAdmin, loginAdminSecret, business } = useApp();
   const navigate = useNavigate();
-  const [identifier, setIdentifier] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -34,11 +34,16 @@ export const AdminLoginPage: React.FC = () => {
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    const res = await loginAdminSecret(identifier, password);
+
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+    console.log('Attempted admin username:', trimmedUsername);
+
+    const res = await loginAdminSecret(trimmedUsername, trimmedPassword);
     if (res.success) {
       navigate('/admin', { replace: true });
     } else {
-      setErrorMsg(res.error || 'Invalid administrator credentials.');
+      setErrorMsg(res.error || 'Invalid credentials');
     }
   };
 
@@ -56,38 +61,42 @@ export const AdminLoginPage: React.FC = () => {
             Administrator Access
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 font-medium">
-            Enter your authorized administrator username/email and password to continue.
+            Sign in with your administrator username and password.
           </p>
         </div>
 
         <form onSubmit={handleAdminLogin} className="space-y-4" noValidate>
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Email / Username *
+              Username
             </label>
             <input
               type="text"
-              name="email"
+              name="username"
               autoComplete="username"
-              required
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="Enter admin username or email"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                if (errorMsg) setErrorMsg(null);
+              }}
+              placeholder="Username"
               className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
             />
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Password *
+              Password
             </label>
             <input
               type="password"
               name="password"
               autoComplete="current-password"
-              required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter admin password"
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errorMsg) setErrorMsg(null);
+              }}
+              placeholder="Password"
               className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
             />
           </div>
@@ -100,7 +109,8 @@ export const AdminLoginPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-3 px-4 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm transition-all"
+            disabled={false}
+            className="w-full py-3 px-4 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm transition-all cursor-pointer"
           >
             Sign In to Admin Dashboard
           </button>
@@ -259,12 +269,12 @@ export const AdminDashboardPage: React.FC = () => {
     paymentInstructions: business.paymentInstructions,
   });
 
-  // Strict Route Protection: Only opens if localStorage isAdmin === 'true', otherwise redirects to /login
+  // Strict Route Protection: Only opens if localStorage isAdmin === 'true', otherwise redirects to /baig-admin-secure-786
   const isStorageAdmin =
     typeof window !== 'undefined' && window.localStorage.getItem('isAdmin') === 'true';
 
   if (!isAdmin && !isStorageAdmin) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/baig-admin-secure-786" replace />;
   }
 
   const pendingInquiriesCount = inquiries.filter((i) => i.status === 'pending').length;

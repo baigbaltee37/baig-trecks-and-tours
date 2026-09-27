@@ -660,21 +660,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // 1b. Secret Admin Login (ONLY for /baig-admin-secure-786)
-  // Accepts "Only_baig" as username or email field input with password "5549495744"
+  // Accepts BOTH "admin@baigtreks.com" AND "Only_baig" (case-insensitive, trimmed) with password "5549495744"
   const loginAdminSecret = async (
     identifier: string,
     password: string
   ): Promise<{ success: boolean; redirectTo: string; error?: string }> => {
-    const cleanId = identifier.trim();
-    const isValidIdentifier =
-      cleanId === ADMIN_EMAIL || cleanId.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    const cleanUsername = identifier.trim().toLowerCase();
+    const cleanPassword = password.trim();
 
-    if (isValidIdentifier && password === ADMIN_PASSWORD) {
+    console.log('[Admin Auth] Attempted username:', identifier.trim());
+
+    const isValidAdminUsername =
+      cleanUsername === 'only_baig' || cleanUsername === 'admin@baigtreks.com';
+    const isValidAdminPassword =
+      password === '5549495744' || cleanPassword === '5549495744';
+
+    if (isValidAdminUsername && isValidAdminPassword) {
       const adminUser: LocalUser = {
         uid: 'admin_baigtreks',
         name: 'Only_baig',
         displayName: 'Only_baig',
-        email: ADMIN_EMAIL,
+        email: cleanUsername === 'admin@baigtreks.com' ? 'admin@baigtreks.com' : ADMIN_EMAIL,
         phone: business.phone,
         role: 'admin',
         savedTourIds: [],
@@ -697,7 +703,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return {
       success: false,
       redirectTo: '/baig-admin-secure-786',
-      error: 'Invalid administrator username/email or password.',
+      error: 'Invalid credentials',
     };
   };
 
@@ -744,7 +750,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    if (cleanEmail === ADMIN_EMAIL.toLowerCase()) {
+    if (cleanEmail === ADMIN_EMAIL.toLowerCase() || cleanEmail === 'admin@baigtreks.com') {
       return {
         success: false,
         redirectTo: '/signup',
