@@ -16,7 +16,7 @@ import {
   ChevronDown,
   Settings,
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp, ADMIN_EMAIL } from '../context/AppContext';
 import { buildWhatsAppLink } from '../config/business';
 import { BrandLogo3D } from './BrandLogo3D';
 
@@ -185,7 +185,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                             {displayName}
                           </div>
                           <div className="text-[11px] text-slate-500 truncate">
-                            {user?.email || 'admin@baigtreks.com'}
+                            {user?.email || profile?.email || ADMIN_EMAIL}
                           </div>
                         </div>
 
@@ -333,7 +333,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                           <div>
                             <div className="text-xs font-bold text-slate-900">{displayName}</div>
                             <div className="text-[11px] text-slate-500">
-                              {user?.email || 'admin@baigtreks.com'}
+                              {user?.email || profile?.email || ADMIN_EMAIL}
                             </div>
                           </div>
                         </div>

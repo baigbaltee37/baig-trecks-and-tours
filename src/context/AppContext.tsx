@@ -1,5 +1,17 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  updatePassword,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
 import { BusinessConfig, defaultBusinessConfig } from '../config/business';
+
+const hasValidFirebaseConfig = Boolean(auth);
 import {
   TourItem,
   DestinationItem,
@@ -24,7 +36,6 @@ export interface LocalUser {
   phone: string;
   role: 'customer' | 'admin' | 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN';
   savedTourIds: string[];
-  password?: string;
   status: 'active' | 'disabled';
   createdAt: string;
 }
@@ -166,45 +177,10 @@ const SS_ADMIN_TOKEN_KEY = 'btt_admin_session_token_v2';
 const SS_ADMIN_PROFILE_KEY = 'btt_admin_session_profile_v2';
 const BROADCAST_CHANNEL_NAME = 'baig_treks_live_sync_v1';
 
-// Official Super Admin identifier (no password ever stored in frontend code)
-export const ADMIN_EMAIL = 'admin@baigtours';
-
-// Deterministic PBKDF2-SHA512 parameters for offline static fallback verification only
-const PBKDF2_SALT = 'baig_treks_super_admin_salt_2026';
-const PBKDF2_EXPECTED_HEX =
-  '474e315363e90e6119df10433721a5148c5818ee9c5a34ba6752e5559c2584c7dbd871c6df20457527d0945188c61bdc88d32b30836ba3d1f438823a186e1d21';
+// Official Master Admin identifier (no password or hash ever stored in frontend code)
+export const ADMIN_EMAIL = 'admit@baigtours';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-async function verifyOfflinePbkdf2(password: string): Promise<boolean> {
-  if (typeof window === 'undefined' || !window.crypto?.subtle) return false;
-  try {
-    const enc = new TextEncoder();
-    const keyMaterial = await window.crypto.subtle.importKey(
-      'raw',
-      enc.encode(password),
-      { name: 'PBKDF2' },
-      false,
-      ['deriveBits']
-    );
-    const derivedBits = await window.crypto.subtle.deriveBits(
-      {
-        name: 'PBKDF2',
-        salt: enc.encode(PBKDF2_SALT),
-        iterations: 100000,
-        hash: 'SHA-512',
-      },
-      keyMaterial,
-      512
-    );
-    const hex = Array.from(new Uint8Array(derivedBits))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-    return hex === PBKDF2_EXPECTED_HEX;
-  } catch {
-    return false;
-  }
-}
 
 function getAdminToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -290,24 +266,123 @@ function writeStorage<T>(key: string, value: T, shouldBroadcast = true): void {
   }
 }
 
+const RESERVED_ADMIN_IDENTIFIERS = new Set([
+  'admit@baigtours',
+  'admin@baigtours',
+  'admit@baigtours.com',
+  'admin@baigtours.com',
+  'admin@baigtreks.com',
+  'only_baig',
+  'baigbaltee37@gmail.com',
+  'skardubhai1@gmail.com',
+]);
+
+function toFirebaseCompatibleEmail(identifier: string): string {
+  const clean = identifier.trim().toLowerCase();
+  if (!clean.includes('@')) return `${clean}@baigtours.com`;
+  const [localPart, domainPart] = clean.split('@');
+  if (domainPart && !domainPart.includes('.')) {
+    return `${localPart}@${domainPart}.com`;
+  }
+  return clean;
+}
+
+function isReservedAdminIdentifier(identifier: string, knownAdmins: AdminUserRecord[] = []): boolean {
+  const clean = identifier.trim().toLowerCase();
+  if (!clean) return false;
+  if (RESERVED_ADMIN_IDENTIFIERS.has(clean)) return true;
+  return knownAdmins.some((a) => a.email.toLowerCase() === clean && a.status === 'active');
+}
+
+async function evaluateFirebaseUserAdminRole(fbUser: FirebaseUser): Promise<{
+  isCustomClaimAdmin: boolean;
+  isFirestoreAdmin: boolean;
+  isAnyAdmin: boolean;
+}> {
+  let isCustomClaimAdmin = false;
+  let isFirestoreAdmin = false;
+  try {
+    const tokenResult = await fbUser.getIdTokenResult(true);
+    const claims = tokenResult?.claims || {};
+    if (
+      claims.admin === true ||
+      claims.role === 'admin' ||
+      claims.role === 'ADMIN' ||
+      claims.role === 'SUPER_ADMIN'
+    ) {
+      isCustomClaimAdmin = true;
+    }
+  } catch {
+    // Ignore token claims error
+  }
+
+  if (db) {
+    try {
+      const snap = await getDoc(doc(db, 'users', fbUser.uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        if (
+          data?.role === 'admin' ||
+          data?.role === 'ADMIN' ||
+          data?.role === 'SUPER_ADMIN' ||
+          data?.admin === true
+        ) {
+          isFirestoreAdmin = true;
+        }
+      }
+    } catch {
+      // Ignore Firestore lookup error
+    }
+  }
+
+  const emailLower = (fbUser.email || '').trim().toLowerCase();
+  const isBootstrapped = RESERVED_ADMIN_IDENTIFIERS.has(emailLower);
+
+  return {
+    isCustomClaimAdmin,
+    isFirestoreAdmin,
+    isAnyAdmin: isCustomClaimAdmin || isFirestoreAdmin || isBootstrapped,
+  };
+}
+
+function stripSensitiveFieldsFromUser(u: Record<string, unknown>): LocalUser {
+  const cleanEmail = String(u.email || '').trim().toLowerCase();
+  const fallbackName = cleanEmail ? cleanEmail.split('@')[0] : 'Traveler';
+  return {
+    uid: String(u.uid || `user_${Date.now()}`),
+    name: String(u.name || u.displayName || fallbackName),
+    displayName: String(u.displayName || u.name || fallbackName),
+    email: cleanEmail,
+    phone: String(u.phone || ''),
+    role: 'customer',
+    savedTourIds: Array.isArray(u.savedTourIds) ? (u.savedTourIds as string[]) : [],
+    status: u.status === 'disabled' ? 'disabled' : 'active',
+    createdAt: String(u.createdAt || new Date().toISOString()),
+  };
+}
+
 function readMergedUsers(): LocalUser[] {
-  const primary = readStorage<LocalUser[]>(LS_KEYS.USERS, []);
-  const legacy = readStorage<LocalUser[]>(LS_KEYS.LEGACY_USERS, []);
+  const primary = readStorage<Record<string, unknown>[]>(LS_KEYS.USERS, []);
+  const legacy = readStorage<Record<string, unknown>[]>(LS_KEYS.LEGACY_USERS, []);
   const map = new Map<string, LocalUser>();
+  let hadPlaintextPassword = false;
   [...legacy, ...primary].forEach((u) => {
-    if (u && u.email && u.email.toLowerCase() !== ADMIN_EMAIL) {
-      const normalized: LocalUser = {
-        ...u,
-        name: u.name || u.displayName || u.email.split('@')[0],
-        displayName: u.displayName || u.name || u.email.split('@')[0],
-        // Enforce CUSTOMER role on all customer records to prevent role tampering
-        role: 'customer',
-        status: u.status === 'disabled' ? 'disabled' : 'active',
-      };
-      map.set(u.email.toLowerCase(), normalized);
+    if (u && typeof u.email === 'string') {
+      const emailLower = u.email.trim().toLowerCase();
+      if (emailLower && !RESERVED_ADMIN_IDENTIFIERS.has(emailLower)) {
+        if ('password' in u || 'passwordHash' in u || 'salt' in u) {
+          hadPlaintextPassword = true;
+        }
+        map.set(emailLower, stripSensitiveFieldsFromUser(u));
+      }
     }
   });
-  return Array.from(map.values());
+  const sanitizedList = Array.from(map.values());
+  if (hadPlaintextPassword && typeof window !== 'undefined') {
+    writeStorage(LS_KEYS.USERS, sanitizedList, false);
+    writeStorage(LS_KEYS.LEGACY_USERS, sanitizedList, false);
+  }
+  return sanitizedList;
 }
 
 function readMergedBookings(): BookingRecord[] {
@@ -326,24 +401,31 @@ function readMergedBookings(): BookingRecord[] {
 }
 
 function readCurrentCustomerFromStorage(): LocalUser | null {
-  const primary = readStorage<LocalUser | null>(LS_KEYS.CURRENT_USER, null);
-  const candidate = primary?.email
-    ? primary
-    : readStorage<LocalUser | null>(LS_KEYS.LEGACY_CURRENT_USER, null);
+  const primary = readStorage<Record<string, unknown> | null>(LS_KEYS.CURRENT_USER, null);
+  const candidate =
+    primary && typeof primary.email === 'string'
+      ? primary
+      : readStorage<Record<string, unknown> | null>(LS_KEYS.LEGACY_CURRENT_USER, null);
 
-  if (candidate && candidate.email) {
+  if (candidate && typeof candidate.email === 'string') {
+    const emailLower = candidate.email.trim().toLowerCase();
     // Prevent privilege escalation if someone edits currentUser in localStorage
-    if (candidate.email.toLowerCase() === ADMIN_EMAIL || candidate.role === 'admin' || candidate.role === 'ADMIN' || candidate.role === 'SUPER_ADMIN') {
+    if (
+      RESERVED_ADMIN_IDENTIFIERS.has(emailLower) ||
+      candidate.role === 'admin' ||
+      candidate.role === 'ADMIN' ||
+      candidate.role === 'SUPER_ADMIN'
+    ) {
       window.localStorage.removeItem(LS_KEYS.CURRENT_USER);
       window.localStorage.removeItem(LS_KEYS.LEGACY_CURRENT_USER);
       return null;
     }
-    return {
-      ...candidate,
-      role: 'customer',
-      name: candidate.name || candidate.displayName || candidate.email.split('@')[0],
-      displayName: candidate.displayName || candidate.name || candidate.email.split('@')[0],
-    };
+    const sanitized = stripSensitiveFieldsFromUser(candidate);
+    if ('password' in candidate) {
+      writeStorage(LS_KEYS.CURRENT_USER, sanitized, false);
+      writeStorage(LS_KEYS.LEGACY_CURRENT_USER, sanitized, false);
+    }
+    return sanitized;
   }
   return null;
 }
@@ -402,6 +484,7 @@ interface AppContextValue {
   destinations: DestinationItem[];
   allDestinations: DestinationItem[];
   blogPosts: BlogPostItem[];
+  allBlogPosts: BlogPostItem[];
   gallery: GalleryImageItem[];
   allGallery: GalleryImageItem[];
   reviews: ReviewItem[];
@@ -475,6 +558,7 @@ interface AppContextValue {
   togglePublishDestinationAdmin: (destId: string) => Promise<void>;
   saveBlogPostAdmin: (post: BlogPostItem) => Promise<void>;
   deleteBlogPostAdmin: (postId: string) => Promise<void>;
+  togglePublishBlogPostAdmin: (postId: string) => Promise<void>;
   saveGalleryImageAdmin: (img: GalleryImageItem) => Promise<void>;
   deleteGalleryImageAdmin: (imgId: string) => Promise<void>;
   togglePublishGalleryAdmin: (imgId: string) => Promise<void>;
@@ -487,14 +571,35 @@ interface AppContextValue {
     internalNotes: string
   ) => Promise<void>;
   deleteInquiryAdmin: (inquiryId: string) => Promise<void>;
+  createBookingAdmin: (data: {
+    customerName: string;
+    email: string;
+    whatsapp: string;
+    tourId: string;
+    tourTitle: string;
+    travelDates: string;
+    travelers: number;
+    bookingStatus: BookingRecord['bookingStatus'];
+    paymentStatus: BookingRecord['paymentStatus'];
+    notes: string;
+  }) => Promise<BookingRecord>;
   updateBookingAdmin: (
     bookingId: string,
     bookingStatus: BookingRecord['bookingStatus'],
     paymentStatus: BookingRecord['paymentStatus'],
     travelDates: string,
-    notes: string
+    notes: string,
+    extra?: Partial<Pick<BookingRecord, 'customerName' | 'email' | 'whatsapp' | 'tourTitle' | 'travelers'>>
   ) => Promise<void>;
   deleteBookingAdmin: (bookingId: string) => Promise<void>;
+  saveCustomerAdmin: (data: {
+    uid?: string;
+    displayName: string;
+    email: string;
+    phone: string;
+    status: 'active' | 'disabled';
+    password?: string;
+  }) => Promise<{ success: boolean; error?: string }>;
   updateCustomerStatusAdmin: (uid: string, status: 'active' | 'disabled') => Promise<void>;
   deleteCustomerAdmin: (uid: string) => Promise<void>;
   saveSiteSettingsAdmin: (newSettings: Partial<BusinessConfig>) => Promise<void>;
@@ -613,8 +718,8 @@ function normalizeTours(list: unknown): TourItem[] {
 const DEFAULT_ADMIN_USERS: AdminUserRecord[] = [
   {
     uid: 'super_admin_baigtours',
-    email: 'admin@baigtours',
-    displayName: 'Baig Super Admin',
+    email: 'admit@baigtours',
+    displayName: 'Master Admin',
     role: 'SUPER_ADMIN',
     status: 'active',
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -638,8 +743,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [allDestinations, setAllDestinations] = useState<DestinationItem[]>(() =>
     normalizeDestinations(readStorage<DestinationItem[]>(LS_KEYS.DESTINATIONS, INITIAL_DESTINATIONS))
   );
-  const [blogPosts, setBlogPosts] = useState<BlogPostItem[]>(() =>
-    readStorage<BlogPostItem[]>(LS_KEYS.BLOG, INITIAL_BLOG_POSTS)
+  const [allBlogPosts, setBlogPosts] = useState<BlogPostItem[]>(() =>
+    readStorage<BlogPostItem[]>(LS_KEYS.BLOG, INITIAL_BLOG_POSTS).map((p) => ({
+      ...p,
+      published: p.published ?? true,
+    }))
   );
   const [allGallery, setAllGallery] = useState<GalleryImageItem[]>(() =>
     readStorage<GalleryImageItem[]>(LS_KEYS.GALLERY, INITIAL_GALLERY).map((g) => ({
@@ -880,6 +988,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Public filtered collections (only published items appear on public website)
   const tours = allTours.filter((t) => t.published !== false);
   const destinations = allDestinations.filter((d) => d.published !== false);
+  const blogPosts = allBlogPosts.filter((p) => p.published !== false);
   const gallery = allGallery.filter((g) => g.published !== false);
   const reviews = allReviews.filter((r) => r.published !== false);
 
@@ -923,18 +1032,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     : null;
 
-  // 1. Customer Login (/login) — strictly for customers; does NOT mix admin login
+  // 1. Customer Login (/login) — strictly for customers; does NOT allow admin login
   const loginWithCredentials = async (
     email: string,
     password: string
   ): Promise<{ success: boolean; isAdmin: boolean; redirectTo: string; error?: string }> => {
     const cleanEmail = email.trim().toLowerCase();
 
-    if (cleanEmail === 'admin@baigtours') {
+    // Requirement 9: If an administrator accidentally uses the normal customer login page, show:
+    // "Administrator accounts must sign in at the Admin Portal (/admin/login)."
+    if (isReservedAdminIdentifier(cleanEmail, adminUsers)) {
       return {
         success: false,
-        isAdmin: false,
-        redirectTo: '/login',
+        isAdmin: true,
+        redirectTo: '/admin/login',
         error: 'Administrator accounts must sign in at the Admin Portal (/admin/login).',
       };
     }
@@ -957,47 +1068,120 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    const storedUsers = readMergedUsers();
-    const matched = storedUsers.find(
-      (u) =>
-        u.email.toLowerCase() === cleanEmail &&
-        u.password === password &&
-        u.role !== 'admin' &&
-        u.role !== 'ADMIN' &&
-        u.role !== 'SUPER_ADMIN'
-    );
+    // Step A: Verify against backend customer authentication endpoint (/api/customer/login)
+    try {
+      const res = await fetch('/api/customer/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password }),
+      });
 
-    if (!matched) {
-      return {
-        success: false,
-        isAdmin: false,
-        redirectTo: '/login',
-        error: 'Invalid email or password. Please check your credentials or sign up.',
-      };
+      if (res.status === 403) {
+        const errBody = await res.json().catch(() => ({}));
+        if (errBody?.code === 'ADMIN_MUST_USE_PORTAL') {
+          return {
+            success: false,
+            isAdmin: true,
+            redirectTo: '/admin/login',
+            error: 'Administrator accounts must sign in at the Admin Portal (/admin/login).',
+          };
+        }
+        return {
+          success: false,
+          isAdmin: false,
+          redirectTo: '/login',
+          error: errBody?.error || 'Your customer account is currently disabled. Please contact support.',
+        };
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.ok && data?.user) {
+          setAdminSessionStorage(null, null);
+          setAdminUser(null);
+
+          const customerUser = stripSensitiveFieldsFromUser(data.user);
+          writeStorage(LS_KEYS.CURRENT_USER, customerUser);
+          writeStorage(LS_KEYS.LEGACY_CURRENT_USER, customerUser);
+          setUser(customerUser);
+
+          return {
+            success: true,
+            isAdmin: false,
+            redirectTo: '/my-bookings',
+          };
+        }
+      }
+    } catch {
+      // Proceed to Firebase Authentication check if server endpoint is unreachable
     }
 
-    if (matched.status === 'disabled') {
-      return {
-        success: false,
-        isAdmin: false,
-        redirectTo: '/login',
-        error: 'Your customer account is currently disabled. Please contact support.',
-      };
+    // Step B: Verify with Firebase Authentication if configured
+    if (hasValidFirebaseConfig && auth) {
+      try {
+        const cred = await signInWithEmailAndPassword(auth, cleanEmail, password);
+        const fbUser = cred.user;
+        const roleEval = await evaluateFirebaseUserAdminRole(fbUser);
+
+        // Requirement 9: If the Firebase account has admin privileges (custom claim admin: true or Firestore role),
+        // block customer login and direct them to /admin/login
+        if (roleEval.isAnyAdmin) {
+          await firebaseSignOut(auth).catch(() => {});
+          return {
+            success: false,
+            isAdmin: true,
+            redirectTo: '/admin/login',
+            error: 'Administrator accounts must sign in at the Admin Portal (/admin/login).',
+          };
+        }
+
+        setAdminSessionStorage(null, null);
+        setAdminUser(null);
+
+        const existingLocal = readMergedUsers().find(
+          (u) => u.email.toLowerCase() === cleanEmail
+        );
+        const customerUser: LocalUser = existingLocal || {
+          uid: fbUser.uid,
+          name: fbUser.displayName || cleanEmail.split('@')[0],
+          displayName: fbUser.displayName || cleanEmail.split('@')[0],
+          email: cleanEmail,
+          phone: fbUser.phoneNumber || '',
+          role: 'customer',
+          savedTourIds: [],
+          status: 'active',
+          createdAt: new Date().toISOString(),
+        };
+
+        if (customerUser.status === 'disabled') {
+          await firebaseSignOut(auth).catch(() => {});
+          return {
+            success: false,
+            isAdmin: false,
+            redirectTo: '/login',
+            error: 'Your customer account is currently disabled. Please contact support.',
+          };
+        }
+
+        writeStorage(LS_KEYS.CURRENT_USER, customerUser);
+        writeStorage(LS_KEYS.LEGACY_CURRENT_USER, customerUser);
+        setUser(customerUser);
+
+        return {
+          success: true,
+          isAdmin: false,
+          redirectTo: '/my-bookings',
+        };
+      } catch {
+        // Invalid Firebase credentials
+      }
     }
-
-    // Ensure admin session is cleared when logging in as a normal customer
-    setAdminSessionStorage(null, null);
-    setAdminUser(null);
-
-    const customerUser: LocalUser = { ...matched, role: 'customer' };
-    writeStorage(LS_KEYS.CURRENT_USER, customerUser);
-    writeStorage(LS_KEYS.LEGACY_CURRENT_USER, customerUser);
-    setUser(customerUser);
 
     return {
-      success: true,
+      success: false,
       isAdmin: false,
-      redirectTo: '/my-bookings',
+      redirectTo: '/login',
+      error: 'Invalid email or password. Please check your credentials or sign up.',
     };
   };
 
@@ -1017,6 +1201,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
+    // Requirement 12: If a normal customer tries to log in through /admin/login, show:
+    // "You do not have administrator access."
+    const knownCustomers = readMergedUsers();
+    const isRegisteredCustomer =
+      (user && user.email.toLowerCase() === cleanEmail) ||
+      knownCustomers.some((u) => u.email.toLowerCase() === cleanEmail);
+    if (isRegisteredCustomer && !isReservedAdminIdentifier(cleanEmail, adminUsers)) {
+      return {
+        success: false,
+        redirectTo: '/admin/login',
+        error: 'You do not have administrator access.',
+      };
+    }
+
+    // Step A: Server-side PBKDF2 Master Admin authentication (/api/admin/login)
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
@@ -1044,6 +1243,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             writeStorage(LS_KEYS.ADMIN_USERS, data.adminUsers, false);
           }
 
+          // Synchronize Master Admin session with Firebase Authentication if configured
+          if (hasValidFirebaseConfig && auth) {
+            const fbEmail = toFirebaseCompatibleEmail(data.admin.email || cleanEmail);
+            try {
+              await signInWithEmailAndPassword(auth, fbEmail, rawPassword);
+            } catch {
+              try {
+                await createUserWithEmailAndPassword(auth, fbEmail, rawPassword);
+              } catch {
+                // Ignore if Firebase email/password provider is not enabled in console
+              }
+            }
+          }
+
           return {
             success: true,
             redirectTo: '/admin',
@@ -1051,47 +1264,104 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
 
-      if (res.status === 401 || res.status === 403 || res.status === 429) {
+      if (res.status === 403) {
+        const errBody = await res.json().catch(() => ({}));
         return {
           success: false,
           redirectTo: '/admin/login',
-          error: 'Invalid admin credentials.',
+          error: errBody?.error || 'You do not have administrator access.',
         };
       }
     } catch {
-      // Offline / static deployment fallback using Web Crypto PBKDF2-SHA512
-      if (cleanEmail === 'admin@baigtours') {
-        const isMatch = await verifyOfflinePbkdf2(rawPassword);
-        if (isMatch) {
-          window.localStorage.removeItem(LS_KEYS.CURRENT_USER);
-          window.localStorage.removeItem(LS_KEYS.LEGACY_CURRENT_USER);
-          setUser(null);
+      // Proceed to Firebase Authentication verification
+    }
 
-          const offlineAdmin: AdminUserRecord = {
-            uid: 'super_admin_baigtours',
-            email: 'admin@baigtours',
-            displayName: 'Baig Super Admin',
-            role: 'SUPER_ADMIN',
-            status: 'active',
-            createdAt: '2026-01-01T00:00:00.000Z',
-            lastLoginAt: new Date().toISOString(),
-          };
-          const fallbackToken = `offline_verified_${Date.now()}`;
-          setAdminSessionStorage(fallbackToken, offlineAdmin);
-          setAdminUser(offlineAdmin);
-          recordLocalAuditLog(
-            'Admin logged in',
-            'Session',
-            offlineAdmin.uid,
-            offlineAdmin.email,
-            'Authenticated into Admin Portal (SUPER_ADMIN)'
-          );
+    // Step B: Firebase Authentication + Custom Claims (`admin: true`) / Firestore RBAC verification
+    if (hasValidFirebaseConfig && auth) {
+      const fbCandidateEmail = toFirebaseCompatibleEmail(cleanEmail);
+      try {
+        const cred = await signInWithEmailAndPassword(auth, fbCandidateEmail, rawPassword);
+        const fbUser = cred.user;
+        const roleEval = await evaluateFirebaseUserAdminRole(fbUser);
+
+        // Requirement 12: Normal Firebase customer attempting /admin/login must be denied with exact message
+        if (!roleEval.isAnyAdmin && !isReservedAdminIdentifier(cleanEmail, adminUsers)) {
+          await firebaseSignOut(auth).catch(() => {});
           return {
-            success: true,
-            redirectTo: '/admin',
+            success: false,
+            redirectTo: '/admin/login',
+            error: 'You do not have administrator access.',
           };
         }
+
+        // Exchange verified Firebase admin session for backend token
+        window.localStorage.removeItem(LS_KEYS.CURRENT_USER);
+        window.localStorage.removeItem(LS_KEYS.LEGACY_CURRENT_USER);
+        setUser(null);
+
+        try {
+          const exchangeRes = await fetch('/api/admin/firebase-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              uid: fbUser.uid,
+              email: cleanEmail,
+              displayName: fbUser.displayName || cleanEmail.split('@')[0],
+              isCustomClaimAdmin: roleEval.isCustomClaimAdmin,
+              isFirestoreAdmin: roleEval.isFirestoreAdmin,
+            }),
+          });
+          if (exchangeRes.ok) {
+            const data = await exchangeRes.json();
+            if (data?.ok && data?.token && data?.admin) {
+              setAdminSessionStorage(data.token, data.admin);
+              setAdminUser(data.admin);
+              if (Array.isArray(data.auditLogs)) {
+                setAuditLogs(data.auditLogs);
+                writeStorage(LS_KEYS.AUDIT_LOGS, data.auditLogs, false);
+              }
+              if (Array.isArray(data.adminUsers)) {
+                setAdminUsers(data.adminUsers);
+                writeStorage(LS_KEYS.ADMIN_USERS, data.adminUsers, false);
+              }
+              return {
+                success: true,
+                redirectTo: '/admin',
+              };
+            }
+          }
+        } catch {
+          // Fallback to Firebase ID token for verified Firebase admin
+        }
+
+        const fbAdminRecord: AdminUserRecord = {
+          uid: fbUser.uid,
+          email: cleanEmail,
+          displayName: fbUser.displayName || 'Master Admin',
+          role: 'SUPER_ADMIN',
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+        };
+        const fbToken = await fbUser.getIdToken();
+        setAdminSessionStorage(fbToken, fbAdminRecord);
+        setAdminUser(fbAdminRecord);
+        return {
+          success: true,
+          redirectTo: '/admin',
+        };
+      } catch {
+        // Invalid Firebase credentials
       }
+    }
+
+    // If a non-admin email tried to log in at /admin/login, return "You do not have administrator access."
+    if (!isReservedAdminIdentifier(cleanEmail, adminUsers) && cleanEmail.includes('@')) {
+      return {
+        success: false,
+        redirectTo: '/admin/login',
+        error: 'You do not have administrator access.',
+      };
     }
 
     return {
@@ -1101,7 +1371,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   };
 
-  // 2. Customer Signup (/signup)
+  // 2. Customer Signup (/signup) — Never stores plaintext password in localStorage/sessionStorage/Firestore
   const signupWithCredentials = async (data: {
     displayName: string;
     email: string;
@@ -1120,11 +1390,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    if (cleanEmail === 'admin@baigtours' || cleanEmail === 'admin@baigtreks.com') {
+    if (isReservedAdminIdentifier(cleanEmail, adminUsers)) {
       return {
         success: false,
-        redirectTo: '/signup',
-        error: 'This email address is reserved for administration.',
+        redirectTo: '/admin/login',
+        error: 'Administrator accounts must sign in at the Admin Portal (/admin/login).',
       };
     }
 
@@ -1161,15 +1431,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
+    let resolvedUid = `user_${Date.now()}`;
+
+    // Also register with Firebase Authentication if available (without duplicating admin accounts)
+    if (hasValidFirebaseConfig && auth) {
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, cleanEmail, data.password);
+        resolvedUid = cred.user.uid;
+      } catch {
+        // Proceed with server-side PBKDF2 registration
+      }
+    }
+
+    // Register via server-side PBKDF2 endpoint (/api/customer/signup)
+    try {
+      const res = await fetch('/api/customer/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: resolvedUid,
+          displayName: cleanName,
+          email: cleanEmail,
+          password: data.password,
+          phone: cleanPhone,
+        }),
+      });
+      if (res.status === 409) {
+        return {
+          success: false,
+          redirectTo: '/signup',
+          error: 'An account with this email already exists. Please log in instead.',
+        };
+      }
+    } catch {
+      // Offline fallback
+    }
+
+    // Store ONLY non-sensitive customer profile in state/localStorage (NO password field!)
     const newUser: LocalUser = {
-      uid: `user_${Date.now()}`,
+      uid: resolvedUid,
       name: cleanName,
       displayName: cleanName,
       email: cleanEmail,
       phone: cleanPhone,
       role: 'customer',
       savedTourIds: [],
-      password: data.password,
       status: 'active',
       createdAt: new Date().toISOString(),
     };
@@ -1184,7 +1490,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAdminUser(null);
     setAllUsers(updatedUsers);
     setUser(newUser);
-    pushSharedStateToServer({ users: updatedUsers });
     setSignupNotificationNote(`Welcome, ${cleanName}! You are now signed in.`);
 
     return {
@@ -1197,12 +1502,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await signupWithCredentials({
       displayName: 'Traveler',
       email: `traveler_${Date.now()}@example.com`,
-      password: 'password123',
+      password: `Pass_${Date.now()}`,
       phone: phoneInput || '03155449778',
     });
   };
 
-  // 3. Secure Logout (Destroys admin & customer sessions)
+  // 3. Secure Logout (Destroys admin, customer & Firebase sessions)
   const signOut = async () => {
     const token = getAdminToken();
     if (token) {
@@ -1214,6 +1519,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch {
         // Ignore network errors on logout
       }
+    }
+    if (hasValidFirebaseConfig && auth) {
+      await firebaseSignOut(auth).catch(() => {});
     }
     setAdminSessionStorage(null, null);
     window.localStorage.removeItem(LS_KEYS.CURRENT_USER);
@@ -1227,7 +1535,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const current = user.savedTourIds || [];
     const exists = current.includes(tourId);
     const updatedIds = exists ? current.filter((id) => id !== tourId) : [...current, tourId];
-    const updatedUser: LocalUser = { ...user, savedTourIds: updatedIds, role: 'customer' };
+    const updatedUser: LocalUser = stripSensitiveFieldsFromUser({
+      ...user,
+      savedTourIds: updatedIds,
+      role: 'customer',
+    });
     setUser(updatedUser);
     writeStorage(LS_KEYS.CURRENT_USER, updatedUser);
     writeStorage(LS_KEYS.LEGACY_CURRENT_USER, updatedUser);
@@ -1244,13 +1556,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateCustomerProfile = async (displayName: string, phone: string) => {
     if (!user) return;
     const cleanName = displayName.trim() || user.displayName;
-    const updatedUser: LocalUser = {
+    const updatedUser: LocalUser = stripSensitiveFieldsFromUser({
       ...user,
       name: cleanName,
       displayName: cleanName,
       phone: phone.trim(),
       role: 'customer',
-    };
+    });
     setUser(updatedUser);
     writeStorage(LS_KEYS.CURRENT_USER, updatedUser);
     writeStorage(LS_KEYS.LEGACY_CURRENT_USER, updatedUser);
@@ -1274,26 +1586,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!newPassword || newPassword.length < 6) {
       return { success: false, error: 'New password must be at least 6 characters long.' };
     }
-    if (user.password && currentPassword !== user.password) {
-      return { success: false, error: 'Current password does not match.' };
+
+    try {
+      const res = await fetch('/api/customer/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          currentPassword,
+          newPassword,
+        }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        return {
+          success: false,
+          error: errData?.error || 'Current password does not match.',
+        };
+      }
+    } catch {
+      // Fallback to Firebase Auth password update if signed into Firebase
     }
 
-    const updatedUser: LocalUser = {
-      ...user,
-      password: newPassword,
-      role: 'customer',
-    };
-    setUser(updatedUser);
-    writeStorage(LS_KEYS.CURRENT_USER, updatedUser);
-    writeStorage(LS_KEYS.LEGACY_CURRENT_USER, updatedUser);
+    if (hasValidFirebaseConfig && auth?.currentUser) {
+      try {
+        await updatePassword(auth.currentUser, newPassword);
+      } catch {
+        // Ignore if not using Firebase Auth session
+      }
+    }
 
-    const updatedAll = allUsers.map((u) =>
-      u.email.toLowerCase() === user.email.toLowerCase() ? updatedUser : u
-    );
-    setAllUsers(updatedAll);
-    writeStorage(LS_KEYS.USERS, updatedAll);
-    writeStorage(LS_KEYS.LEGACY_USERS, updatedAll);
-    pushSharedStateToServer({ users: updatedAll });
     return { success: true };
   };
 
@@ -1658,28 +1980,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const saveBlogPostAdmin = async (post: BlogPostItem) => {
     assertAdmin();
     const cleanId = sanitizeId(post.id || post.slug || post.title);
-    const normalized: BlogPostItem = { ...post, id: cleanId, slug: cleanId };
-    const idx = blogPosts.findIndex((p) => p.id === cleanId);
+    const isExisting = allBlogPosts.some((p) => p.id === cleanId);
+    const normalized: BlogPostItem = {
+      ...post,
+      id: cleanId,
+      slug: sanitizeId(post.slug || cleanId),
+      published: post.published ?? true,
+    };
+    const idx = allBlogPosts.findIndex((p) => p.id === cleanId);
     const updated =
-      idx >= 0 ? blogPosts.map((p, i) => (i === idx ? normalized : p)) : [normalized, ...blogPosts];
+      idx >= 0 ? allBlogPosts.map((p, i) => (i === idx ? normalized : p)) : [normalized, ...allBlogPosts];
     setBlogPosts(updated);
     writeStorage(LS_KEYS.BLOG, updated);
     await syncAuditWithServer(
       { blogPosts: updated },
       {
-        action: 'Travel guide saved',
+        action: isExisting ? 'Travel guide edited' : 'Travel guide created',
         targetType: 'BlogPost',
         targetId: cleanId,
         targetName: normalized.title,
-        details: `Saved travel guide "${normalized.title}"`,
+        details: `${isExisting ? 'Updated' : 'Created'} travel guide "${normalized.title}"`,
       }
     );
   };
 
   const deleteBlogPostAdmin = async (postId: string) => {
     assertAdmin();
-    const target = blogPosts.find((p) => p.id === postId);
-    const updated = blogPosts.filter((p) => p.id !== postId);
+    const target = allBlogPosts.find((p) => p.id === postId);
+    const updated = allBlogPosts.filter((p) => p.id !== postId);
     setBlogPosts(updated);
     writeStorage(LS_KEYS.BLOG, updated);
     await syncAuditWithServer(
@@ -1690,6 +2018,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         targetId: postId,
         targetName: target?.title || postId,
         details: `Deleted travel guide "${target?.title || postId}"`,
+      }
+    );
+  };
+
+  const togglePublishBlogPostAdmin = async (postId: string) => {
+    assertAdmin();
+    const target = allBlogPosts.find((p) => p.id === postId);
+    if (!target) return;
+    const nextPub = target.published === false ? true : false;
+    const updated = allBlogPosts.map((p) =>
+      p.id === postId ? { ...p, published: nextPub } : p
+    );
+    setBlogPosts(updated);
+    writeStorage(LS_KEYS.BLOG, updated);
+    await syncAuditWithServer(
+      { blogPosts: updated },
+      {
+        action: nextPub ? 'Travel guide published' : 'Travel guide unpublished',
+        targetType: 'BlogPost',
+        targetId: postId,
+        targetName: target.title,
+        details: `${nextPub ? 'Published' : 'Unpublished'} travel guide "${target.title}"`,
       }
     );
   };
@@ -1878,18 +2228,76 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const createBookingAdmin = async (data: {
+    customerName: string;
+    email: string;
+    whatsapp: string;
+    tourId: string;
+    tourTitle: string;
+    travelDates: string;
+    travelers: number;
+    bookingStatus: BookingRecord['bookingStatus'];
+    paymentStatus: BookingRecord['paymentStatus'];
+    notes: string;
+  }): Promise<BookingRecord> => {
+    assertAdmin();
+    const cleanEmail = data.email.trim().toLowerCase();
+    const newBooking: BookingRecord = {
+      id: `bk_${Date.now()}`,
+      userId: `admin_created_${Date.now()}`,
+      userEmail: cleanEmail,
+      customerName: data.customerName.trim() || 'Traveler',
+      email: cleanEmail,
+      whatsapp: data.whatsapp.trim(),
+      tourId: data.tourId || sanitizeId(data.tourTitle),
+      tourSlug: data.tourId || sanitizeId(data.tourTitle),
+      tourTitle: data.tourTitle.trim(),
+      travelDates: data.travelDates.trim() || 'Flexible',
+      travelers: Math.max(1, Number(data.travelers) || 1),
+      bookingStatus: data.bookingStatus || 'CONFIRMED',
+      paymentStatus: data.paymentStatus || 'PAYMENT PENDING',
+      paymentMethod: 'JazzCash / Admin Entry',
+      notes: data.notes.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [newBooking, ...bookings];
+    setBookings(updated);
+    writeStorage(LS_KEYS.BOOKINGS, updated);
+    writeStorage(LS_KEYS.LEGACY_BOOKINGS, updated);
+    await syncAuditWithServer(
+      { bookings: updated },
+      {
+        action: 'Booking created by Admin',
+        targetType: 'Booking',
+        targetId: newBooking.id,
+        targetName: `${newBooking.customerName} (${newBooking.tourTitle})`,
+        details: `Created booking ${newBooking.id} (${newBooking.bookingStatus})`,
+      }
+    );
+    return newBooking;
+  };
+
   const updateBookingAdmin = async (
     bookingId: string,
     bookingStatus: BookingRecord['bookingStatus'],
     paymentStatus: BookingRecord['paymentStatus'],
     travelDates: string,
-    notes: string
+    notes: string,
+    extra?: Partial<Pick<BookingRecord, 'customerName' | 'email' | 'whatsapp' | 'tourTitle' | 'travelers'>>
   ) => {
     assertAdmin();
     const target = bookings.find((b) => b.id === bookingId);
     const updated = bookings.map((bk) =>
       bk.id === bookingId
-        ? { ...bk, bookingStatus, paymentStatus, travelDates, notes }
+        ? {
+            ...bk,
+            ...(extra || {}),
+            userEmail: extra?.email ? extra.email.trim().toLowerCase() : bk.userEmail,
+            bookingStatus,
+            paymentStatus,
+            travelDates,
+            notes,
+          }
         : bk
     );
     setBookings(updated);
@@ -1898,10 +2306,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await syncAuditWithServer(
       { bookings: updated },
       {
-        action: 'Booking status changed',
+        action: 'Booking updated',
         targetType: 'Booking',
         targetId: bookingId,
-        targetName: `${target?.customerName || 'Customer'} (${target?.tourTitle || bookingId})`,
+        targetName: `${extra?.customerName || target?.customerName || 'Customer'} (${extra?.tourTitle || target?.tourTitle || bookingId})`,
         details: `Updated booking ${bookingId}: Status=${bookingStatus}, Payment=${paymentStatus}`,
       }
     );
@@ -1924,6 +2332,86 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         details: `Deleted booking ${bookingId}`,
       }
     );
+  };
+
+  const saveCustomerAdmin = async (data: {
+    uid?: string;
+    displayName: string;
+    email: string;
+    phone: string;
+    status: 'active' | 'disabled';
+    password?: string;
+  }): Promise<{ success: boolean; error?: string }> => {
+    assertAdmin();
+    const cleanEmail = data.email.trim().toLowerCase();
+    const cleanName = data.displayName.trim() || cleanEmail.split('@')[0];
+    const cleanPhone = data.phone.trim();
+
+    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+      return { success: false, error: 'Please enter a valid customer email address.' };
+    }
+    if (isReservedAdminIdentifier(cleanEmail, adminUsers)) {
+      return { success: false, error: 'Cannot register an administrator email as a customer account.' };
+    }
+
+    const token = getAdminToken();
+    try {
+      const res = await fetch('/api/admin/customers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          uid: data.uid,
+          displayName: cleanName,
+          email: cleanEmail,
+          phone: cleanPhone,
+          status: data.status,
+          password: data.password,
+        }),
+      });
+      if (res.ok) {
+        const body = await res.json();
+        if (Array.isArray(body?.users)) {
+          writeStorage(LS_KEYS.USERS, body.users);
+          writeStorage(LS_KEYS.LEGACY_USERS, body.users);
+          setAllUsers(readMergedUsers());
+        }
+        if (Array.isArray(body?.auditLogs)) {
+          setAuditLogs(body.auditLogs);
+          writeStorage(LS_KEYS.AUDIT_LOGS, body.auditLogs, false);
+        }
+        return { success: true };
+      } else {
+        const errBody = await res.json().catch(() => ({}));
+        return { success: false, error: errBody?.error || 'Could not save customer account.' };
+      }
+    } catch {
+      // Fallback update in local state
+      const existingIdx = allUsers.findIndex(
+        (u) => (data.uid && u.uid === data.uid) || u.email.toLowerCase() === cleanEmail
+      );
+      const record: LocalUser = {
+        uid: data.uid || (existingIdx >= 0 ? allUsers[existingIdx].uid : `user_${Date.now()}`),
+        name: cleanName,
+        displayName: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        role: 'customer',
+        savedTourIds: existingIdx >= 0 ? allUsers[existingIdx].savedTourIds : [],
+        status: data.status,
+        createdAt: existingIdx >= 0 ? allUsers[existingIdx].createdAt : new Date().toISOString(),
+      };
+      const updated =
+        existingIdx >= 0
+          ? allUsers.map((u, i) => (i === existingIdx ? record : u))
+          : [record, ...allUsers];
+      setAllUsers(updated);
+      writeStorage(LS_KEYS.USERS, updated);
+      writeStorage(LS_KEYS.LEGACY_USERS, updated);
+      return { success: true };
+    }
   };
 
   const updateCustomerStatusAdmin = async (uid: string, status: 'active' | 'disabled') => {
@@ -2174,6 +2662,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         destinations,
         allDestinations,
         blogPosts,
+        allBlogPosts,
         gallery,
         allGallery,
         reviews,
@@ -2208,6 +2697,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         togglePublishDestinationAdmin,
         saveBlogPostAdmin,
         deleteBlogPostAdmin,
+        togglePublishBlogPostAdmin,
         saveGalleryImageAdmin,
         deleteGalleryImageAdmin,
         togglePublishGalleryAdmin,
@@ -2216,8 +2706,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         togglePublishReviewAdmin,
         updateInquiryAdmin,
         deleteInquiryAdmin,
+        createBookingAdmin,
         updateBookingAdmin,
         deleteBookingAdmin,
+        saveCustomerAdmin,
         updateCustomerStatusAdmin,
         deleteCustomerAdmin,
         saveSiteSettingsAdmin,

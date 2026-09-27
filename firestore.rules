@@ -33,17 +33,37 @@ service cloud.firestore {
       return isVerifiedUser() && request.auth.uid == userId;
     }
 
-    // Zero-DB-read admin check for list operations (Cost-Optimization Clause)
+    // Zero-DB-read admin check (Firebase custom claims admin: true + bootstrapped admin email)
     function isBootstrappedAdmin() {
-      return isVerifiedUser() && request.auth.token.email == 'baigbaltee37@gmail.com';
+      return isSignedIn() && (
+        request.auth.token.admin == true ||
+        request.auth.token.role == 'admin' ||
+        request.auth.token.role == 'ADMIN' ||
+        request.auth.token.role == 'SUPER_ADMIN' ||
+        (
+          isVerifiedUser() && (
+            request.auth.token.email == 'admit@baigtours' ||
+            request.auth.token.email == 'admit@baigtours.com' ||
+            request.auth.token.email == 'admin@baigtours' ||
+            request.auth.token.email == 'admin@baigtours.com' ||
+            request.auth.token.email == 'baigbaltee37@gmail.com' ||
+            request.auth.token.email == 'skardubhai1@gmail.com' ||
+            request.auth.token.email == 'admin@baigtreks.com'
+          )
+        )
+      );
     }
 
     // Full RBAC admin check for single-document operations
     function isAdmin() {
       return isBootstrappedAdmin() || (
-        isVerifiedUser() &&
+        isSignedIn() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPER_ADMIN'
+        )
       );
     }
 

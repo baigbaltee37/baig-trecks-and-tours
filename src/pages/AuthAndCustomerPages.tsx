@@ -33,6 +33,7 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
     signupWithCredentials,
     user,
     isAdmin,
+    authReady,
     signOut,
   } = useApp();
   const navigate = useNavigate();
@@ -45,6 +46,15 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
   const [phoneInput, setPhoneInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showAdminPortalLink, setShowAdminPortalLink] = useState<boolean>(false);
+
+  if (!authReady) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center text-sm font-semibold text-slate-600">
+        Verifying authentication status...
+      </div>
+    );
+  }
 
   if (user || isAdmin) {
     return (
@@ -112,8 +122,22 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setShowAdminPortalLink(false);
 
     const cleanIdentifier = email.trim().toLowerCase();
+
+    if (
+      cleanIdentifier === 'admit@baigtours' ||
+      cleanIdentifier === 'admin@baigtours' ||
+      cleanIdentifier === 'admit@baigtours.com' ||
+      cleanIdentifier === 'admin@baigtours.com' ||
+      cleanIdentifier === 'admin@baigtreks.com' ||
+      cleanIdentifier === 'only_baig'
+    ) {
+      setErrorMsg('Administrator accounts must sign in at the Admin Portal (/admin/login).');
+      setShowAdminPortalLink(true);
+      return;
+    }
 
     if (mode === 'signup') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -146,14 +170,22 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
           phone: phoneInput,
         });
         if (!res.success) {
-          setErrorMsg(res.error || 'Could not create account.');
+          const msg = res.error || 'Could not create account.';
+          setErrorMsg(msg);
+          if (msg.includes('/admin/login')) {
+            setShowAdminPortalLink(true);
+          }
         } else {
           navigate(redirectParam || res.redirectTo);
         }
       } else {
         const res = await loginWithCredentials(cleanIdentifier, password);
         if (!res.success) {
-          setErrorMsg(res.error || 'Invalid login credentials.');
+          const msg = res.error || 'Invalid login credentials.';
+          setErrorMsg(msg);
+          if (res.isAdmin || msg.includes('/admin/login')) {
+            setShowAdminPortalLink(true);
+          }
         } else {
           navigate(redirectParam || res.redirectTo);
         }
@@ -235,7 +267,11 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errorMsg) setErrorMsg(null);
+                  if (showAdminPortalLink) setShowAdminPortalLink(false);
+                }}
                 placeholder="you@example.com"
                 className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
               />
@@ -253,7 +289,10 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
                 required
                 minLength={6}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errorMsg) setErrorMsg(null);
+                }}
                 placeholder="Enter your password"
                 className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
               />
@@ -261,9 +300,26 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
           </div>
 
           {errorMsg && (
-            <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
+            <div
+              role="alert"
+              className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-700 space-y-2.5"
+            >
+              <div className="flex items-start gap-2 font-semibold">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <span>{errorMsg}</span>
+              </div>
+              {showAdminPortalLink && (
+                <div className="pt-1">
+                  <Link
+                    to="/admin/login"
+                    className="w-full py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-colors"
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    <span>Go to Admin Portal (/admin/login)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
@@ -323,7 +379,15 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
 
 // Dedicated /my-bookings Page
 export const MyBookingsPage: React.FC = () => {
-  const { user, isAdmin, bookings, tours, business, profile } = useApp();
+  const { user, isAdmin, authReady, bookings, tours, business, profile } = useApp();
+
+  if (!authReady) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center text-sm font-semibold text-slate-600">
+        Verifying authentication status...
+      </div>
+    );
+  }
 
   if (!user && !isAdmin) {
     return (
@@ -543,6 +607,7 @@ export const ProfilePage: React.FC = () => {
     profile,
     privateInfo,
     isAdmin,
+    authReady,
     signOut,
     updateCustomerProfile,
     changeCustomerPassword,
@@ -562,6 +627,14 @@ export const ProfilePage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  if (!authReady) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center text-sm font-semibold text-slate-600">
+        Verifying authentication status...
+      </div>
+    );
+  }
 
   if (!user && !isAdmin) {
     return (
@@ -699,7 +772,7 @@ export const ProfilePage: React.FC = () => {
           {profileSaved && (
             <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2 font-semibold">
               <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-              <span>Profile updated in localStorage!</span>
+              <span>Profile updated successfully!</span>
             </div>
           )}
 

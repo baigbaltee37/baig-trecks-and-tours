@@ -80,19 +80,40 @@ function verifyPasswordTimingSafe(password: string, salt: string, expectedHashHe
 
 function ensureInitialSuperAdmin(adminUsers?: ServerAdminAccount[]): ServerAdminAccount[] {
   const list = Array.isArray(adminUsers) ? [...adminUsers] : [];
-  const exists = list.some((a) => a.email.toLowerCase() === 'admin@baigtours');
-  if (!exists) {
-    list.unshift({
+  const existingIdx = list.findIndex(
+    (a) =>
+      a.uid === 'super_admin_baigtours' ||
+      a.email.toLowerCase() === 'admit@baigtours' ||
+      a.email.toLowerCase() === 'admin@baigtours'
+  );
+  if (existingIdx >= 0) {
+    list[existingIdx] = {
+      ...list[existingIdx],
       uid: 'super_admin_baigtours',
-      email: 'admin@baigtours',
-      displayName: 'Baig Super Admin',
+      email: 'admit@baigtours',
+      displayName: list[existingIdx].displayName || 'Master Admin',
       role: 'SUPER_ADMIN',
-      salt: INITIAL_SUPER_ADMIN_SALT,
-      passwordHash: INITIAL_SUPER_ADMIN_HASH,
       status: 'active',
-      createdAt: '2026-01-01T00:00:00.000Z',
-    });
+    };
+    // Deduplicate if both admit@baigtours and admin@baigtours existed
+    return list.filter(
+      (a, idx) =>
+        idx === existingIdx ||
+        (a.email.toLowerCase() !== 'admit@baigtours' &&
+          a.email.toLowerCase() !== 'admin@baigtours' &&
+          a.uid !== 'super_admin_baigtours')
+    );
   }
+  list.unshift({
+    uid: 'super_admin_baigtours',
+    email: 'admit@baigtours',
+    displayName: 'Master Admin',
+    role: 'SUPER_ADMIN',
+    salt: INITIAL_SUPER_ADMIN_SALT,
+    passwordHash: INITIAL_SUPER_ADMIN_HASH,
+    status: 'active',
+    createdAt: '2026-01-01T00:00:00.000Z',
+  });
   return list;
 }
 
@@ -133,6 +154,7 @@ interface TokenPayload {
   uid: string;
   email: string;
   role: 'SUPER_ADMIN' | 'ADMIN';
+  admin: true;
   iat: number;
   exp: number;
   jti: string;
@@ -143,6 +165,7 @@ function signAdminToken(admin: ServerAdminAccount): string {
     uid: admin.uid,
     email: admin.email,
     role: admin.role,
+    admin: true,
     iat: Date.now(),
     exp: Date.now() + 1000 * 60 * 60 * 12, // 12 hours
     jti: crypto.randomBytes(12).toString('hex'),
@@ -181,14 +204,19 @@ function verifyAdminTokenFromHeader(authHeader?: string): TokenPayload | null {
       return null;
     }
     const state = readSharedStateFromDisk();
-    const adminRecord = (state.adminUsers || []).find(
-      (a) => a.uid === payload.uid && a.email.toLowerCase() === payload.email.toLowerCase()
+    const admins = ensureInitialSuperAdmin(state.adminUsers);
+    const adminRecord = admins.find(
+      (a) =>
+        a.uid === payload.uid &&
+        (a.email.toLowerCase() === payload.email.toLowerCase() ||
+          a.uid === 'super_admin_baigtours')
     );
     if (!adminRecord || adminRecord.status !== 'active') {
       return null;
     }
     return {
       ...payload,
+      admin: true,
       role: adminRecord.role,
     };
   } catch {
@@ -318,8 +346,26 @@ async function startServer() {
   app.use(express.json({ limit: '8mb' }));
 
   // ============================================================================
-  // 1. SECURE ADMIN AUTHENTICATION & RBAC ENDPOINTS
+  // 1. SECURE ADMIN & CUSTOMER AUTHENTICATION + RBAC ENDPOINTS
   // ============================================================================
+
+  const RESERVED_ADMIN_IDENTIFIERS = new Set([
+    'admit@baigtours',
+    'admin@baigtours',
+    'admit@baigtours.com',
+    'admin@baigtours.com',
+    'admin@baigtreks.com',
+    'only_baig',
+    'baigbaltee37@gmail.com',
+    'skardubhai1@gmail.com',
+  ]);
+
+  function isKnownAdminIdentifier(identifier: string, admins: ServerAdminAccount[]): boolean {
+    const clean = identifier.trim().toLowerCase();
+    if (!clean) return false;
+    if (RESERVED_ADMIN_IDENTIFIERS.has(clean)) return true;
+    return admins.some((a) => a.email.toLowerCase() === clean && a.status === 'active');
+  }
 
   app.post('/api/admin/login', (req, res) => {
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
@@ -328,8 +374,8 @@ async function startServer() {
       return;
     }
 
-    const { email, password } = req.body || {};
-    const cleanEmail = String(email || '').trim().toLowerCase();
+    const { email, identifier, username, password } = req.body || {};
+    const cleanEmail = String(email || identifier || username || '').trim().toLowerCase();
     const rawPassword = String(password || '');
 
     if (!cleanEmail || !rawPassword) {
@@ -339,14 +385,41 @@ async function startServer() {
 
     const state = readSharedStateFromDisk();
     const admins = ensureInitialSuperAdmin(state.adminUsers);
+
+    // Resolve primary Master Admin alias if user enters admit@baigtours, admin@baigtours, admin@baigtreks.com, or only_baig
+    const resolvedAdminEmail =
+      cleanEmail === 'admit@baigtours' ||
+      cleanEmail === 'admin@baigtours' ||
+      cleanEmail === 'admit@baigtours.com' ||
+      cleanEmail === 'admin@baigtours.com' ||
+      cleanEmail === 'admin@baigtreks.com' ||
+      cleanEmail === 'only_baig'
+        ? 'admit@baigtours'
+        : cleanEmail;
+
     const matchedAdmin = admins.find(
-      (a) => a.email.toLowerCase() === cleanEmail && a.status === 'active'
+      (a) => a.email.toLowerCase() === resolvedAdminEmail && a.status === 'active'
     );
 
-    if (
-      !matchedAdmin ||
-      !verifyPasswordTimingSafe(rawPassword, matchedAdmin.salt, matchedAdmin.passwordHash)
-    ) {
+    // Requirement 12: If a normal customer tries to log in through /admin/login, show:
+    // "You do not have administrator access."
+    if (!matchedAdmin) {
+      const customerUsers = Array.isArray(state.users) ? state.users : [];
+      const isRegisteredCustomer = customerUsers.some(
+        (u) => String(u?.email || '').trim().toLowerCase() === cleanEmail
+      );
+      if (isRegisteredCustomer || (!isKnownAdminIdentifier(cleanEmail, admins) && cleanEmail.includes('@'))) {
+        res.status(403).json({
+          error: 'You do not have administrator access.',
+          code: 'NOT_ADMIN',
+        });
+        return;
+      }
+      res.status(401).json({ error: 'Invalid admin credentials.' });
+      return;
+    }
+
+    if (!verifyPasswordTimingSafe(rawPassword, matchedAdmin.salt, matchedAdmin.passwordHash)) {
       res.status(401).json({ error: 'Invalid admin credentials.' });
       return;
     }
@@ -382,6 +455,265 @@ async function startServer() {
       auditLogs: state.auditLogs,
       adminUsers: sanitizeAdminUsersForClient(admins),
     });
+  });
+
+  // Exchange verified Firebase Admin authentication (custom claim admin: true or Firestore admin role) for a server session token
+  app.post('/api/admin/firebase-session', (req, res) => {
+    const { uid, email, displayName, isCustomClaimAdmin, isFirestoreAdmin } = req.body || {};
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    if (!uid || !cleanEmail) {
+      res.status(400).json({ error: 'Invalid admin credentials.' });
+      return;
+    }
+
+    const state = readSharedStateFromDisk();
+    const admins = ensureInitialSuperAdmin(state.adminUsers);
+    const isAuthorizedAdmin =
+      Boolean(isCustomClaimAdmin) ||
+      Boolean(isFirestoreAdmin) ||
+      isKnownAdminIdentifier(cleanEmail, admins);
+
+    if (!isAuthorizedAdmin) {
+      res.status(403).json({
+        error: 'You do not have administrator access.',
+        code: 'NOT_ADMIN',
+      });
+      return;
+    }
+
+    let adminRecord = admins.find((a) => a.email.toLowerCase() === cleanEmail);
+    if (!adminRecord) {
+      const salt = `baig_salt_${crypto.randomBytes(12).toString('hex')}`;
+      adminRecord = {
+        uid: String(uid),
+        email: cleanEmail,
+        displayName: String(displayName || cleanEmail.split('@')[0]),
+        role: 'SUPER_ADMIN',
+        salt,
+        passwordHash: computePasswordHash(crypto.randomBytes(24).toString('hex'), salt),
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      };
+      admins.push(adminRecord);
+    }
+
+    if (adminRecord.status !== 'active') {
+      res.status(403).json({ error: 'You do not have administrator access.' });
+      return;
+    }
+
+    adminRecord.lastLoginAt = new Date().toISOString();
+    state.adminUsers = admins;
+    appendAuditLog(state, {
+      adminEmail: adminRecord.email,
+      adminRole: adminRecord.role,
+      action: 'Admin logged in (Firebase Auth)',
+      targetType: 'Session',
+      targetId: adminRecord.uid,
+      targetName: adminRecord.email,
+      details: `Authenticated via Firebase Auth into Admin Portal (${adminRecord.role})`,
+    });
+    state.updatedAt = Date.now();
+    writeSharedStateToDisk(state);
+
+    const token = signAdminToken(adminRecord);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({
+      ok: true,
+      token,
+      admin: {
+        uid: adminRecord.uid,
+        email: adminRecord.email,
+        displayName: adminRecord.displayName,
+        role: adminRecord.role,
+        status: adminRecord.status,
+        createdAt: adminRecord.createdAt,
+        lastLoginAt: adminRecord.lastLoginAt,
+      },
+      auditLogs: state.auditLogs,
+      adminUsers: sanitizeAdminUsersForClient(admins),
+    });
+  });
+
+  // Customer Signup & Login Endpoints (Server-side PBKDF2 hashing — no passwords ever stored in localStorage/sessionStorage/Firestore)
+  app.post('/api/customer/signup', (req, res) => {
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    if (!checkRateLimit(`cust_signup_${ip}`, 15, 60_000)) {
+      res.status(429).json({ error: 'Too many requests. Please try again shortly.' });
+      return;
+    }
+
+    const { displayName, email, password, phone, uid } = req.body || {};
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const cleanName = String(displayName || '').trim();
+    const cleanPhone = String(phone || '').trim();
+    const rawPassword = String(password || '');
+
+    const state = readSharedStateFromDisk();
+    const admins = ensureInitialSuperAdmin(state.adminUsers);
+
+    if (isKnownAdminIdentifier(cleanEmail, admins)) {
+      res.status(400).json({
+        error: 'Administrator accounts must sign in at the Admin Portal (/admin/login).',
+        code: 'ADMIN_MUST_USE_PORTAL',
+      });
+      return;
+    }
+
+    if (!cleanName || !cleanEmail || rawPassword.length < 6 || !cleanPhone) {
+      res.status(400).json({ error: 'Please complete all required registration fields.' });
+      return;
+    }
+
+    const users = Array.isArray(state.users) ? [...state.users] : [];
+    if (users.some((u) => String(u?.email || '').trim().toLowerCase() === cleanEmail)) {
+      res.status(409).json({
+        error: 'An account with this email already exists. Please log in instead.',
+      });
+      return;
+    }
+
+    const salt = `cust_salt_${crypto.randomBytes(12).toString('hex')}`;
+    const passwordHash = computePasswordHash(rawPassword, salt);
+    const nowIso = new Date().toISOString();
+    const newCustomerRecord: Record<string, unknown> = {
+      uid: uid ? String(uid) : `user_${Date.now()}`,
+      name: cleanName,
+      displayName: cleanName,
+      email: cleanEmail,
+      phone: cleanPhone,
+      role: 'CUSTOMER',
+      savedTourIds: [],
+      salt,
+      passwordHash,
+      status: 'active',
+      createdAt: nowIso,
+    };
+
+    users.unshift(newCustomerRecord);
+    state.users = users;
+    state.updatedAt = Date.now();
+    writeSharedStateToDisk(state);
+
+    const sanitizedUser = sanitizeUsersForClient([newCustomerRecord], false)[0];
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({
+      ok: true,
+      user: sanitizedUser,
+      users: sanitizeUsersForClient(users, false),
+    });
+  });
+
+  app.post('/api/customer/login', (req, res) => {
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    if (!checkRateLimit(`cust_login_${ip}`, 20, 60_000)) {
+      res.status(429).json({ error: 'Too many login attempts. Please try again shortly.' });
+      return;
+    }
+
+    const { email, password } = req.body || {};
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const rawPassword = String(password || '');
+
+    const state = readSharedStateFromDisk();
+    const admins = ensureInitialSuperAdmin(state.adminUsers);
+
+    // Requirement 9: If an administrator accidentally uses the normal customer login page, show:
+    // "Administrator accounts must sign in at the Admin Portal (/admin/login)."
+    if (isKnownAdminIdentifier(cleanEmail, admins)) {
+      res.status(403).json({
+        error: 'Administrator accounts must sign in at the Admin Portal (/admin/login).',
+        code: 'ADMIN_MUST_USE_PORTAL',
+      });
+      return;
+    }
+
+    const users = Array.isArray(state.users) ? state.users : [];
+    const matched = users.find(
+      (u) => String(u?.email || '').trim().toLowerCase() === cleanEmail
+    );
+
+    if (!matched) {
+      res.status(401).json({
+        error: 'Invalid email or password. Please check your credentials or sign up.',
+      });
+      return;
+    }
+
+    if (matched.status === 'disabled') {
+      res.status(403).json({
+        error: 'Your customer account is currently disabled. Please contact support.',
+      });
+      return;
+    }
+
+    // Verify server-side PBKDF2 hash (or migrate legacy record if it existed prior to hashing)
+    let passwordValid = false;
+    if (typeof matched.salt === 'string' && typeof matched.passwordHash === 'string') {
+      passwordValid = verifyPasswordTimingSafe(rawPassword, matched.salt, matched.passwordHash);
+    } else if (typeof matched.password === 'string' && matched.password === rawPassword) {
+      passwordValid = true;
+      const newSalt = `cust_salt_${crypto.randomBytes(12).toString('hex')}`;
+      matched.salt = newSalt;
+      matched.passwordHash = computePasswordHash(rawPassword, newSalt);
+      delete matched.password;
+      state.updatedAt = Date.now();
+      writeSharedStateToDisk(state);
+    }
+
+    if (!passwordValid) {
+      res.status(401).json({
+        error: 'Invalid email or password. Please check your credentials or sign up.',
+      });
+      return;
+    }
+
+    const sanitizedUser = sanitizeUsersForClient([matched], false)[0];
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({
+      ok: true,
+      user: sanitizedUser,
+    });
+  });
+
+  app.post('/api/customer/change-password', (req, res) => {
+    const { email, currentPassword, newPassword } = req.body || {};
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const curPass = String(currentPassword || '');
+    const nextPass = String(newPassword || '');
+
+    if (!cleanEmail || nextPass.length < 6) {
+      res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+      return;
+    }
+
+    const state = readSharedStateFromDisk();
+    const users = Array.isArray(state.users) ? state.users : [];
+    const matched = users.find(
+      (u) => String(u?.email || '').trim().toLowerCase() === cleanEmail
+    );
+
+    if (!matched) {
+      res.status(404).json({ error: 'Customer account not found.' });
+      return;
+    }
+
+    if (typeof matched.salt === 'string' && typeof matched.passwordHash === 'string') {
+      if (!verifyPasswordTimingSafe(curPass, matched.salt, matched.passwordHash)) {
+        res.status(401).json({ error: 'Current password does not match.' });
+        return;
+      }
+    }
+
+    const newSalt = `cust_salt_${crypto.randomBytes(12).toString('hex')}`;
+    matched.salt = newSalt;
+    matched.passwordHash = computePasswordHash(nextPass, newSalt);
+    delete matched.password;
+    state.updatedAt = Date.now();
+    writeSharedStateToDisk(state);
+
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ ok: true });
   });
 
   app.get('/api/admin/session', (req, res) => {
@@ -551,8 +883,12 @@ async function startServer() {
       res.status(404).json({ error: 'Administrator account not found.' });
       return;
     }
-    if (target.email.toLowerCase() === 'admin@baigtours') {
-      res.status(400).json({ error: 'Primary Super Admin (admin@baigtours) cannot be demoted or disabled.' });
+    if (
+      target.uid === 'super_admin_baigtours' ||
+      target.email.toLowerCase() === 'admit@baigtours' ||
+      target.email.toLowerCase() === 'admin@baigtours'
+    ) {
+      res.status(400).json({ error: 'Master Admin (admit@baigtours) cannot be demoted or disabled.' });
       return;
     }
 
@@ -597,8 +933,12 @@ async function startServer() {
       res.status(404).json({ error: 'Administrator account not found.' });
       return;
     }
-    if (target.email.toLowerCase() === 'admin@baigtours') {
-      res.status(400).json({ error: 'Primary Super Admin (admin@baigtours) cannot be deleted.' });
+    if (
+      target.uid === 'super_admin_baigtours' ||
+      target.email.toLowerCase() === 'admit@baigtours' ||
+      target.email.toLowerCase() === 'admin@baigtours'
+    ) {
+      res.status(400).json({ error: 'Master Admin (admit@baigtours) cannot be deleted.' });
       return;
     }
 
@@ -642,6 +982,108 @@ async function startServer() {
     state.updatedAt = Date.now();
     writeSharedStateToDisk(state);
     res.json({ ok: true, auditLogs: state.auditLogs });
+  });
+
+  // Master Admin Customer Management Endpoint (Create or Edit Customer Account)
+  app.post('/api/admin/customers', (req, res) => {
+    const verified = verifyAdminTokenFromHeader(req.headers.authorization);
+    if (!verified) {
+      res.status(403).json({ error: 'REQUEST DENIED: Administrator authentication required.' });
+      return;
+    }
+
+    const { uid, displayName, email, phone, status, password } = req.body || {};
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const cleanName = String(displayName || '').trim() || cleanEmail.split('@')[0] || 'Traveler';
+    const cleanPhone = String(phone || '').trim();
+    const nextStatus = status === 'disabled' ? 'disabled' : 'active';
+    const rawPassword = String(password || '');
+
+    if (!cleanEmail) {
+      res.status(400).json({ error: 'Customer email is required.' });
+      return;
+    }
+
+    const state = readSharedStateFromDisk();
+    const admins = ensureInitialSuperAdmin(state.adminUsers);
+    if (isKnownAdminIdentifier(cleanEmail, admins)) {
+      res.status(400).json({ error: 'Cannot register an administrator identifier as a customer account.' });
+      return;
+    }
+
+    const users = Array.isArray(state.users) ? [...state.users] : [];
+    const existingIdx = users.findIndex(
+      (u) =>
+        (uid && String(u?.uid) === String(uid)) ||
+        String(u?.email || '').trim().toLowerCase() === cleanEmail
+    );
+
+    if (existingIdx >= 0) {
+      const prev = users[existingIdx];
+      const updatedRecord: Record<string, unknown> = {
+        ...prev,
+        name: cleanName,
+        displayName: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        role: 'CUSTOMER',
+        status: nextStatus,
+      };
+      if (rawPassword.length >= 6) {
+        const newSalt = `cust_salt_${crypto.randomBytes(12).toString('hex')}`;
+        updatedRecord.salt = newSalt;
+        updatedRecord.passwordHash = computePasswordHash(rawPassword, newSalt);
+      }
+      delete updatedRecord.password;
+      users[existingIdx] = updatedRecord;
+
+      appendAuditLog(state, {
+        adminEmail: verified.email,
+        adminRole: verified.role,
+        action: 'Customer account updated',
+        targetType: 'Customer',
+        targetId: String(updatedRecord.uid),
+        targetName: cleanEmail,
+        details: `Updated customer ${cleanName} (${cleanEmail}, Status: ${nextStatus})`,
+      });
+    } else {
+      const salt = `cust_salt_${crypto.randomBytes(12).toString('hex')}`;
+      const passwordHash = computePasswordHash(rawPassword.length >= 6 ? rawPassword : `Cust_${Date.now()}`, salt);
+      const newRecord: Record<string, unknown> = {
+        uid: uid ? String(uid) : `user_${Date.now()}`,
+        name: cleanName,
+        displayName: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        role: 'CUSTOMER',
+        savedTourIds: [],
+        salt,
+        passwordHash,
+        status: nextStatus,
+        createdAt: new Date().toISOString(),
+      };
+      users.unshift(newRecord);
+
+      appendAuditLog(state, {
+        adminEmail: verified.email,
+        adminRole: verified.role,
+        action: 'Customer account created by Admin',
+        targetType: 'Customer',
+        targetId: String(newRecord.uid),
+        targetName: cleanEmail,
+        details: `Created customer account for ${cleanName} (${cleanEmail})`,
+      });
+    }
+
+    state.users = users;
+    state.updatedAt = Date.now();
+    writeSharedStateToDisk(state);
+
+    res.json({
+      ok: true,
+      users: sanitizeUsersForClient(users, true),
+      auditLogs: state.auditLogs,
+    });
   });
 
   // ============================================================================
@@ -775,19 +1217,26 @@ async function startServer() {
       }
     }
 
-    // Users: customers can never escalate their role to admin/SUPER_ADMIN
+    // Users: customers can never escalate their role to admin/SUPER_ADMIN; preserve server-side password hashes
     if (Array.isArray(incoming.users)) {
-      if (verifiedAdmin) {
-        merged.users = incoming.users.map((u: Record<string, unknown>) => ({
+      const existingUsersByEmail = new Map(
+        (current.users || []).map((u) => [String(u.email || '').toLowerCase(), u])
+      );
+      merged.users = incoming.users.map((u: Record<string, unknown>) => {
+        const cleanEmail = String(u.email || '').toLowerCase();
+        const prev = existingUsersByEmail.get(cleanEmail);
+        const nextRecord: Record<string, unknown> = {
+          ...prev,
           ...u,
           role: 'CUSTOMER',
-        }));
-      } else {
-        merged.users = incoming.users.map((u: Record<string, unknown>) => ({
-          ...u,
-          role: 'CUSTOMER',
-        }));
-      }
+        };
+        delete nextRecord.password;
+        if (prev?.salt && prev?.passwordHash) {
+          nextRecord.salt = prev.salt;
+          nextRecord.passwordHash = prev.passwordHash;
+        }
+        return nextRecord;
+      });
     }
 
     writeSharedStateToDisk(merged);

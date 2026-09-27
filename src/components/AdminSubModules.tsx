@@ -12,7 +12,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { useApp, InquiryRecord, BookingRecord } from '../context/AppContext';
-import { GalleryImageItem, ReviewItem, VISUAL_ASSETS } from '../data/initialData';
+import { GalleryImageItem, ReviewItem, BlogPostItem, VISUAL_ASSETS } from '../data/initialData';
 
 export interface ConfirmDialogState {
   open: boolean;
@@ -70,9 +70,65 @@ export const AdminBookingsSection: React.FC<{
   notify: (msg: string) => void;
   askConfirm: (message: string, onConfirm: () => void, confirmLabel?: string) => void;
 }> = ({ notify, askConfirm }) => {
-  const { bookings, updateBookingAdmin, deleteBookingAdmin } = useApp();
+  const { bookings, allTours, createBookingAdmin, updateBookingAdmin, deleteBookingAdmin } = useApp();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [email, setEmail] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [tourTitle, setTourTitle] = useState('');
+  const [travelDates, setTravelDates] = useState('');
+  const [travelers, setTravelers] = useState(2);
+  const [bookingStatus, setBookingStatus] = useState<BookingRecord['bookingStatus']>('CONFIRMED');
+  const [paymentStatus, setPaymentStatus] = useState<BookingRecord['paymentStatus']>('PAYMENT PENDING');
+  const [notes, setNotes] = useState('');
+
+  const resetForm = () => {
+    setEditingId('');
+    setCustomerName('');
+    setEmail('');
+    setWhatsapp('');
+    setTourTitle(allTours[0]?.title || 'Hunza Valley Discovery');
+    setTravelDates('');
+    setTravelers(2);
+    setBookingStatus('CONFIRMED');
+    setPaymentStatus('PAYMENT PENDING');
+    setNotes('');
+    setShowForm(false);
+  };
+
+  const handleSaveBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerName.trim() || !tourTitle.trim()) return;
+    if (editingId) {
+      await updateBookingAdmin(editingId, bookingStatus, paymentStatus, travelDates, notes, {
+        customerName: customerName.trim(),
+        email: email.trim(),
+        whatsapp: whatsapp.trim(),
+        tourTitle: tourTitle.trim(),
+        travelers: Math.max(1, Number(travelers) || 1),
+      });
+      notify(`Updated booking ${editingId}.`);
+    } else {
+      const matchedTour = allTours.find((t) => t.title === tourTitle);
+      const created = await createBookingAdmin({
+        customerName: customerName.trim(),
+        email: email.trim(),
+        whatsapp: whatsapp.trim(),
+        tourId: matchedTour?.id || tourTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        tourTitle: tourTitle.trim(),
+        travelDates: travelDates.trim() || 'Flexible',
+        travelers: Math.max(1, Number(travelers) || 1),
+        bookingStatus,
+        paymentStatus,
+        notes: notes.trim(),
+      });
+      notify(`Created booking ${created.id} for ${created.customerName}.`);
+    }
+    resetForm();
+  };
 
   const filtered = bookings.filter((b) => {
     const matchSearch =
@@ -96,7 +152,7 @@ export const AdminBookingsSection: React.FC<{
             Booking Management ({bookings.length})
           </h2>
           <p className="text-xs text-slate-600">
-            Verify payment screenshots before marking any booking as PAID.
+            Create, edit, update status, and manage all customer bookings.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -124,8 +180,182 @@ export const AdminBookingsSection: React.FC<{
             <option value="CANCELLED">CANCELLED</option>
             <option value="COMPLETED">COMPLETED</option>
           </select>
+          <button
+            type="button"
+            onClick={() => {
+              if (showForm) {
+                resetForm();
+              } else {
+                setTourTitle(allTours[0]?.title || 'Hunza Valley Discovery');
+                setShowForm(true);
+              }
+            }}
+            className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{showForm ? 'Close Form' : 'Add Booking'}</span>
+          </button>
         </div>
       </div>
+
+      {showForm && (
+        <form
+          onSubmit={handleSaveBooking}
+          className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs"
+        >
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 className="font-display text-base font-bold text-slate-900">
+              {editingId ? `Edit Booking (${editingId})` : 'Create New Booking Record'}
+            </h3>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+            >
+              Cancel
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Customer Name *
+              </label>
+              <input
+                type="text"
+                required
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Customer Email *
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                WhatsApp / Phone *
+              </label>
+              <input
+                type="text"
+                required
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Tour Package *
+              </label>
+              <input
+                type="text"
+                required
+                list="admin-tour-titles"
+                value={tourTitle}
+                onChange={(e) => setTourTitle(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+              <datalist id="admin-tour-titles">
+                {allTours.map((t) => (
+                  <option key={t.id} value={t.title} />
+                ))}
+              </datalist>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Travel Dates
+              </label>
+              <input
+                type="text"
+                value={travelDates}
+                onChange={(e) => setTravelDates(e.target.value)}
+                placeholder="e.g. June 15 - June 20"
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Travelers
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={travelers}
+                onChange={(e) => setTravelers(Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Booking Status
+              </label>
+              <select
+                value={bookingStatus}
+                onChange={(e) => setBookingStatus(e.target.value as BookingRecord['bookingStatus'])}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs font-semibold text-slate-900"
+              >
+                <option value="PENDING">PENDING</option>
+                <option value="UNDER REVIEW">UNDER REVIEW</option>
+                <option value="CONFIRMED">CONFIRMED</option>
+                <option value="PAYMENT PENDING">PAYMENT PENDING</option>
+                <option value="PAID">PAID</option>
+                <option value="CANCELLED">CANCELLED</option>
+                <option value="COMPLETED">COMPLETED</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Payment Status
+              </label>
+              <select
+                value={paymentStatus}
+                onChange={(e) => setPaymentStatus(e.target.value as BookingRecord['paymentStatus'])}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs font-semibold text-slate-900"
+              >
+                <option value="PAYMENT PENDING">PAYMENT PENDING</option>
+                <option value="UNDER REVIEW">UNDER REVIEW</option>
+                <option value="PAID">PAID</option>
+                <option value="UNPAID">UNPAID</option>
+                <option value="REFUNDED">REFUNDED</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Booking Notes
+              </label>
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Special requests or admin notes..."
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold"
+          >
+            {editingId ? 'Save Booking Changes' : 'Create Booking'}
+          </button>
+        </form>
+      )}
 
       {filtered.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-sm text-slate-600">
@@ -158,6 +388,11 @@ export const AdminBookingsSection: React.FC<{
                   <td className="p-3.5">
                     <div className="font-bold text-slate-900">{bk.tourTitle}</div>
                     <div className="text-slate-600">Date: {bk.travelDates || 'Flexible'}</div>
+                    {bk.notes && (
+                      <div className="text-[11px] text-slate-500 mt-0.5 truncate max-w-xs">
+                        Note: {bk.notes}
+                      </div>
+                    )}
                   </td>
                   <td className="p-3.5 font-mono-num font-bold text-slate-900">{bk.travelers}</td>
                   <td className="p-3.5">
@@ -209,7 +444,27 @@ export const AdminBookingsSection: React.FC<{
                   <td className="p-3.5 text-slate-600 font-mono-num">
                     {bk.createdAt ? new Date(bk.createdAt).toLocaleDateString() : '—'}
                   </td>
-                  <td className="p-3.5 text-right">
+                  <td className="p-3.5 text-right space-x-1 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingId(bk.id);
+                        setCustomerName(bk.customerName);
+                        setEmail(bk.email);
+                        setWhatsapp(bk.whatsapp);
+                        setTourTitle(bk.tourTitle);
+                        setTravelDates(bk.travelDates);
+                        setTravelers(bk.travelers);
+                        setBookingStatus(bk.bookingStatus);
+                        setPaymentStatus(bk.paymentStatus);
+                        setNotes(bk.notes || '');
+                        setShowForm(true);
+                      }}
+                      className="px-2.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg inline-flex items-center gap-1"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() =>
@@ -242,25 +497,65 @@ export const AdminInquiriesSection: React.FC<{
 }> = ({ notify, askConfirm }) => {
   const { inquiries, updateInquiryAdmin, deleteInquiryAdmin } = useApp();
   const [notesDraft, setNotesDraft] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
+  const filtered = inquiries.filter((inq) => {
+    const matchSearch =
+      !search.trim() ||
+      inq.customerName.toLowerCase().includes(search.toLowerCase()) ||
+      inq.email.toLowerCase().includes(search.toLowerCase()) ||
+      (inq.destination || '').toLowerCase().includes(search.toLowerCase()) ||
+      (inq.message || '').toLowerCase().includes(search.toLowerCase());
+    const normStatus = inq.status.toUpperCase() === 'PENDING' ? 'NEW' : inq.status.toUpperCase();
+    const matchStatus = statusFilter === 'ALL' || normStatus === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
   return (
     <div className="space-y-4">
-      <div className="bg-white p-4 rounded-2xl border border-slate-200">
-        <h2 className="font-display text-lg font-bold text-slate-900">
-          Customer Inquiries ({inquiries.length})
-        </h2>
-        <p className="text-xs text-slate-600">
-          Manage inquiry statuses and private admin internal notes (never visible to customers).
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200">
+        <div>
+          <h2 className="font-display text-lg font-bold text-slate-900">
+            Customer Inquiries ({inquiries.length})
+          </h2>
+          <p className="text-xs text-slate-600">
+            Manage inquiry statuses and private admin internal notes (never visible to customers).
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search customer, destination..."
+              className="pl-9 pr-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs font-semibold text-slate-900"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="NEW">NEW</option>
+            <option value="CONTACTED">CONTACTED</option>
+            <option value="IN PROGRESS">IN PROGRESS</option>
+            <option value="RESOLVED">RESOLVED</option>
+            <option value="CLOSED">CLOSED</option>
+          </select>
+        </div>
       </div>
 
-      {inquiries.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-sm text-slate-600">
           0 customer inquiries found.
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {inquiries.map((inq) => {
+          {filtered.map((inq) => {
             const currentNote =
               notesDraft[inq.id] !== undefined ? notesDraft[inq.id] : inq.internalNotes || '';
             return (
@@ -379,16 +674,55 @@ export const AdminCustomersSection: React.FC<{
   notify: (msg: string) => void;
   askConfirm: (message: string, onConfirm: () => void, confirmLabel?: string) => void;
 }> = ({ notify, askConfirm }) => {
-  const { allUsers, updateCustomerStatusAdmin, deleteCustomerAdmin } = useApp();
+  const { allUsers, saveCustomerAdmin, updateCustomerStatusAdmin, deleteCustomerAdmin } = useApp();
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [showForm, setShowForm] = useState(false);
+  const [editingUid, setEditingUid] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [status, setStatus] = useState<'active' | 'disabled'>('active');
+  const [password, setPassword] = useState('');
 
-  const filtered = allUsers.filter(
-    (u) =>
+  const resetForm = () => {
+    setEditingUid('');
+    setDisplayName('');
+    setEmail('');
+    setPhone('');
+    setStatus('active');
+    setPassword('');
+    setShowForm(false);
+  };
+
+  const handleSaveCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await saveCustomerAdmin({
+      uid: editingUid || undefined,
+      displayName,
+      email,
+      phone,
+      status,
+      password: password.trim() || undefined,
+    });
+    if (res.success) {
+      notify(editingUid ? `Updated customer ${email}.` : `Registered customer ${email}.`);
+      resetForm();
+    } else {
+      notify(res.error || 'Could not save customer.');
+    }
+  };
+
+  const filtered = allUsers.filter((u) => {
+    const matchSearch =
       !search.trim() ||
       u.displayName.toLowerCase().includes(search.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(search.toLowerCase()) ||
-      (u.phone || '').toLowerCase().includes(search.toLowerCase())
-  );
+      (u.phone || '').toLowerCase().includes(search.toLowerCase());
+    const matchStatus =
+      statusFilter === 'ALL' || (u.status || 'active') === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
   return (
     <div className="space-y-4">
@@ -398,20 +732,124 @@ export const AdminCustomersSection: React.FC<{
             Registered Customers ({allUsers.length})
           </h2>
           <p className="text-xs text-slate-600">
-            Customer passwords and authentication secrets are strictly hidden.
+            Manage customer registrations, contact details, and account enable/disable status.
           </p>
         </div>
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name, email, phone..."
-            className="pl-9 pr-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search name, email, phone..."
+              className="pl-9 pr-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs font-semibold text-slate-900"
+          >
+            <option value="ALL">All Accounts</option>
+            <option value="active">Active Only</option>
+            <option value="disabled">Disabled Only</option>
+          </select>
+          <button
+            type="button"
+            onClick={() => (showForm ? resetForm() : setShowForm(true))}
+            className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{showForm ? 'Close Form' : 'Add Customer'}</span>
+          </button>
         </div>
       </div>
+
+      {showForm && (
+        <form
+          onSubmit={handleSaveCustomer}
+          className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs"
+        >
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 className="font-display text-base font-bold text-slate-900">
+              {editingUid ? `Edit Customer Account (${email})` : 'Register New Customer Account'}
+            </h3>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+            >
+              Cancel
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name *</label>
+              <input
+                type="text"
+                required
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address *</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Phone / WhatsApp *</label>
+              <input
+                type="text"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                {editingUid ? 'Set New Password (optional, min 6 chars)' : 'Initial Password (min 6 chars) *'}
+              </label>
+              <input
+                type="password"
+                required={!editingUid}
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={editingUid ? 'Leave blank to keep existing password' : 'Enter customer password'}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Account Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as 'active' | 'disabled')}
+                className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs font-semibold text-slate-900"
+              >
+                <option value="active">Active</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </div>
+          </div>
+          <button
+            type="submit"
+            className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold"
+          >
+            {editingUid ? 'Save Customer Changes' : 'Register Customer'}
+          </button>
+        </form>
+      )}
 
       {filtered.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-sm text-slate-600">
@@ -457,7 +895,23 @@ export const AdminCustomersSection: React.FC<{
                       <option value="disabled">Disabled</option>
                     </select>
                   </td>
-                  <td className="p-3.5 text-right">
+                  <td className="p-3.5 text-right space-x-1 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingUid(u.uid);
+                        setDisplayName(u.displayName);
+                        setEmail(u.email || '');
+                        setPhone(u.phone || '');
+                        setStatus((u.status as 'active' | 'disabled') || 'active');
+                        setPassword('');
+                        setShowForm(true);
+                      }}
+                      className="px-2.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg inline-flex items-center gap-1"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() =>
@@ -466,7 +920,7 @@ export const AdminCustomersSection: React.FC<{
                           notify(`Deleted customer ${u.email}.`);
                         })
                       }
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-xl"
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-xl inline-flex items-center"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -906,6 +1360,274 @@ export const AdminReviewsSection: React.FC<{
   );
 };
 
+export const AdminGuidesSection: React.FC<{
+  notify: (msg: string) => void;
+  askConfirm: (message: string, onConfirm: () => void, confirmLabel?: string) => void;
+}> = ({ notify, askConfirm }) => {
+  const {
+    allBlogPosts,
+    saveBlogPostAdmin,
+    deleteBlogPostAdmin,
+    togglePublishBlogPostAdmin,
+  } = useApp();
+
+  const [editingId, setEditingId] = useState('');
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [category, setCategory] = useState('Travel Planning');
+  const [readTime, setReadTime] = useState('6 min read');
+  const [imageUrl, setImageUrl] = useState<string>(VISUAL_ASSETS.heroKarakoram);
+  const [excerpt, setExcerpt] = useState('');
+  const [content, setContent] = useState('');
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoDescription, setSeoDescription] = useState('');
+  const [published, setPublished] = useState(true);
+  const [search, setSearch] = useState('');
+
+  const resetForm = () => {
+    setEditingId('');
+    setTitle('');
+    setSlug('');
+    setCategory('Travel Planning');
+    setReadTime('6 min read');
+    setImageUrl(VISUAL_ASSETS.heroKarakoram);
+    setExcerpt('');
+    setContent('');
+    setSeoTitle('');
+    setSeoDescription('');
+    setPublished(true);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') setImageUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !content.trim()) return;
+    const computedSlug =
+      slug.trim() ||
+      title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+    await saveBlogPostAdmin({
+      id: editingId || computedSlug,
+      slug: computedSlug,
+      title: title.trim(),
+      category: category.trim() || 'Travel Planning',
+      readTime: readTime.trim() || '5 min read',
+      imageUrl,
+      excerpt: excerpt.trim() || content.trim().slice(0, 160),
+      content: content.trim(),
+      seoTitle: seoTitle.trim() || title.trim(),
+      seoDescription: seoDescription.trim() || excerpt.trim(),
+      published,
+    });
+    notify(editingId ? `Travel guide "${title}" updated.` : `Travel guide "${title}" created.`);
+    resetForm();
+  };
+
+  const filtered = allBlogPosts.filter(
+    (p) =>
+      !search.trim() ||
+      p.title.toLowerCase().includes(search.toLowerCase()) ||
+      p.category.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <form
+        onSubmit={handleSubmit}
+        className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-lg font-bold text-slate-900">
+            {editingId ? 'Edit Travel Guide / Content' : 'Create Travel Guide / Content'}
+          </h2>
+          {editingId && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+
+        <input
+          type="text"
+          required
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Article / Guide Title *"
+          className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+        />
+
+        <div className="grid grid-cols-2 gap-3">
+          <input
+            type="text"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="Category (e.g. Hunza Guide)"
+            className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+          />
+          <input
+            type="text"
+            value={readTime}
+            onChange={(e) => setReadTime(e.target.value)}
+            placeholder="Read Time (e.g. 6 min read)"
+            className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-slate-700">Cover Image</label>
+            <label className="px-3 py-1 rounded-lg bg-emerald-700 text-white text-xs font-semibold cursor-pointer">
+              Upload Image
+              <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+            </label>
+          </div>
+          <input
+            type="text"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="Image URL"
+            className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+          />
+        </div>
+
+        <textarea
+          rows={2}
+          required
+          value={excerpt}
+          onChange={(e) => setExcerpt(e.target.value)}
+          placeholder="Short Summary / Excerpt *"
+          className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+        />
+
+        <textarea
+          rows={5}
+          required
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Full Guide Content *"
+          className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+        />
+
+        <label className="flex items-center gap-2 text-xs font-semibold text-slate-800">
+          <input
+            type="checkbox"
+            checked={published}
+            onChange={(e) => setPublished(e.target.checked)}
+          />
+          <span>Published publicly on Travel Guides</span>
+        </label>
+
+        <button
+          type="submit"
+          className="w-full py-2.5 px-4 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl"
+        >
+          {editingId ? 'Save Guide Changes' : 'Publish Travel Guide'}
+        </button>
+      </form>
+
+      <div className="lg:col-span-7 space-y-3">
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between gap-2">
+          <span className="text-xs font-bold text-slate-800">
+            Travel Guides &amp; Content Articles ({allBlogPosts.length})
+          </span>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Filter guides..."
+            className="px-3 py-1.5 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+          />
+        </div>
+
+        {filtered.map((post: BlogPostItem) => (
+          <div
+            key={post.id}
+            className="p-4 rounded-2xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-start justify-between gap-4 shadow-xs"
+          >
+            <div className="flex items-start gap-3">
+              <img
+                src={post.imageUrl || VISUAL_ASSETS.heroKarakoram}
+                alt={post.title}
+                className="w-20 h-16 rounded-xl object-cover shrink-0 border border-slate-200"
+              />
+              <div>
+                <div className="text-xs font-semibold text-emerald-800">
+                  {post.category} · {post.readTime} ·{' '}
+                  {post.published === false ? 'Unpublished' : 'Published'}
+                </div>
+                <div className="text-sm font-bold text-slate-900">{post.title}</div>
+                <p className="text-xs text-slate-600 line-clamp-2 mt-1">{post.excerpt}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingId(post.id);
+                  setTitle(post.title);
+                  setSlug(post.slug);
+                  setCategory(post.category);
+                  setReadTime(post.readTime);
+                  setImageUrl(post.imageUrl);
+                  setExcerpt(post.excerpt);
+                  setContent(post.content);
+                  setSeoTitle(post.seoTitle || '');
+                  setSeoDescription(post.seoDescription || '');
+                  setPublished(post.published !== false);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await togglePublishBlogPostAdmin(post.id);
+                  notify(
+                    post.published === false
+                      ? `Published "${post.title}".`
+                      : `Unpublished "${post.title}".`
+                  );
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800"
+              >
+                {post.published === false ? 'Publish' : 'Unpublish'}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  askConfirm(`Delete travel guide "${post.title}"?`, async () => {
+                    await deleteBlogPostAdmin(post.id);
+                    notify(`Deleted travel guide "${post.title}".`);
+                  })
+                }
+                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const AdminSettingsSection: React.FC<{ notify: (msg: string) => void }> = ({ notify }) => {
   const { business, saveSiteSettingsAdmin } = useApp();
   const [form, setForm] = useState({
@@ -917,6 +1639,8 @@ export const AdminSettingsSection: React.FC<{ notify: (msg: string) => void }> =
     jazzcashNumber: business.jazzcashNumber,
     jazzcashName: business.jazzcashName,
     tagline: business.tagline,
+    address: business.address || '',
+    businessHours: business.businessHours || '',
     heroHeadline: business.heroHeadline,
     heroDescription: business.heroDescription,
     ctaText: business.ctaText || '',
@@ -926,6 +1650,7 @@ export const AdminSettingsSection: React.FC<{ notify: (msg: string) => void }> =
     paymentInstructions: business.paymentInstructions,
     bookingPolicy: business.bookingPolicy,
     cancellationPolicy: business.cancellationPolicy,
+    refundPolicy: business.refundPolicy || '',
     instagramHandle1: business.instagram?.[0]?.handle || '@only_baig',
     instagramUrl1: business.instagram?.[0]?.url || 'https://www.instagram.com/only_baig/',
     instagramHandle2: business.instagram?.[1]?.handle || '@baig_treks_and_tours',
@@ -944,6 +1669,8 @@ export const AdminSettingsSection: React.FC<{ notify: (msg: string) => void }> =
       jazzcashNumber: form.jazzcashNumber,
       jazzcashName: form.jazzcashName,
       tagline: form.tagline,
+      address: form.address,
+      businessHours: form.businessHours,
       heroHeadline: form.heroHeadline,
       heroDescription: form.heroDescription,
       ctaText: form.ctaText,
@@ -953,6 +1680,7 @@ export const AdminSettingsSection: React.FC<{ notify: (msg: string) => void }> =
       paymentInstructions: form.paymentInstructions,
       bookingPolicy: form.bookingPolicy,
       cancellationPolicy: form.cancellationPolicy,
+      refundPolicy: form.refundPolicy,
       instagram: [
         { handle: form.instagramHandle1, url: form.instagramUrl1 },
         { handle: form.instagramHandle2, url: form.instagramUrl2 },
@@ -1158,6 +1886,68 @@ export const AdminSettingsSection: React.FC<{ notify: (msg: string) => void }> =
         />
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">Brand Tagline</label>
+          <input
+            type="text"
+            value={form.tagline}
+            onChange={(e) => setForm({ ...form, tagline: e.target.value })}
+            className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">Office Address</label>
+          <input
+            type="text"
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">Business Hours</label>
+          <input
+            type="text"
+            value={form.businessHours}
+            onChange={(e) => setForm({ ...form, businessHours: e.target.value })}
+            className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">Booking Policy</label>
+          <textarea
+            rows={2}
+            value={form.bookingPolicy}
+            onChange={(e) => setForm({ ...form, bookingPolicy: e.target.value })}
+            className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">
+            Cancellation Policy
+          </label>
+          <textarea
+            rows={2}
+            value={form.cancellationPolicy}
+            onChange={(e) => setForm({ ...form, cancellationPolicy: e.target.value })}
+            className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">Refund Policy</label>
+          <textarea
+            rows={2}
+            value={form.refundPolicy}
+            onChange={(e) => setForm({ ...form, refundPolicy: e.target.value })}
+            className="w-full px-3.5 py-2 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+          />
+        </div>
+      </div>
+
       <button
         type="submit"
         className="px-6 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold"
@@ -1334,7 +2124,10 @@ export const AdminUsersSection: React.FC<{
 
           <div className="space-y-3">
             {adminUsers.map((adm) => {
-              const isPrimarySuper = adm.email.toLowerCase() === 'admin@baigtours';
+              const isPrimarySuper =
+                adm.uid === 'super_admin_baigtours' ||
+                adm.email.toLowerCase() === 'admit@baigtours' ||
+                adm.email.toLowerCase() === 'admin@baigtours';
               return (
                 <div
                   key={adm.uid}
@@ -1347,6 +2140,9 @@ export const AdminUsersSection: React.FC<{
                       <span className="text-xs font-mono-num font-bold text-emerald-800">
                         {adm.role}
                       </span>
+                      <span className="text-[11px] font-semibold text-slate-500">
+                        ({adm.status})
+                      </span>
                     </div>
                     <div className="text-xs text-slate-600 font-mono-num mt-0.5">{adm.email}</div>
                     {adm.lastLoginAt && (
@@ -1357,7 +2153,7 @@ export const AdminUsersSection: React.FC<{
                   </div>
 
                   {!isPrimarySuper && isSuperAdmin && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() =>
@@ -1377,6 +2173,17 @@ export const AdminUsersSection: React.FC<{
                         className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800"
                       >
                         Toggle Role
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const nextStatus = adm.status === 'active' ? 'disabled' : 'active';
+                          await updateAdminAccountRole(adm.uid, adm.role, nextStatus);
+                          notify(`Set ${adm.email} status to ${nextStatus}.`);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800"
+                      >
+                        {adm.status === 'active' ? 'Disable' : 'Enable'}
                       </button>
                       <button
                         type="button"

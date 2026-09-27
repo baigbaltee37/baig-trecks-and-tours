@@ -31,6 +31,7 @@ import {
   Settings,
   FileText,
   UserCheck,
+  BookOpen,
 } from 'lucide-react';
 import { useApp, ADMIN_EMAIL } from '../context/AppContext';
 import {
@@ -46,19 +47,28 @@ import {
   AdminCustomersSection,
   AdminGallerySection,
   AdminReviewsSection,
+  AdminGuidesSection,
   AdminSettingsSection,
   AdminUsersSection,
   AdminAuditLogsSection,
 } from '../components/AdminSubModules';
 
 export const AdminLoginPage: React.FC = () => {
-  const { isAdmin, loginAdminSecret } = useApp();
+  const { isAdmin, authReady, loginAdminSecret } = useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [forgotOpen, setForgotOpen] = useState(false);
+
+  if (!authReady) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center text-sm font-semibold text-slate-600">
+        Verifying administrator session...
+      </div>
+    );
+  }
 
   if (isAdmin) {
     return <Navigate to="/admin" replace />;
@@ -73,7 +83,7 @@ export const AdminLoginPage: React.FC = () => {
       if (res.success) {
         navigate('/admin', { replace: true });
       } else {
-        setErrorMsg('Invalid admin credentials.');
+        setErrorMsg(res.error || 'Invalid admin credentials.');
       }
     } finally {
       setLoading(false);
@@ -241,6 +251,7 @@ type AdminSectionKey =
   | 'customers'
   | 'gallery'
   | 'reviews'
+  | 'guides'
   | 'settings'
   | 'users'
   | 'audit-logs';
@@ -253,6 +264,7 @@ function resolveSectionFromPath(pathname: string): AdminSectionKey {
   if (pathname.startsWith('/admin/customers')) return 'customers';
   if (pathname.startsWith('/admin/gallery')) return 'gallery';
   if (pathname.startsWith('/admin/reviews')) return 'reviews';
+  if (pathname.startsWith('/admin/guides') || pathname.startsWith('/admin/content')) return 'guides';
   if (pathname.startsWith('/admin/settings')) return 'settings';
   if (pathname.startsWith('/admin/users')) return 'users';
   if (pathname.startsWith('/admin/audit-logs')) return 'audit-logs';
@@ -311,6 +323,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [editingDest, setEditingDest] = useState<DestinationItem>(EMPTY_DEST_TEMPLATE);
   const [destGalleryText, setDestGalleryText] = useState('');
   const [destRelatedToursText, setDestRelatedToursText] = useState('');
+  const [destSearch, setDestSearch] = useState('');
 
   useEffect(() => {
     const editId = searchParams.get('editTour');
@@ -461,6 +474,12 @@ export const AdminDashboardPage: React.FC = () => {
         label: 'Reviews',
         to: '/admin/reviews',
         icon: <Star className="w-4 h-4" />,
+      },
+      {
+        id: 'guides',
+        label: 'Travel Guides & Content',
+        to: '/admin/guides',
+        icon: <BookOpen className="w-4 h-4" />,
       },
       {
         id: 'settings',
@@ -1452,69 +1471,90 @@ export const AdminDashboardPage: React.FC = () => {
               </button>
             </form>
 
-            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {allDestinations.map((d) => {
-                const isPub = d.published !== false;
-                return (
-                  <div
-                    key={d.id}
-                    className="p-4 rounded-2xl bg-white border border-slate-200 flex flex-col justify-between gap-3 shadow-xs"
-                  >
-                    <div className="flex items-start gap-3">
-                      <img
-                        src={d.imageUrl}
-                        alt={d.name}
-                        className="w-16 h-14 rounded-xl object-cover shrink-0 border border-slate-200"
-                      />
-                      <div>
-                        <div className="text-sm font-bold text-slate-900">{d.name}</div>
-                        <div className="text-xs text-slate-500">
-                          {d.region} · {isPub ? 'Published' : 'Unpublished'}
+            <div className="lg:col-span-7 space-y-3">
+              <div className="bg-white p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-slate-800">
+                  Destinations ({allDestinations.length})
+                </span>
+                <input
+                  type="text"
+                  value={destSearch}
+                  onChange={(e) => setDestSearch(e.target.value)}
+                  placeholder="Search destinations..."
+                  className="px-3 py-1.5 rounded-xl bg-gray-50 border border-slate-200 text-xs text-slate-900"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {allDestinations
+                  .filter(
+                    (d) =>
+                      !destSearch.trim() ||
+                      d.name.toLowerCase().includes(destSearch.toLowerCase()) ||
+                      d.region.toLowerCase().includes(destSearch.toLowerCase())
+                  )
+                  .map((d) => {
+                    const isPub = d.published !== false;
+                    return (
+                      <div
+                        key={d.id}
+                        className="p-4 rounded-2xl bg-white border border-slate-200 flex flex-col justify-between gap-3 shadow-xs"
+                      >
+                        <div className="flex items-start gap-3">
+                          <img
+                            src={d.imageUrl}
+                            alt={d.name}
+                            className="w-16 h-14 rounded-xl object-cover shrink-0 border border-slate-200"
+                          />
+                          <div>
+                            <div className="text-sm font-bold text-slate-900">{d.name}</div>
+                            <div className="text-xs text-slate-500">
+                              {d.region} · {isPub ? 'Published' : 'Unpublished'}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-end gap-1.5 border-t border-slate-100 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingDest(d);
+                              setDestGalleryText((d.galleryImages || []).join('\n'));
+                              setDestRelatedToursText((d.relatedTourIds || []).join(', '));
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-800"
+                          >
+                            EDIT
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await togglePublishDestinationAdmin(d.id);
+                              notify(
+                                isPub
+                                  ? `Unpublished ${d.name}.`
+                                  : `Published ${d.name}.`
+                              );
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-800"
+                          >
+                            {isPub ? 'UNPUBLISH' : 'PUBLISH'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              askConfirm(`Delete destination "${d.name}"?`, async () => {
+                                await deleteDestinationAdmin(d.id);
+                                notify(`Deleted destination "${d.name}".`);
+                              })
+                            }
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center justify-end gap-1.5 border-t border-slate-100 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingDest(d);
-                          setDestGalleryText((d.galleryImages || []).join('\n'));
-                          setDestRelatedToursText((d.relatedTourIds || []).join(', '));
-                        }}
-                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-800"
-                      >
-                        EDIT
-                      </button>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await togglePublishDestinationAdmin(d.id);
-                          notify(
-                            isPub
-                              ? `Unpublished ${d.name}.`
-                              : `Published ${d.name}.`
-                          );
-                        }}
-                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-800"
-                      >
-                        {isPub ? 'UNPUBLISH' : 'PUBLISH'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          askConfirm(`Delete destination "${d.name}"?`, async () => {
-                            await deleteDestinationAdmin(d.id);
-                            notify(`Deleted destination "${d.name}".`);
-                          })
-                        }
-                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
+              </div>
             </div>
           </div>
         )}
@@ -1533,6 +1573,9 @@ export const AdminDashboardPage: React.FC = () => {
         )}
         {activeSection === 'reviews' && (
           <AdminReviewsSection notify={notify} askConfirm={askConfirm} />
+        )}
+        {activeSection === 'guides' && (
+          <AdminGuidesSection notify={notify} askConfirm={askConfirm} />
         )}
         {activeSection === 'settings' && <AdminSettingsSection notify={notify} />}
         {activeSection === 'users' && (
