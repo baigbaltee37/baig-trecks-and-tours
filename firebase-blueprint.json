@@ -1,0 +1,753 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public customer or administrator profile without sensitive PII.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID matching the document ID.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the traveler.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user (customer or admin).",
+          "enum": ["customer", "admin"],
+          "maxLength": 20
+        },
+        "savedTourIds": {
+          "type": "array",
+          "description": "Bounded list of saved tour IDs (max 20)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": ["uid", "displayName", "role", "savedTourIds", "createdAt", "updatedAt"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Strictly isolated PII document for a user under /users/{userId}/private/{docId}.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Customer email address.",
+          "maxLength": 160
+        },
+        "phone": {
+          "type": "string",
+          "description": "Customer phone or WhatsApp number.",
+          "maxLength": 40
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "disabled"],
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "phone", "status", "createdAt", "updatedAt"]
+    },
+    "Tour": {
+      "title": "Tour",
+      "description": "Tour package managed by Baig Trecks & Tours.",
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "maxLength": 120,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 160
+        },
+        "destination": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "duration": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "durationCategory": {
+          "type": "string",
+          "enum": ["1-3 Days", "4-6 Days", "7-10 Days", "10+ Days", "Custom"],
+          "maxLength": 30
+        },
+        "tourType": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "startingLocation": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "endingLocation": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "groupSize": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "difficulty": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "bestSeason": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "shortDescription": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "overview": {
+          "type": "string",
+          "maxLength": 3000
+        },
+        "badge": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "featured": {
+          "type": "boolean"
+        },
+        "bookingStatus": {
+          "type": "string",
+          "enum": ["Available", "Limited Availability", "Sold Out", "Inquiry Only"],
+          "maxLength": 40
+        },
+        "pricePerPerson": {
+          "type": "number"
+        },
+        "couplePrice": {
+          "type": "number"
+        },
+        "childPrice": {
+          "type": "number"
+        },
+        "groupPriceNote": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "imageUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "itinerary": {
+          "type": "array",
+          "description": "Bounded day-by-day itinerary items (max 20)."
+        },
+        "inclusions": {
+          "type": "array",
+          "description": "Bounded list of confirmed inclusions (max 20)."
+        },
+        "exclusions": {
+          "type": "array",
+          "description": "Bounded list of confirmed exclusions (max 20)."
+        },
+        "transportation": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "accommodation": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "slug",
+        "title",
+        "destination",
+        "duration",
+        "durationCategory",
+        "tourType",
+        "shortDescription",
+        "overview",
+        "badge",
+        "featured",
+        "bookingStatus",
+        "pricePerPerson",
+        "couplePrice",
+        "childPrice",
+        "groupPriceNote",
+        "imageUrl",
+        "itinerary",
+        "inclusions",
+        "exclusions",
+        "transportation",
+        "accommodation",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Destination": {
+      "title": "Destination",
+      "description": "Gilgit-Baltistan destination showcase.",
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "maxLength": 100,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "region": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "shortDescription": {
+          "type": "string",
+          "maxLength": 350
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2500
+        },
+        "imageUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "isConfirmedTourOffering": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "slug",
+        "name",
+        "region",
+        "shortDescription",
+        "description",
+        "imageUrl",
+        "isConfirmedTourOffering",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "Customer travel inquiry submitted via form.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "customerName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "whatsapp": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "travelers": {
+          "type": "number"
+        },
+        "destination": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "preferredDates": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "tourType": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "budget": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "tourSlug": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "contacted", "resolved", "archived"],
+          "maxLength": 30
+        },
+        "internalNotes": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "customerName",
+        "email",
+        "whatsapp",
+        "travelers",
+        "destination",
+        "preferredDates",
+        "tourType",
+        "budget",
+        "tourSlug",
+        "message",
+        "status",
+        "internalNotes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Customer tour reservation request and payment tracking.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "customerName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "whatsapp": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "tourId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "tourTitle": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "travelDates": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "travelers": {
+          "type": "number"
+        },
+        "bookingStatus": {
+          "type": "string",
+          "enum": ["pending_confirmation", "confirmed", "completed", "cancelled"],
+          "maxLength": 40
+        },
+        "paymentStatus": {
+          "type": "string",
+          "enum": ["unpaid", "verification_pending", "confirmed_by_admin", "refunded"],
+          "maxLength": 40
+        },
+        "paymentMethod": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "customerName",
+        "email",
+        "whatsapp",
+        "tourId",
+        "tourTitle",
+        "travelDates",
+        "travelers",
+        "bookingStatus",
+        "paymentStatus",
+        "paymentMethod",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Verified customer review added by administrator.",
+      "type": "object",
+      "properties": {
+        "customerName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "rating": {
+          "type": "number"
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "reviewText": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "photoUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "customerName",
+        "rating",
+        "date",
+        "reviewText",
+        "photoUrl",
+        "verified",
+        "source",
+        "createdAt"
+      ]
+    },
+    "BlogPost": {
+      "title": "BlogPost",
+      "description": "Travel guide article for Northern Pakistan.",
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "maxLength": 120,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 180
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "excerpt": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "content": {
+          "type": "string",
+          "maxLength": 15000
+        },
+        "imageUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "readTime": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "seoTitle": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "seoDescription": {
+          "type": "string",
+          "maxLength": 320
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "slug",
+        "title",
+        "category",
+        "excerpt",
+        "content",
+        "imageUrl",
+        "published",
+        "readTime",
+        "seoTitle",
+        "seoDescription",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "GalleryImage": {
+      "title": "GalleryImage",
+      "description": "Photography item in the gallery.",
+      "type": "object",
+      "properties": {
+        "imageUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "caption": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "altText": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "destination": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "featured": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "imageUrl",
+        "caption",
+        "altText",
+        "category",
+        "destination",
+        "featured",
+        "createdAt"
+      ]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Centralized editable site settings for Baig Trecks & Tours.",
+      "type": "object",
+      "properties": {
+        "businessName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "whatsapp": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "signupNotificationEmail": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "jazzcashNumber": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "jazzcashName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "instagramPrimary": {
+          "type": "string",
+          "maxLength": 250
+        },
+        "instagramSecondary": {
+          "type": "string",
+          "maxLength": 250
+        },
+        "tagline": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "heroHeadline": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "heroDescription": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "businessHours": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "cancellationPolicy": {
+          "type": "string",
+          "maxLength": 3000
+        },
+        "refundPolicy": {
+          "type": "string",
+          "maxLength": 3000
+        },
+        "bookingPolicy": {
+          "type": "string",
+          "maxLength": 3000
+        },
+        "paymentInstructions": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "businessName",
+        "phone",
+        "whatsapp",
+        "email",
+        "signupNotificationEmail",
+        "jazzcashNumber",
+        "jazzcashName",
+        "instagramPrimary",
+        "instagramSecondary",
+        "tagline",
+        "heroHeadline",
+        "heroDescription",
+        "address",
+        "businessHours",
+        "cancellationPolicy",
+        "refundPolicy",
+        "bookingPolicy",
+        "paymentInstructions",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Public customer profile and saved tours."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Isolated PII document for user email and phone."
+    },
+    "/tours/{tourId}": {
+      "schema": { "$ref": "#/entities/Tour" },
+      "description": "Publicly readable tour packages managed by admins."
+    },
+    "/destinations/{destinationId}": {
+      "schema": { "$ref": "#/entities/Destination" },
+      "description": "Publicly readable destinations managed by admins."
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/Inquiry" },
+      "description": "Customer inquiries isolated by owner userId and admin access."
+    },
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "Customer tour bookings isolated by owner userId and admin access."
+    },
+    "/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Verified customer reviews managed by admins."
+    },
+    "/blogPosts/{postId}": {
+      "schema": { "$ref": "#/entities/BlogPost" },
+      "description": "Travel guides and articles managed by admins."
+    },
+    "/gallery/{imageId}": {
+      "schema": { "$ref": "#/entities/GalleryImage" },
+      "description": "Gallery photographs managed by admins."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Global business and CMS configuration managed by admins."
+    }
+  }
+}
