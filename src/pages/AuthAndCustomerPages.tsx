@@ -19,7 +19,7 @@ import {
   ArrowRight,
   Mountain,
 } from 'lucide-react';
-import { useApp, ADMIN_EMAIL, ADMIN_PASSWORD } from '../context/AppContext';
+import { useApp, ADMIN_EMAIL } from '../context/AppContext';
 import { TourCard } from '../components/InteractiveMapAndScroll';
 import { buildWhatsAppLink } from '../config/business';
 import { BrandLogo3D } from '../components/BrandLogo3D';
@@ -164,12 +164,6 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
     }
   };
 
-  const handleFillAdminCredentials = () => {
-    setEmail(ADMIN_EMAIL);
-    setPassword(ADMIN_PASSWORD);
-    setErrorMsg(null);
-  };
-
   return (
     <div className="max-w-md mx-auto px-4 py-10 md:py-14">
       <motion.div
@@ -184,41 +178,14 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
           <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
             {mode === 'signup' ? 'Create Your Account' : 'Sign In to Your Account'}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
             {redirectParam
               ? 'Please log in or sign up first to complete your tour booking.'
               : mode === 'signup'
               ? 'Register with your name, email, password, and phone to book tours.'
-              : 'Enter your email and password or use Admin credentials.'}
+              : 'Enter your registered customer email and password to sign in.'}
           </p>
         </div>
-
-        {/* Quick Admin Credentials Helper Box */}
-        {mode !== 'signup' && (
-          <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-2 text-xs">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold text-emerald-900 flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-emerald-700" />
-                <span>Admin Login</span>
-              </span>
-              <button
-                type="button"
-                onClick={handleFillAdminCredentials}
-                className="px-2.5 py-1 rounded-xl bg-emerald-800 text-white font-semibold hover:bg-emerald-900 transition-colors"
-              >
-                Auto-Fill Admin
-              </button>
-            </div>
-            <div className="text-slate-700 font-mono-num space-y-0.5 text-[11px]">
-              <div>
-                Email: <span className="text-slate-900 font-bold">{ADMIN_EMAIL}</span>
-              </div>
-              <div>
-                Password: <span className="text-slate-900 font-bold">{ADMIN_PASSWORD}</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {mode === 'signup' && (
@@ -270,7 +237,7 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={mode === 'signup' ? 'you@example.com' : 'admin@baigtreks.com'}
+                placeholder="you@example.com"
                 className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
               />
             </div>
@@ -288,7 +255,7 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === 'signup' ? 'At least 6 characters' : 'admin123'}
+                placeholder="Enter your password"
                 className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
               />
             </div>

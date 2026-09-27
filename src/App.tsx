@@ -53,7 +53,7 @@ export default function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/customer" element={<CustomerDashboardPage />} />
             <Route path="/customer/dashboard" element={<CustomerDashboardPage />} />
-            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/baig-admin-secure-786" element={<AdminLoginPage />} />
             <Route path="/admin" element={<AdminDashboardPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

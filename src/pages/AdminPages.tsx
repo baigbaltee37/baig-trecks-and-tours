@@ -11,7 +11,7 @@ import {
   RotateCcw,
   Image as ImageIcon,
 } from 'lucide-react';
-import { useApp, ADMIN_EMAIL, ADMIN_PASSWORD } from '../context/AppContext';
+import { useApp } from '../context/AppContext';
 import {
   TourItem,
   BlogPostItem,
@@ -21,9 +21,9 @@ import {
 } from '../data/initialData';
 
 export const AdminLoginPage: React.FC = () => {
-  const { isAdmin, loginWithCredentials, business } = useApp();
+  const { isAdmin, loginAdminSecret, business } = useApp();
   const navigate = useNavigate();
-  const [email, setEmail] = useState(ADMIN_EMAIL);
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -34,71 +34,75 @@ export const AdminLoginPage: React.FC = () => {
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    const res = await loginWithCredentials(email, password);
-    if (res.success && res.isAdmin) {
-      navigate('/admin');
+    const res = await loginAdminSecret(identifier, password);
+    if (res.success) {
+      navigate('/admin', { replace: true });
     } else {
-      setErrorMsg('Invalid Admin credentials. Use admin@baigtreks.com / admin123');
+      setErrorMsg(res.error || 'Invalid administrator credentials.');
     }
   };
 
   return (
     <div className="max-w-md mx-auto px-4 py-12 md:py-16">
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
         <div className="space-y-2 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
-            <Shield className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto">
+            <Shield className="w-6 h-6 text-emerald-600" />
           </div>
-          <div className="text-xs font-semibold text-emerald-700">
-            {business.name} Administration
+          <div className="text-xs font-bold text-emerald-800">
+            {business.name} Security Portal
           </div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-            Admin Console Login
+            Administrator Access
           </h1>
-          <p className="text-xs text-slate-600">
-            Enter <span className="text-slate-900 font-mono-num font-bold">{ADMIN_EMAIL}</span> and password{' '}
-            <span className="text-slate-900 font-mono-num font-bold">{ADMIN_PASSWORD}</span>
+          <p className="text-xs sm:text-sm text-slate-600 font-medium">
+            Enter your authorized administrator username/email and password to continue.
           </p>
         </div>
 
-        <form onSubmit={handleAdminLogin} className="space-y-4">
+        <form onSubmit={handleAdminLogin} className="space-y-4" noValidate>
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Admin Email
+              Email / Username *
             </label>
             <input
-              type="email"
+              type="text"
+              name="email"
+              autoComplete="username"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="Enter admin username or email"
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
             />
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Admin Password
+              Password *
             </label>
             <input
               type="password"
+              name="password"
+              autoComplete="current-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="admin123"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+              placeholder="Enter admin password"
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
             />
           </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">
+            <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-xs font-medium text-red-700">
               {errorMsg}
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full py-3 px-4 text-sm font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl shadow-sm transition-all"
+            className="w-full py-3 px-4 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm transition-all"
           >
-            Log In to Admin Dashboard
+            Sign In to Admin Dashboard
           </button>
         </form>
       </div>

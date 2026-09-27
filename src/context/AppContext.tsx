@@ -104,9 +104,9 @@ const LS_KEYS = {
 
 const BROADCAST_CHANNEL_NAME = 'baig_treks_live_sync_v1';
 
-// Hardcoded Admin Credentials
-export const ADMIN_EMAIL = 'admin@baigtreks.com';
-export const ADMIN_PASSWORD = 'admin123';
+// Admin Credentials (used exclusively on /baig-admin-secure-786)
+export const ADMIN_EMAIL = 'Only_baig';
+export const ADMIN_PASSWORD = '5549495744';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -240,6 +240,10 @@ interface AppContextValue {
     email: string,
     password: string
   ) => Promise<{ success: boolean; isAdmin: boolean; redirectTo: string; error?: string }>;
+  loginAdminSecret: (
+    identifier: string,
+    password: string
+  ) => Promise<{ success: boolean; redirectTo: string; error?: string }>;
   signupWithCredentials: (data: {
     displayName: string;
     email: string;
@@ -585,12 +589,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     : null;
 
-  // 1. Login with Email & Password (checks email format, min 6 chars, admin credentials, or localStorage 'users')
+  // 1. Customer-only Login on /login (does NOT accept admin credentials)
   const loginWithCredentials = async (
     email: string,
     password: string
   ): Promise<{ success: boolean; isAdmin: boolean; redirectTo: string; error?: string }> => {
     const cleanEmail = email.trim().toLowerCase();
+
+    if (
+      cleanEmail === ADMIN_EMAIL.toLowerCase() ||
+      cleanEmail === 'admin@baigtreks.com'
+    ) {
+      return {
+        success: false,
+        isAdmin: false,
+        redirectTo: '/login',
+        error: 'Customer login only. Invalid customer email or password.',
+      };
+    }
 
     if (!EMAIL_REGEX.test(cleanEmail)) {
       return {
@@ -610,37 +626,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    // Check Hardcoded Admin Credentials: admin@baigtreks.com / admin123
-    if (cleanEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      const adminUser: LocalUser = {
-        uid: 'admin_baigtreks',
-        name: 'Baig Admin',
-        displayName: 'Baig Admin',
-        email: ADMIN_EMAIL,
-        phone: business.phone,
-        role: 'admin',
-        savedTourIds: [],
-        status: 'active',
-        createdAt: new Date().toISOString(),
-      };
-      window.localStorage.setItem(LS_KEYS.IS_ADMIN, 'true');
-      window.localStorage.setItem(LS_KEYS.USER_ROLE, 'admin');
-      writeStorage(LS_KEYS.CURRENT_USER, adminUser);
-      writeStorage(LS_KEYS.LEGACY_CURRENT_USER, adminUser);
-      broadcastStorageUpdate(LS_KEYS.IS_ADMIN, 'true');
-      setIsAdmin(true);
-      setUser(adminUser);
-      return {
-        success: true,
-        isAdmin: true,
-        redirectTo: '/',
-      };
-    }
-
     // Check registered customers in localStorage 'users'
     const storedUsers = readMergedUsers();
     const matched = storedUsers.find(
-      (u) => u.email.toLowerCase() === cleanEmail && u.password === password
+      (u) =>
+        u.email.toLowerCase() === cleanEmail &&
+        u.password === password &&
+        u.role !== 'admin'
     );
 
     if (!matched) {
@@ -664,6 +656,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       success: true,
       isAdmin: false,
       redirectTo: '/my-bookings',
+    };
+  };
+
+  // 1b. Secret Admin Login (ONLY for /baig-admin-secure-786)
+  // Accepts "Only_baig" as username or email field input with password "5549495744"
+  const loginAdminSecret = async (
+    identifier: string,
+    password: string
+  ): Promise<{ success: boolean; redirectTo: string; error?: string }> => {
+    const cleanId = identifier.trim();
+    const isValidIdentifier =
+      cleanId === ADMIN_EMAIL || cleanId.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+    if (isValidIdentifier && password === ADMIN_PASSWORD) {
+      const adminUser: LocalUser = {
+        uid: 'admin_baigtreks',
+        name: 'Only_baig',
+        displayName: 'Only_baig',
+        email: ADMIN_EMAIL,
+        phone: business.phone,
+        role: 'admin',
+        savedTourIds: [],
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      };
+      window.localStorage.setItem(LS_KEYS.IS_ADMIN, 'true');
+      window.localStorage.setItem(LS_KEYS.USER_ROLE, 'admin');
+      writeStorage(LS_KEYS.CURRENT_USER, adminUser);
+      writeStorage(LS_KEYS.LEGACY_CURRENT_USER, adminUser);
+      broadcastStorageUpdate(LS_KEYS.IS_ADMIN, 'true');
+      setIsAdmin(true);
+      setUser(adminUser);
+      return {
+        success: true,
+        redirectTo: '/admin',
+      };
+    }
+
+    return {
+      success: false,
+      redirectTo: '/baig-admin-secure-786',
+      error: 'Invalid administrator username/email or password.',
     };
   };
 
@@ -710,11 +744,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    if (cleanEmail === ADMIN_EMAIL) {
+    if (cleanEmail === ADMIN_EMAIL.toLowerCase()) {
       return {
         success: false,
-        redirectTo: '/login',
-        error: 'This is the reserved Admin email. Please sign in on the Login page using admin123.',
+        redirectTo: '/signup',
+        error: 'This identifier is reserved.',
       };
     }
 
@@ -1190,6 +1224,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         signupNotificationNote,
         clearSignupNotificationNote: () => setSignupNotificationNote(null),
         loginWithCredentials,
+        loginAdminSecret,
         signupWithCredentials,
         signInWithGoogle,
         signOut,
