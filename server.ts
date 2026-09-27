@@ -203,10 +203,8 @@ async function startServer() {
   });
 
   // 2. Server-side SEO Sitemap
-  app.get('/sitemap.xml', (req, res) => {
-    const baseUrl =
-      process.env.APP_URL ||
-      `${req.protocol}://${req.get('host') || 'ais-pre-dmeyebpc5blebeyp3qd7cz-960435612346.asia-southeast1.run.app'}`;
+  app.get('/sitemap.xml', (_req, res) => {
+    const baseUrl = 'https://baig-treks-and-tours.vercel.app';
     const routes = [
       '/',
       '/tours',
@@ -246,13 +244,10 @@ ${routes
   });
 
   // 3. Server-side robots.txt
-  app.get('/robots.txt', (req, res) => {
-    const baseUrl =
-      process.env.APP_URL ||
-      `${req.protocol}://${req.get('host') || 'ais-pre-dmeyebpc5blebeyp3qd7cz-960435612346.asia-southeast1.run.app'}`;
+  app.get('/robots.txt', (_req, res) => {
     res.header('Content-Type', 'text/plain');
     res.send(
-      `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /customer\nDisallow: /profile\nDisallow: /my-bookings\n\nSitemap: ${baseUrl}/sitemap.xml\n`
+      `User-agent: *\nAllow: /\n\nSitemap: https://baig-treks-and-tours.vercel.app/sitemap.xml\n`
     );
   });
 
