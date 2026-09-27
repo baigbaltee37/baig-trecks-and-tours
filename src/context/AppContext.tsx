@@ -395,7 +395,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     const current = readCurrentUserFromStorage();
-    return window.localStorage.getItem(LS_KEYS.IS_ADMIN) === 'true' || current?.role === 'admin';
+    return (
+      window.localStorage.getItem(LS_KEYS.IS_ADMIN) === 'true' ||
+      window.localStorage.getItem('user') === 'admin' ||
+      current?.role === 'admin'
+    );
   });
   const [authReady] = useState(true);
   const [signupNotificationNote, setSignupNotificationNote] = useState<string | null>(null);
@@ -438,7 +442,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const current = readCurrentUserFromStorage();
       setUser(current);
       setIsAdmin(
-        window.localStorage.getItem(LS_KEYS.IS_ADMIN) === 'true' || current?.role === 'admin'
+        window.localStorage.getItem(LS_KEYS.IS_ADMIN) === 'true' ||
+          window.localStorage.getItem('user') === 'admin' ||
+          current?.role === 'admin'
       );
       setTours(normalizeTours(readStorage<TourItem[]>(LS_KEYS.TOURS, INITIAL_TOURS)));
       setDestinations(
@@ -589,22 +595,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     : null;
 
-  // 1. Customer-only Login on /login (does NOT accept admin credentials)
+  // 1. Login on /login: FIRST check Admin ("admin@baigtreks.com" or "only_baig" + "5549495744"), ELSE customer login
   const loginWithCredentials = async (
     email: string,
     password: string
   ): Promise<{ success: boolean; isAdmin: boolean; redirectTo: string; error?: string }> => {
     const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
 
+    // FIRST check if username/email is "admin@baigtreks.com" or "only_baig" (lowercase trim) AND password is "5549495744"
     if (
-      cleanEmail === ADMIN_EMAIL.toLowerCase() ||
-      cleanEmail === 'admin@baigtreks.com'
+      (cleanEmail === 'admin@baigtreks.com' || cleanEmail === 'only_baig') &&
+      (password === '5549495744' || cleanPassword === '5549495744')
     ) {
+      const adminUser: LocalUser = {
+        uid: 'admin_baigtreks',
+        name: 'Only_baig',
+        displayName: 'Only_baig',
+        email: cleanEmail === 'admin@baigtreks.com' ? 'admin@baigtreks.com' : ADMIN_EMAIL,
+        phone: business.phone,
+        role: 'admin',
+        savedTourIds: [],
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      };
+      window.localStorage.setItem('isAdmin', 'true');
+      window.localStorage.setItem('user', 'admin');
+      window.localStorage.setItem(LS_KEYS.IS_ADMIN, 'true');
+      window.localStorage.setItem(LS_KEYS.USER_ROLE, 'admin');
+      writeStorage(LS_KEYS.CURRENT_USER, adminUser);
+      writeStorage(LS_KEYS.LEGACY_CURRENT_USER, adminUser);
+      broadcastStorageUpdate(LS_KEYS.IS_ADMIN, 'true');
+      setIsAdmin(true);
+      setUser(adminUser);
       return {
-        success: false,
-        isAdmin: false,
-        redirectTo: '/login',
-        error: 'Customer login only. Invalid customer email or password.',
+        success: true,
+        isAdmin: true,
+        redirectTo: '/admin',
       };
     }
 
@@ -613,7 +640,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         success: false,
         isAdmin: false,
         redirectTo: '/login',
-        error: 'Please enter a valid email address (e.g. name@example.com).',
+        error: 'Invalid credentials. Please enter a valid customer email or admin username.',
       };
     }
 
@@ -646,6 +673,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     window.localStorage.setItem(LS_KEYS.IS_ADMIN, 'false');
+    window.localStorage.setItem('user', 'customer');
     window.localStorage.setItem(LS_KEYS.USER_ROLE, 'customer');
     writeStorage(LS_KEYS.CURRENT_USER, matched);
     writeStorage(LS_KEYS.LEGACY_CURRENT_USER, matched);
@@ -659,7 +687,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   };
 
-  // 1b. Secret Admin Login (ONLY for /baig-admin-secure-786)
+  // 1b. Secret Admin Login (/baig-admin-secure-786)
   // Accepts BOTH "admin@baigtreks.com" AND "Only_baig" (case-insensitive, trimmed) with password "5549495744"
   const loginAdminSecret = async (
     identifier: string,
@@ -687,6 +715,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         status: 'active',
         createdAt: new Date().toISOString(),
       };
+      window.localStorage.setItem('isAdmin', 'true');
+      window.localStorage.setItem('user', 'admin');
       window.localStorage.setItem(LS_KEYS.IS_ADMIN, 'true');
       window.localStorage.setItem(LS_KEYS.USER_ROLE, 'admin');
       writeStorage(LS_KEYS.CURRENT_USER, adminUser);
@@ -815,6 +845,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // 3. Logout (clears currentUser, isAdmin, userRole from localStorage)
   const signOut = async () => {
     window.localStorage.removeItem(LS_KEYS.IS_ADMIN);
+    window.localStorage.removeItem('user');
     window.localStorage.removeItem(LS_KEYS.USER_ROLE);
     window.localStorage.removeItem(LS_KEYS.CURRENT_USER);
     window.localStorage.removeItem(LS_KEYS.LEGACY_CURRENT_USER);

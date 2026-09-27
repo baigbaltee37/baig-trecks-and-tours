@@ -109,24 +109,32 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    // Client-side validation checks
-    const cleanEmail = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanEmail)) {
-      setErrorMsg('Please enter a valid email address (e.g. name@example.com).');
-      return;
-    }
+    const cleanIdentifier = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
 
-    if (!password || password.length < 6) {
-      setErrorMsg('Password must be at least 6 characters long.');
+    // FIRST check if username/email is "admin@baigtreks.com" or "only_baig" (lowercase trim) AND password is "5549495744"
+    if (
+      mode !== 'signup' &&
+      (cleanIdentifier === 'admin@baigtreks.com' || cleanIdentifier === 'only_baig') &&
+      (password === '5549495744' || cleanPassword === '5549495744')
+    ) {
+      localStorage.setItem('isAdmin', 'true');
+      localStorage.setItem('user', 'admin');
+      await loginWithCredentials(cleanIdentifier, cleanPassword);
+      navigate('/admin', { replace: true });
       return;
     }
 
     if (mode === 'signup') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanIdentifier)) {
+        setErrorMsg('Please enter a valid email address (e.g. name@example.com).');
+        return;
+      }
       if (!displayName.trim()) {
         setErrorMsg('Please enter your full name.');
         return;
@@ -137,12 +145,17 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
       }
     }
 
+    if (!password || password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters long.');
+      return;
+    }
+
     setLoading(true);
     try {
       if (mode === 'signup') {
         const res = await signupWithCredentials({
           displayName,
-          email: cleanEmail,
+          email: cleanIdentifier,
           password,
           phone: phoneInput,
         });
@@ -152,9 +165,11 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
           navigate(redirectParam || res.redirectTo);
         }
       } else {
-        const res = await loginWithCredentials(cleanEmail, password);
+        const res = await loginWithCredentials(cleanIdentifier, password);
         if (!res.success) {
           setErrorMsg(res.error || 'Invalid login credentials.');
+        } else if (res.isAdmin) {
+          navigate('/admin', { replace: true });
         } else {
           navigate(redirectParam || res.redirectTo);
         }
@@ -183,11 +198,11 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
               ? 'Please log in or sign up first to complete your tour booking.'
               : mode === 'signup'
               ? 'Register with your name, email, password, and phone to book tours.'
-              : 'Enter your registered customer email and password to sign in.'}
+              : 'Admin can also login here'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <form onSubmit={handleLogin} className="space-y-4" noValidate>
           {mode === 'signup' && (
             <>
               <div>
@@ -228,16 +243,16 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' 
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Email Address *
+              {mode === 'signup' ? 'Email Address *' : 'Email or Username *'}
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={mode === 'signup' ? 'you@example.com' : 'Email or username'}
                 className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
               />
             </div>
