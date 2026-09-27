@@ -266,6 +266,40 @@ function writeStorage<T>(key: string, value: T, shouldBroadcast = true): void {
   }
 }
 
+const ADMIN_PBKDF2_SALT = 'baig_treks_super_admin_salt_2026';
+const ADMIN_PBKDF2_DIGEST =
+  '474e315363e90e6119df10433721a5148c5818ee9c5a34ba6752e5559c2584c7dbd871c6df20457527d0945188c61bdc88d32b30836ba3d1f438823a186e1d21';
+
+async function verifyWebCryptoPbkdf2(password: string): Promise<boolean> {
+  if (typeof window === 'undefined' || !window.crypto?.subtle) return false;
+  try {
+    const enc = new TextEncoder();
+    const keyMaterial = await window.crypto.subtle.importKey(
+      'raw',
+      enc.encode(password),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveBits']
+    );
+    const derivedBits = await window.crypto.subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        salt: enc.encode(ADMIN_PBKDF2_SALT),
+        iterations: 100000,
+        hash: 'SHA-512',
+      },
+      keyMaterial,
+      512
+    );
+    const hex = Array.from(new Uint8Array(derivedBits))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    return hex === ADMIN_PBKDF2_DIGEST;
+  } catch {
+    return false;
+  }
+}
+
 const RESERVED_ADMIN_IDENTIFIERS = new Set([
   'admit@baigtours',
   'admin@baigtours',
@@ -829,7 +863,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             headers: { Authorization: `Bearer ${token}` },
             cache: 'no-store',
           });
-          if (sessionRes.ok) {
+          const contentType = sessionRes.headers.get('content-type') || '';
+          if (sessionRes.ok && contentType.includes('application/json')) {
             const sessionData = await sessionRes.json();
             if (sessionData?.authenticated && sessionData?.admin) {
               setAdminUser(sessionData.admin);
@@ -842,11 +877,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 setAdminUsers(sessionData.adminUsers);
                 writeStorage(LS_KEYS.ADMIN_USERS, sessionData.adminUsers, false);
               }
-            } else {
+            } else if (!token.startsWith('wc_admin_')) {
               setAdminSessionStorage(null, null);
               setAdminUser(null);
             }
-          } else if (sessionRes.status === 401 || sessionRes.status === 403) {
+          } else if (
+            (sessionRes.status === 401 || sessionRes.status === 403) &&
+            !token.startsWith('wc_admin_')
+          ) {
             setAdminSessionStorage(null, null);
             setAdminUser(null);
           }
@@ -1216,14 +1254,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     // Step A: Server-side PBKDF2 Master Admin authentication (/api/admin/login)
+    let serverHandledAndRejected = false;
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: cleanEmail, password: rawPassword }),
       });
+      const contentType = res.headers.get('content-type') || '';
 
-      if (res.ok) {
+      if (res.ok && contentType.includes('application/json')) {
         const data = await res.json();
         if (data?.ok && data?.token && data?.admin) {
           // Clear any customer session so roles never collide
@@ -1264,7 +1304,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
 
-      if (res.status === 403) {
+      if (res.status === 403 && contentType.includes('application/json')) {
         const errBody = await res.json().catch(() => ({}));
         return {
           success: false,
@@ -1272,8 +1312,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           error: errBody?.error || 'You do not have administrator access.',
         };
       }
+
+      if (res.status === 401 && contentType.includes('application/json')) {
+        serverHandledAndRejected = true;
+      }
     } catch {
-      // Proceed to Firebase Authentication verification
+      // Proceed to Firebase Authentication / WebCrypto PBKDF2 verification
     }
 
     // Step B: Firebase Authentication + Custom Claims (`admin: true`) / Firestore RBAC verification
@@ -1352,6 +1396,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
       } catch {
         // Invalid Firebase credentials
+      }
+    }
+
+    // Step C: WebCrypto PBKDF2-SHA512 fallback if deployed as a static bundle without /api/admin/login
+    const isPrimaryMasterAlias =
+      cleanEmail === 'admit@baigtours' ||
+      cleanEmail === 'admin@baigtours' ||
+      cleanEmail === 'admit@baigtours.com' ||
+      cleanEmail === 'admin@baigtours.com' ||
+      cleanEmail === 'admin@baigtreks.com' ||
+      cleanEmail === 'only_baig';
+
+    if (!serverHandledAndRejected && isPrimaryMasterAlias) {
+      const verified = await verifyWebCryptoPbkdf2(rawPassword);
+      if (verified) {
+        window.localStorage.removeItem(LS_KEYS.CURRENT_USER);
+        window.localStorage.removeItem(LS_KEYS.LEGACY_CURRENT_USER);
+        setUser(null);
+
+        const masterProfile: AdminUserRecord = {
+          uid: 'super_admin_baigtours',
+          email: ADMIN_EMAIL,
+          displayName: 'Master Admin',
+          role: 'SUPER_ADMIN',
+          status: 'active',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          lastLoginAt: new Date().toISOString(),
+        };
+        const wcToken = `wc_admin_${Date.now()}`;
+        setAdminSessionStorage(wcToken, masterProfile);
+        setAdminUser(masterProfile);
+        recordLocalAuditLog(
+          'Admin logged in',
+          'Session',
+          masterProfile.uid,
+          masterProfile.email,
+          'Authenticated into Admin Portal (SUPER_ADMIN)'
+        );
+        return {
+          success: true,
+          redirectTo: '/admin',
+        };
       }
     }
 
