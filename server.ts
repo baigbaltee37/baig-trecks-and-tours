@@ -204,7 +204,9 @@ async function startServer() {
 
   // 2. Server-side SEO Sitemap
   app.get('/sitemap.xml', (req, res) => {
-    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl =
+      process.env.APP_URL ||
+      `${req.protocol}://${req.get('host') || 'ais-pre-dmeyebpc5blebeyp3qd7cz-960435612346.asia-southeast1.run.app'}`;
     const routes = [
       '/',
       '/tours',
@@ -213,6 +215,14 @@ async function startServer() {
       '/tours/hunza-skardu-grand-karakoram',
       '/tours/fairy-meadows-nanga-parbat-trek',
       '/destinations',
+      '/destinations/hunza',
+      '/destinations/skardu',
+      '/destinations/fairy-meadows',
+      '/destinations/deosai',
+      '/destinations/khunjerab-pass',
+      '/destinations/attabad-lake',
+      '/destinations/shigar',
+      '/destinations/khaplu',
       '/experiences',
       '/about',
       '/gallery',
@@ -225,8 +235,8 @@ ${routes
   .map(
     (route) => `  <url>
     <loc>${baseUrl}${route}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>${route === '/' ? '1.0' : '0.8'}</priority>
+    <changefreq>${route === '/' ? 'daily' : 'weekly'}</changefreq>
+    <priority>${route === '/' ? '1.0' : route.startsWith('/tours') || route.startsWith('/destinations') ? '0.9' : '0.8'}</priority>
   </url>`
   )
   .join('\n')}
@@ -237,9 +247,13 @@ ${routes
 
   // 3. Server-side robots.txt
   app.get('/robots.txt', (req, res) => {
-    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl =
+      process.env.APP_URL ||
+      `${req.protocol}://${req.get('host') || 'ais-pre-dmeyebpc5blebeyp3qd7cz-960435612346.asia-southeast1.run.app'}`;
     res.header('Content-Type', 'text/plain');
-    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /customer\nSitemap: ${baseUrl}/sitemap.xml\n`);
+    res.send(
+      `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /customer\nDisallow: /profile\nDisallow: /my-bookings\n\nSitemap: ${baseUrl}/sitemap.xml\n`
+    );
   });
 
   if (process.env.NODE_ENV !== 'production') {

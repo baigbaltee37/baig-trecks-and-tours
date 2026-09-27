@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /customer
+Disallow: /profile
+Disallow: /my-bookings
+
+Sitemap: https://ais-pre-dmeyebpc5blebeyp3qd7cz-960435612346.asia-southeast1.run.app/sitemap.xml

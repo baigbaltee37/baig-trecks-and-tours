@@ -41,6 +41,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     setMobileMenuOpen(false);
     setUserDropdownOpen(false);
     window.scrollTo(0, 0);
+
+    const canonicalUrl = `${window.location.origin}${location.pathname}`;
+    const canonicalLink = document.querySelector('link[rel="canonical"]');
+    if (canonicalLink) {
+      canonicalLink.setAttribute('href', canonicalUrl);
+    }
+    const ogUrlMeta = document.querySelector('meta[property="og:url"]');
+    if (ogUrlMeta) {
+      ogUrlMeta.setAttribute('content', canonicalUrl);
+    }
   }, [location.pathname]);
 
   useEffect(() => {
