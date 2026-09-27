@@ -11,17 +11,13 @@ export interface BusinessConfig {
   instagram: {
     handle: string;
     url: string;
-    label: string;
   }[];
   locationLabel: string;
-  address: string;
-  businessHours: string;
-  googleMapsUrl: string;
-  facebook: string;
-  youtube: string;
   tagline: string;
   heroHeadline: string;
   heroDescription: string;
+  address: string;
+  businessHours: string;
   cancellationPolicy: string;
   refundPolicy: string;
   bookingPolicy: string;
@@ -29,7 +25,7 @@ export interface BusinessConfig {
 }
 
 export const defaultBusinessConfig: BusinessConfig = {
-  name: 'Baig Trecks & Tours',
+  name: 'Baig Treks & Tours',
   phone: '03155449778',
   phoneInternational: '+923155449778',
   whatsapp: '923155449778',
@@ -42,29 +38,28 @@ export const defaultBusinessConfig: BusinessConfig = {
     {
       handle: '@only_baig',
       url: 'https://www.instagram.com/only_baig/',
-      label: 'Official Perspective (@only_baig)',
     },
     {
       handle: '@baig_treks_and_tours',
       url: 'https://www.instagram.com/baig_treks_and_tours/',
-      label: 'Expeditions & Tours (@baig_treks_and_tours)',
     },
   ],
-  locationLabel: 'GILGIT-BALTISTAN • PAKISTAN',
+  locationLabel: 'Gilgit-Baltistan, Pakistan',
+  tagline:
+    'Explore Gilgit-Baltistan with Authentic Local Expertise, Adventure & Comfort',
+  heroHeadline: 'Discover the Majesty of Gilgit-Baltistan',
+  heroDescription:
+    'Experience breathtaking valleys, legendary Karakoram peaks, crystal-clear alpine lakes, and curated private & group journeys through Northern Pakistan with Baig Treks & Tours.',
   address: '',
   businessHours: '',
-  googleMapsUrl: '',
-  facebook: '',
-  youtube: '',
-  tagline: 'Experience the Majestic Beauty of Gilgit-Baltistan',
-  heroHeadline: 'EXPERIENCE THE MAJESTIC BEAUTY OF GILGIT-BALTISTAN',
-  heroDescription:
-    'Discover breathtaking valleys, legendary mountain landscapes, rich cultures and unforgettable journeys through Northern Pakistan with Baig Trecks & Tours.',
-  cancellationPolicy: '',
-  refundPolicy: '',
-  bookingPolicy: '',
+  cancellationPolicy:
+    'Cancellation terms depend on the season, hotel reservation policies, and transport arrangements confirmed for your itinerary. Please contact Baig Treks & Tours directly via WhatsApp or email prior to making changes.',
+  refundPolicy:
+    'Refund eligibility is determined according to the advance commitments made for your specific tour dates and group size. Contact our team directly to review your booking.',
+  bookingPolicy:
+    'All tour bookings and custom itineraries are confirmed directly with Baig Treks & Tours after verifying travel dates, group size, and seasonal road/weather conditions.',
   paymentInstructions:
-    'After Baig Trecks & Tours confirms your travel dates, availability, and final package price, you may reserve your seat using the official JazzCash account details displayed below and share your transaction reference on WhatsApp for manual verification.',
+    'Confirm your tour dates and availability with Baig Treks & Tours via WhatsApp (03155449778) or email before sending your JazzCash transfer to 03155449778 (Account Name: ESSA ALI). Share your payment confirmation screenshot on WhatsApp for verification.',
 };
 
 export function buildWhatsAppLink(message: string, whatsappNumber = defaultBusinessConfig.whatsapp): string {
@@ -73,36 +68,5 @@ export function buildWhatsAppLink(message: string, whatsappNumber = defaultBusin
 }
 
 export function buildTourWhatsAppMessage(tourTitle: string, businessName = defaultBusinessConfig.name): string {
-  return `Hello ${businessName}, I am interested in booking the ${tourTitle}. Please send me the latest price, availability and booking details.`;
+  return `Hello ${businessName}, I am interested in the "${tourTitle}" tour in Gilgit-Baltistan. Please share availability, itinerary details, and booking information.`;
 }
-
-// Future Payment Provider Abstraction Layer (Section 46)
-export interface PaymentInstructionResult {
-  providerId: 'jazzcash' | 'bank_transfer' | 'card_future';
-  displayName: string;
-  isLiveApiIntegrated: boolean;
-  accountNumber?: string;
-  accountTitle?: string;
-  instructions: string;
-}
-
-export abstract class PaymentProvider {
-  abstract getInstructions(config: BusinessConfig): PaymentInstructionResult;
-}
-
-export class JazzCashManualProvider extends PaymentProvider {
-  getInstructions(config: BusinessConfig): PaymentInstructionResult {
-    return {
-      providerId: 'jazzcash',
-      displayName: 'JazzCash Payment',
-      isLiveApiIntegrated: false,
-      accountNumber: config.jazzcashNumber,
-      accountTitle: config.jazzcashName,
-      instructions:
-        config.paymentInstructions ||
-        'Confirm availability with Baig Trecks & Tours prior to transferring funds. All payments are verified manually by our team.',
-    };
-  }
-}
-
-export const paymentProvider = new JazzCashManualProvider();

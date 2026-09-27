@@ -151,7 +151,15 @@ export const Karakoram3DCanvas: React.FC<Karakoram3DCanvasProps> = ({
       mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 0.8;
       mouseY = ((e.clientY - rect.top) / rect.height - 0.5) * 0.4;
     };
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!e.touches[0]) return;
+      const rect = container.getBoundingClientRect();
+      mouseX = ((e.touches[0].clientX - rect.left) / rect.width - 0.5) * 0.8;
+      mouseY = ((e.touches[0].clientY - rect.top) / rect.height - 0.5) * 0.4;
+    };
     container.addEventListener('mousemove', handlePointerMove);
+    container.addEventListener('touchstart', handleTouchMove, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
 
     const handleResize = () => {
       if (!container) return;

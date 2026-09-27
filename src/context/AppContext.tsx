@@ -1,23 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut as firebaseSignOut,
-  User as FirebaseUser,
-} from 'firebase/auth';
-import {
-  collection,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  query,
-  where,
-  serverTimestamp,
-} from 'firebase/firestore';
-import { auth, db, googleProvider, handleFirestoreError, OperationType } from '../lib/firebase';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { BusinessConfig, defaultBusinessConfig } from '../config/business';
 import {
   TourItem,
@@ -33,9 +14,24 @@ import {
   INITIAL_FAQS,
 } from '../data/initialData';
 
+export interface LocalUser {
+  uid: string;
+  name: string;
+  displayName: string;
+  email: string;
+  phone: string;
+  role: 'customer' | 'admin';
+  savedTourIds: string[];
+  password?: string;
+  status: 'active' | 'disabled';
+  createdAt: string;
+}
+
 export interface UserProfileData {
   uid: string;
   displayName: string;
+  email?: string;
+  phone?: string;
   role: 'customer' | 'admin';
   savedTourIds: string[];
 }
@@ -62,28 +58,167 @@ export interface InquiryRecord {
   message: string;
   status: 'pending' | 'contacted' | 'resolved' | 'archived';
   internalNotes: string;
-  createdAt?: unknown;
+  createdAt?: string;
 }
 
 export interface BookingRecord {
   id: string;
   userId: string;
+  userEmail: string;
   customerName: string;
   email: string;
   whatsapp: string;
   tourId: string;
+  tourSlug?: string;
   tourTitle: string;
+  tourImage?: string;
+  pricePerPerson?: number;
   travelDates: string;
   travelers: number;
   bookingStatus: 'pending_confirmation' | 'confirmed' | 'completed' | 'cancelled';
   paymentStatus: 'unpaid' | 'verification_pending' | 'confirmed_by_admin' | 'refunded';
   paymentMethod: string;
   notes: string;
-  createdAt?: unknown;
+  createdAt?: string;
+}
+
+// Exact LocalStorage Keys requested + Legacy Sync Keys
+const LS_KEYS = {
+  IS_ADMIN: 'isAdmin',
+  USER_ROLE: 'userRole',
+  CURRENT_USER: 'currentUser',
+  LEGACY_CURRENT_USER: 'btt_current_user',
+  USERS: 'users',
+  LEGACY_USERS: 'btt_users',
+  BOOKINGS: 'bookings',
+  LEGACY_BOOKINGS: 'btt_bookings',
+  TOURS: 'btt_tours',
+  DESTINATIONS: 'btt_destinations',
+  BLOG: 'btt_blog_posts',
+  GALLERY: 'btt_gallery',
+  REVIEWS: 'btt_reviews',
+  INQUIRIES: 'btt_inquiries',
+  SETTINGS: 'btt_site_settings',
+  SYNC_TS: 'btt_last_sync_ts',
+};
+
+const BROADCAST_CHANNEL_NAME = 'baig_treks_live_sync_v1';
+
+// Hardcoded Admin Credentials
+export const ADMIN_EMAIL = 'admin@baigtreks.com';
+export const ADMIN_PASSWORD = 'admin123';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function readStorage<T>(key: string, fallback: T): T {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function broadcastStorageUpdate(key: string, value: unknown) {
+  if (typeof window === 'undefined') return;
+  try {
+    if ('BroadcastChannel' in window) {
+      const bc = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+      bc.postMessage({ type: 'STORAGE_UPDATE', key, value, ts: Date.now() });
+      bc.close();
+    }
+  } catch {
+    // Ignore BroadcastChannel errors
+  }
+}
+
+function writeStorage<T>(key: string, value: T, shouldBroadcast = true): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+    if (shouldBroadcast) {
+      broadcastStorageUpdate(key, value);
+    }
+  } catch (err) {
+    console.warn(`Failed to save ${key} to localStorage:`, err);
+  }
+}
+
+function readMergedUsers(): LocalUser[] {
+  const primary = readStorage<LocalUser[]>(LS_KEYS.USERS, []);
+  const legacy = readStorage<LocalUser[]>(LS_KEYS.LEGACY_USERS, []);
+  const map = new Map<string, LocalUser>();
+  [...legacy, ...primary].forEach((u) => {
+    if (u && u.email) {
+      const normalized: LocalUser = {
+        ...u,
+        name: u.name || u.displayName || u.email.split('@')[0],
+        displayName: u.displayName || u.name || u.email.split('@')[0],
+      };
+      map.set(u.email.toLowerCase(), normalized);
+    }
+  });
+  return Array.from(map.values());
+}
+
+function readMergedBookings(): BookingRecord[] {
+  const primary = readStorage<BookingRecord[]>(LS_KEYS.BOOKINGS, []);
+  const legacy = readStorage<BookingRecord[]>(LS_KEYS.LEGACY_BOOKINGS, []);
+  const map = new Map<string, BookingRecord>();
+  [...legacy, ...primary].forEach((b) => {
+    if (b && b.id) {
+      map.set(b.id, {
+        ...b,
+        userEmail: (b.userEmail || b.email || '').toLowerCase(),
+      });
+    }
+  });
+  return Array.from(map.values());
+}
+
+function readCurrentUserFromStorage(): LocalUser | null {
+  const primary = readStorage<LocalUser | null>(LS_KEYS.CURRENT_USER, null);
+  if (primary && primary.email) {
+    return {
+      ...primary,
+      name: primary.name || primary.displayName || primary.email.split('@')[0],
+      displayName: primary.displayName || primary.name || primary.email.split('@')[0],
+    };
+  }
+  const legacy = readStorage<LocalUser | null>(LS_KEYS.LEGACY_CURRENT_USER, null);
+  if (legacy && legacy.email) {
+    return {
+      ...legacy,
+      name: legacy.name || legacy.displayName || legacy.email.split('@')[0],
+      displayName: legacy.displayName || legacy.name || legacy.email.split('@')[0],
+    };
+  }
+  return null;
+}
+
+async function pushSharedStateToServer(payload: Record<string, unknown>): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const res = await fetch('/api/shared-state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.updatedAt) {
+        window.localStorage.setItem(LS_KEYS.SYNC_TS, String(data.updatedAt));
+      }
+    }
+  } catch {
+    // Silent fallback when deployed on static-only Vercel
+  }
 }
 
 interface AppContextValue {
-  user: FirebaseUser | null;
+  user: LocalUser | null;
   profile: UserProfileData | null;
   privateInfo: UserPrivateData | null;
   authReady: boolean;
@@ -100,10 +235,25 @@ interface AppContextValue {
   allUsers: UserProfileData[];
   signupNotificationNote: string | null;
   clearSignupNotificationNote: () => void;
+  // Auth Methods
+  loginWithCredentials: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; isAdmin: boolean; redirectTo: string; error?: string }>;
+  signupWithCredentials: (data: {
+    displayName: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }) => Promise<{ success: boolean; redirectTo: string; error?: string }>;
   signInWithGoogle: (phoneInput?: string) => Promise<void>;
   signOut: () => Promise<void>;
   toggleSaveTour: (tourId: string) => Promise<void>;
   updateCustomerProfile: (displayName: string, phone: string) => Promise<void>;
+  changeCustomerPassword: (
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<{ success: boolean; error?: string }>;
   submitInquiry: (data: {
     customerName: string;
     email: string;
@@ -121,14 +271,20 @@ interface AppContextValue {
     email: string;
     whatsapp: string;
     tourId: string;
+    tourSlug?: string;
     tourTitle: string;
+    tourImage?: string;
+    pricePerPerson?: number;
     travelDates: string;
     travelers: number;
     notes: string;
-  }) => Promise<void>;
+  }) => Promise<BookingRecord>;
   // Admin CMS Operations
   saveTourAdmin: (tour: TourItem) => Promise<void>;
   deleteTourAdmin: (tourId: string) => Promise<void>;
+  exportToursAsJson: () => void;
+  importToursFromJson: (jsonString: string) => { success: boolean; count: number; error?: string };
+  resetToursToDefault: () => void;
   saveDestinationAdmin: (dest: DestinationItem) => Promise<void>;
   deleteDestinationAdmin: (destId: string) => Promise<void>;
   saveBlogPostAdmin: (post: BlogPostItem) => Promise<void>;
@@ -137,7 +293,11 @@ interface AppContextValue {
   deleteGalleryImageAdmin: (imgId: string) => Promise<void>;
   saveReviewAdmin: (rev: ReviewItem) => Promise<void>;
   deleteReviewAdmin: (revId: string) => Promise<void>;
-  updateInquiryAdmin: (inquiryId: string, status: InquiryRecord['status'], internalNotes: string) => Promise<void>;
+  updateInquiryAdmin: (
+    inquiryId: string,
+    status: InquiryRecord['status'],
+    internalNotes: string
+  ) => Promise<void>;
   updateBookingAdmin: (
     bookingId: string,
     bookingStatus: BookingRecord['bookingStatus'],
@@ -152,442 +312,559 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 function sanitizeId(raw: string): string {
-  return raw.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 100) || `id_${Date.now()}`;
+  return (
+    raw
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 100) || `id_${Date.now()}`
+  );
+}
+
+function normalizeDestinations(list: unknown): DestinationItem[] {
+  if (!Array.isArray(list) || list.length === 0) return INITIAL_DESTINATIONS;
+  return list
+    .filter((item): item is Partial<DestinationItem> => Boolean(item && typeof item === 'object'))
+    .map((d) => {
+      const fallback = INITIAL_DESTINATIONS.find(
+        (init) => init.id === d.id || init.slug === d.slug || init.name === d.name
+      );
+      return {
+        id: d.id || fallback?.id || 'dest',
+        slug: d.slug || fallback?.slug || d.id || 'dest',
+        name: d.name || fallback?.name || 'Destination',
+        region: d.region || fallback?.region || 'Gilgit-Baltistan',
+        elevation: d.elevation || fallback?.elevation || '2,400 m',
+        coordinates: d.coordinates || fallback?.coordinates || { x: 50, y: 35 },
+        shortDescription: d.shortDescription || fallback?.shortDescription || '',
+        description: d.description || fallback?.description || '',
+        attractions:
+          Array.isArray(d.attractions) && d.attractions.length > 0
+            ? d.attractions
+            : fallback?.attractions || ['Scenic Viewpoints', 'Mountain Panoramas', 'Local Heritage'],
+        bestSeason: d.bestSeason || fallback?.bestSeason || 'April to October',
+        idealFor:
+          Array.isArray(d.idealFor) && d.idealFor.length > 0
+            ? d.idealFor
+            : fallback?.idealFor || ['Families', 'Couples', 'Adventure Travelers'],
+        imageUrl: d.imageUrl || fallback?.imageUrl || INITIAL_DESTINATIONS[0].imageUrl,
+        isConfirmedTourOffering:
+          d.isConfirmedTourOffering ?? fallback?.isConfirmedTourOffering ?? true,
+        activeTourOffering: d.activeTourOffering ?? fallback?.activeTourOffering ?? true,
+      };
+    });
+}
+
+function normalizeTours(list: unknown): TourItem[] {
+  if (!Array.isArray(list) || list.length === 0) return INITIAL_TOURS;
+  return list
+    .filter((item): item is Partial<TourItem> => Boolean(item && typeof item === 'object'))
+    .map((t) => {
+      const fallback = INITIAL_TOURS.find(
+        (init) => init.id === t.id || init.slug === t.slug
+      );
+      return {
+        ...INITIAL_TOURS[0],
+        ...fallback,
+        ...t,
+        id: t.id || fallback?.id || `tour_${Date.now()}`,
+        slug: t.slug || fallback?.slug || t.id || `tour_${Date.now()}`,
+        title: t.title || fallback?.title || 'Gilgit-Baltistan Tour',
+        destination: t.destination || fallback?.destination || 'Hunza',
+        duration: t.duration || fallback?.duration || '5 Days / 4 Nights',
+        durationCategory: t.durationCategory || fallback?.durationCategory || '4-6 Days',
+        tourType: t.tourType || fallback?.tourType || 'Family Holidays',
+        shortDescription: t.shortDescription || fallback?.shortDescription || '',
+        overview: t.overview || fallback?.overview || '',
+        pricePerPerson: Number(t.pricePerPerson) || 0,
+        couplePrice: Number(t.couplePrice) || 0,
+        childPrice: Number(t.childPrice) || 0,
+        itinerary: Array.isArray(t.itinerary) ? t.itinerary : fallback?.itinerary || [],
+        inclusions: Array.isArray(t.inclusions) ? t.inclusions : fallback?.inclusions || [],
+        exclusions: Array.isArray(t.exclusions) ? t.exclusions : fallback?.exclusions || [],
+      };
+    });
 }
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [profile, setProfile] = useState<UserProfileData | null>(null);
-  const [privateInfo, setPrivateInfo] = useState<UserPrivateData | null>(null);
-  const [authReady, setAuthReady] = useState(false);
+  const [user, setUser] = useState<LocalUser | null>(() => readCurrentUserFromStorage());
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const current = readCurrentUserFromStorage();
+    return window.localStorage.getItem(LS_KEYS.IS_ADMIN) === 'true' || current?.role === 'admin';
+  });
+  const [authReady] = useState(true);
   const [signupNotificationNote, setSignupNotificationNote] = useState<string | null>(null);
 
-  const [business, setBusiness] = useState<BusinessConfig>(defaultBusinessConfig);
-  const [tours, setTours] = useState<TourItem[]>(INITIAL_TOURS);
-  const [destinations, setDestinations] = useState<DestinationItem[]>(INITIAL_DESTINATIONS);
-  const [blogPosts, setBlogPosts] = useState<BlogPostItem[]>(INITIAL_BLOG_POSTS);
-  const [gallery, setGallery] = useState<GalleryImageItem[]>(INITIAL_GALLERY);
-  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [business, setBusiness] = useState<BusinessConfig>(() =>
+    readStorage<BusinessConfig>(LS_KEYS.SETTINGS, defaultBusinessConfig)
+  );
+  const [tours, setTours] = useState<TourItem[]>(() =>
+    normalizeTours(readStorage<TourItem[]>(LS_KEYS.TOURS, INITIAL_TOURS))
+  );
+  const [destinations, setDestinations] = useState<DestinationItem[]>(() =>
+    normalizeDestinations(readStorage<DestinationItem[]>(LS_KEYS.DESTINATIONS, INITIAL_DESTINATIONS))
+  );
+  const [blogPosts, setBlogPosts] = useState<BlogPostItem[]>(() =>
+    readStorage<BlogPostItem[]>(LS_KEYS.BLOG, INITIAL_BLOG_POSTS)
+  );
+  const [gallery, setGallery] = useState<GalleryImageItem[]>(() =>
+    readStorage<GalleryImageItem[]>(LS_KEYS.GALLERY, INITIAL_GALLERY)
+  );
+  const [reviews, setReviews] = useState<ReviewItem[]>(() =>
+    readStorage<ReviewItem[]>(LS_KEYS.REVIEWS, [])
+  );
   const [faqs] = useState<FAQItem[]>(INITIAL_FAQS);
-  const [inquiries, setInquiries] = useState<InquiryRecord[]>([]);
-  const [bookings, setBookings] = useState<BookingRecord[]>([]);
-  const [allUsers, setAllUsers] = useState<UserProfileData[]>([]);
+  const [inquiries, setInquiries] = useState<InquiryRecord[]>(() =>
+    readStorage<InquiryRecord[]>(LS_KEYS.INQUIRIES, [])
+  );
+  const [bookings, setBookings] = useState<BookingRecord[]>(() => readMergedBookings());
+  const [allUsers, setAllUsers] = useState<LocalUser[]>(() => readMergedUsers());
 
-  const isBootstrappedAdminEmail =
-    Boolean(user?.email && user.email.toLowerCase() === 'baigbaltee37@gmail.com' && user.emailVerified);
-  const isAdmin = isBootstrappedAdminEmail || profile?.role === 'admin';
-
-  // Ensure user profile & private info exist on login, and send signup notification email on new registration
-  const ensureUserRecords = async (fbUser: FirebaseUser, phoneOverride?: string) => {
-    const userRef = doc(db, 'users', fbUser.uid);
-    const privRef = doc(db, 'users', fbUser.uid, 'private', 'info');
-
-    try {
-      const snap = await getDoc(userRef);
-      const isNewCustomer = !snap.exists();
-      const assignedRole: 'customer' | 'admin' =
-        fbUser.email?.toLowerCase() === 'baigbaltee37@gmail.com' && fbUser.emailVerified
-          ? 'admin'
-          : 'customer';
-
-      if (isNewCustomer) {
-        const displayName = (fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler').slice(0, 100);
-        await setDoc(userRef, {
-          uid: fbUser.uid,
-          displayName,
-          role: assignedRole,
-          savedTourIds: [],
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-
-        const phoneVal = (phoneOverride || fbUser.phoneNumber || '').slice(0, 40);
-        const emailVal = (fbUser.email || 'unknown@example.com').slice(0, 160);
-        await setDoc(privRef, {
-          uid: fbUser.uid,
-          email: emailVal,
-          phone: phoneVal,
-          status: 'active',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-
-        // Trigger server-side notification email to skardubhai1@gmail.com
-        try {
-          const resp = await fetch('/api/notify-signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              uid: fbUser.uid,
-              displayName,
-              email: emailVal,
-              phone: phoneVal || 'Not provided',
-              status: 'active',
-            }),
-          });
-          if (resp.ok) {
-            const result = await resp.json();
-            setSignupNotificationNote(result.note || 'Account registered.');
-          }
-        } catch (notifyErr) {
-          console.warn('Could not reach signup notification endpoint:', notifyErr);
-        }
-      }
-
-      const freshSnap = await getDoc(userRef);
-      if (freshSnap.exists()) {
-        const d = freshSnap.data();
-        setProfile({
-          uid: d.uid,
-          displayName: d.displayName,
-          role: d.role,
-          savedTourIds: Array.isArray(d.savedTourIds) ? d.savedTourIds : [],
-        });
-      }
-
-      const freshPriv = await getDoc(privRef);
-      if (freshPriv.exists()) {
-        const pd = freshPriv.data();
-        setPrivateInfo({
-          uid: pd.uid,
-          email: pd.email,
-          phone: pd.phone,
-          status: pd.status,
-        });
-      }
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, `users/${fbUser.uid}`);
-    }
-  };
+  const isSyncingRef = useRef(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (fbUser) => {
-      setUser(fbUser);
-      if (fbUser) {
-        await ensureUserRecords(fbUser);
-      } else {
-        setProfile(null);
-        setPrivateInfo(null);
-        setInquiries([]);
-        setBookings([]);
+    if (typeof window === 'undefined') return;
+
+    if (!window.localStorage.getItem(LS_KEYS.TOURS)) {
+      writeStorage(LS_KEYS.TOURS, INITIAL_TOURS, false);
+    }
+
+    const refreshFromLocalStorage = () => {
+      const current = readCurrentUserFromStorage();
+      setUser(current);
+      setIsAdmin(
+        window.localStorage.getItem(LS_KEYS.IS_ADMIN) === 'true' || current?.role === 'admin'
+      );
+      setTours(normalizeTours(readStorage<TourItem[]>(LS_KEYS.TOURS, INITIAL_TOURS)));
+      setDestinations(
+        normalizeDestinations(
+          readStorage<DestinationItem[]>(LS_KEYS.DESTINATIONS, INITIAL_DESTINATIONS)
+        )
+      );
+      setBlogPosts(readStorage<BlogPostItem[]>(LS_KEYS.BLOG, INITIAL_BLOG_POSTS));
+      setGallery(readStorage<GalleryImageItem[]>(LS_KEYS.GALLERY, INITIAL_GALLERY));
+      setReviews(readStorage<ReviewItem[]>(LS_KEYS.REVIEWS, []));
+      setInquiries(readStorage<InquiryRecord[]>(LS_KEYS.INQUIRIES, []));
+      setBookings(readMergedBookings());
+      setAllUsers(readMergedUsers());
+      setBusiness(readStorage<BusinessConfig>(LS_KEYS.SETTINGS, defaultBusinessConfig));
+    };
+
+    const handleStorageEvent = () => {
+      refreshFromLocalStorage();
+    };
+    window.addEventListener('storage', handleStorageEvent);
+
+    let bc: BroadcastChannel | null = null;
+    if ('BroadcastChannel' in window) {
+      try {
+        bc = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+        bc.onmessage = () => {
+          refreshFromLocalStorage();
+        };
+      } catch {
+        bc = null;
       }
-      setAuthReady(true);
-    });
-    return () => unsub();
+    }
+
+    const pullFromServer = async () => {
+      if (isSyncingRef.current) return;
+      isSyncingRef.current = true;
+      try {
+        const res = await fetch('/api/shared-state', { cache: 'no-store' });
+        if (!res.ok) return;
+        const remote = await res.json();
+        const localTs = Number(window.localStorage.getItem(LS_KEYS.SYNC_TS) || '0');
+
+        if (remote && typeof remote.updatedAt === 'number' && remote.updatedAt > localTs) {
+          if (Array.isArray(remote.tours) && remote.tours.length > 0) {
+            const normalizedTours = normalizeTours(remote.tours);
+            writeStorage(LS_KEYS.TOURS, normalizedTours, false);
+            setTours(normalizedTours);
+          }
+          if (Array.isArray(remote.destinations) && remote.destinations.length > 0) {
+            const normalizedDests = normalizeDestinations(remote.destinations);
+            writeStorage(LS_KEYS.DESTINATIONS, normalizedDests, false);
+            setDestinations(normalizedDests);
+          }
+          if (Array.isArray(remote.blogPosts) && remote.blogPosts.length > 0) {
+            writeStorage(LS_KEYS.BLOG, remote.blogPosts, false);
+            setBlogPosts(remote.blogPosts);
+          }
+          if (Array.isArray(remote.gallery) && remote.gallery.length > 0) {
+            writeStorage(LS_KEYS.GALLERY, remote.gallery, false);
+            setGallery(remote.gallery);
+          }
+          if (Array.isArray(remote.reviews)) {
+            writeStorage(LS_KEYS.REVIEWS, remote.reviews, false);
+            setReviews(remote.reviews);
+          }
+          if (Array.isArray(remote.inquiries)) {
+            writeStorage(LS_KEYS.INQUIRIES, remote.inquiries, false);
+            setInquiries(remote.inquiries);
+          }
+          if (Array.isArray(remote.bookings)) {
+            writeStorage(LS_KEYS.BOOKINGS, remote.bookings, false);
+            writeStorage(LS_KEYS.LEGACY_BOOKINGS, remote.bookings, false);
+            setBookings(remote.bookings);
+          }
+          if (Array.isArray(remote.users)) {
+            writeStorage(LS_KEYS.USERS, remote.users, false);
+            writeStorage(LS_KEYS.LEGACY_USERS, remote.users, false);
+            setAllUsers(remote.users);
+          }
+          if (remote.settings && typeof remote.settings === 'object') {
+            const mergedSettings = { ...defaultBusinessConfig, ...remote.settings };
+            writeStorage(LS_KEYS.SETTINGS, mergedSettings, false);
+            setBusiness(mergedSettings);
+          }
+          window.localStorage.setItem(LS_KEYS.SYNC_TS, String(remote.updatedAt));
+        } else if (remote && remote.updatedAt === 0) {
+          await pushSharedStateToServer({
+            tours: readStorage(LS_KEYS.TOURS, INITIAL_TOURS),
+            destinations: readStorage(LS_KEYS.DESTINATIONS, INITIAL_DESTINATIONS),
+            blogPosts: readStorage(LS_KEYS.BLOG, INITIAL_BLOG_POSTS),
+            gallery: readStorage(LS_KEYS.GALLERY, INITIAL_GALLERY),
+            reviews: readStorage(LS_KEYS.REVIEWS, []),
+            inquiries: readStorage(LS_KEYS.INQUIRIES, []),
+            bookings: readMergedBookings(),
+            users: readMergedUsers(),
+            settings: readStorage(LS_KEYS.SETTINGS, defaultBusinessConfig),
+          });
+        }
+      } catch {
+        // Silent fallback on static-only Vercel
+      } finally {
+        isSyncingRef.current = false;
+      }
+    };
+
+    pullFromServer();
+    const pollInterval = window.setInterval(pullFromServer, 4000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshFromLocalStorage();
+        pullFromServer();
+      }
+    };
+    window.addEventListener('focus', handleVisibility);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageEvent);
+      window.removeEventListener('focus', handleVisibility);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.clearInterval(pollInterval);
+      if (bc) bc.close();
+    };
   }, []);
 
-  // Public Firestore listeners (tours, destinations, reviews, blogPosts, gallery, settings)
-  useEffect(() => {
-    if (!authReady) return;
+  const profile: UserProfileData | null = user
+    ? {
+        uid: user.uid,
+        displayName: user.displayName || user.name || user.email.split('@')[0],
+        email: user.email,
+        phone: user.phone,
+        role: isAdmin ? 'admin' : user.role,
+        savedTourIds: user.savedTourIds || [],
+      }
+    : isAdmin
+    ? {
+        uid: 'admin_baigtreks',
+        displayName: 'Baig Admin',
+        email: ADMIN_EMAIL,
+        phone: defaultBusinessConfig.phone,
+        role: 'admin',
+        savedTourIds: [],
+      }
+    : null;
 
-    const unsubTours = onSnapshot(
-      collection(db, 'tours'),
-      (snap) => {
-        if (!snap.empty) {
-          const loaded: TourItem[] = snap.docs.map((docSnap) => {
-            const d = docSnap.data();
-            return {
-              id: docSnap.id,
-              slug: d.slug || docSnap.id,
-              title: d.title || '',
-              destination: d.destination || '',
-              duration: d.duration || '',
-              durationCategory: d.durationCategory || '4-6 Days',
-              tourType: d.tourType || '',
-              startingLocation: d.startingLocation || '',
-              endingLocation: d.endingLocation || '',
-              groupSize: d.groupSize || '',
-              difficulty: d.difficulty || '',
-              bestSeason: d.bestSeason || '',
-              shortDescription: d.shortDescription || '',
-              overview: d.overview || '',
-              badge: d.badge || '',
-              featured: Boolean(d.featured),
-              bookingStatus: d.bookingStatus || 'Inquiry Only',
-              pricePerPerson: Number(d.pricePerPerson || 0),
-              couplePrice: Number(d.couplePrice || 0),
-              childPrice: Number(d.childPrice || 0),
-              groupPriceNote: d.groupPriceNote || 'Contact for group pricing',
-              imageUrl: d.imageUrl || INITIAL_TOURS[0].imageUrl,
-              itinerary: Array.isArray(d.itinerary) ? d.itinerary : [],
-              inclusions: Array.isArray(d.inclusions) ? d.inclusions : [],
-              exclusions: Array.isArray(d.exclusions) ? d.exclusions : [],
-              transportation: d.transportation || '',
-              accommodation: d.accommodation || '',
-            };
-          });
-          setTours(loaded);
-        }
-      },
-      (err) => handleFirestoreError(err, OperationType.LIST, 'tours')
-    );
+  const privateInfo: UserPrivateData | null = user
+    ? {
+        uid: user.uid,
+        email: user.email,
+        phone: user.phone || '',
+        status: user.status || 'active',
+      }
+    : isAdmin
+    ? {
+        uid: 'admin_baigtreks',
+        email: ADMIN_EMAIL,
+        phone: defaultBusinessConfig.phone,
+        status: 'active',
+      }
+    : null;
 
-    const unsubDestinations = onSnapshot(
-      collection(db, 'destinations'),
-      (snap) => {
-        if (!snap.empty) {
-          const loaded: DestinationItem[] = snap.docs.map((docSnap) => {
-            const d = docSnap.data();
-            const fallbackMatch = INITIAL_DESTINATIONS.find((item) => item.slug === d.slug);
-            return {
-              id: docSnap.id,
-              slug: d.slug || docSnap.id,
-              name: d.name || '',
-              region: d.region || 'Gilgit-Baltistan',
-              elevation: fallbackMatch?.elevation || '2,400 m',
-              coordinates: fallbackMatch?.coordinates || { x: 50, y: 50 },
-              shortDescription: d.shortDescription || '',
-              description: d.description || '',
-              imageUrl: d.imageUrl || INITIAL_DESTINATIONS[0].imageUrl,
-              isConfirmedTourOffering: Boolean(d.isConfirmedTourOffering),
-            };
-          });
-          setDestinations(loaded);
-        }
-      },
-      (err) => handleFirestoreError(err, OperationType.LIST, 'destinations')
-    );
+  // 1. Login with Email & Password (checks email format, min 6 chars, admin credentials, or localStorage 'users')
+  const loginWithCredentials = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; isAdmin: boolean; redirectTo: string; error?: string }> => {
+    const cleanEmail = email.trim().toLowerCase();
 
-    const unsubReviews = onSnapshot(
-      collection(db, 'reviews'),
-      (snap) => {
-        const loaded: ReviewItem[] = snap.docs.map((docSnap) => {
-          const d = docSnap.data();
-          return {
-            id: docSnap.id,
-            customerName: d.customerName || '',
-            rating: Number(d.rating || 5),
-            date: d.date || '',
-            reviewText: d.reviewText || '',
-            photoUrl: d.photoUrl || '',
-            verified: Boolean(d.verified),
-            source: d.source || 'Direct Traveler Feedback',
-          };
-        });
-        setReviews(loaded);
-      },
-      (err) => handleFirestoreError(err, OperationType.LIST, 'reviews')
-    );
-
-    const unsubGallery = onSnapshot(
-      collection(db, 'gallery'),
-      (snap) => {
-        if (!snap.empty) {
-          const loaded: GalleryImageItem[] = snap.docs.map((docSnap) => {
-            const d = docSnap.data();
-            return {
-              id: docSnap.id,
-              imageUrl: d.imageUrl || '',
-              caption: d.caption || '',
-              altText: d.altText || '',
-              category: d.category || 'Mountains',
-              destination: d.destination || 'Gilgit-Baltistan',
-              featured: Boolean(d.featured),
-            };
-          });
-          setGallery(loaded);
-        }
-      },
-      (err) => handleFirestoreError(err, OperationType.LIST, 'gallery')
-    );
-
-    const unsubSettings = onSnapshot(
-      doc(db, 'settings', 'main'),
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const d = docSnap.data();
-          setBusiness((prev) => ({
-            ...prev,
-            name: d.businessName || prev.name,
-            phone: d.phone || prev.phone,
-            whatsapp: d.whatsapp || prev.whatsapp,
-            whatsappUrl: `https://wa.me/${(d.whatsapp || prev.whatsapp).replace(/[^0-9]/g, '')}`,
-            email: d.email || prev.email,
-            signupNotificationEmail: d.signupNotificationEmail || prev.signupNotificationEmail,
-            jazzcashNumber: d.jazzcashNumber || prev.jazzcashNumber,
-            jazzcashName: d.jazzcashName || prev.jazzcashName,
-            tagline: d.tagline || prev.tagline,
-            heroHeadline: d.heroHeadline || prev.heroHeadline,
-            heroDescription: d.heroDescription || prev.heroDescription,
-            address: d.address ?? prev.address,
-            businessHours: d.businessHours ?? prev.businessHours,
-            cancellationPolicy: d.cancellationPolicy ?? prev.cancellationPolicy,
-            refundPolicy: d.refundPolicy ?? prev.refundPolicy,
-            bookingPolicy: d.bookingPolicy ?? prev.bookingPolicy,
-            paymentInstructions: d.paymentInstructions ?? prev.paymentInstructions,
-            instagram: [
-              {
-                handle: '@only_baig',
-                url: d.instagramPrimary || 'https://www.instagram.com/only_baig/',
-                label: 'Official Perspective (@only_baig)',
-              },
-              {
-                handle: '@baig_treks_and_tours',
-                url: d.instagramSecondary || 'https://www.instagram.com/baig_treks_and_tours/',
-                label: 'Expeditions & Tours (@baig_treks_and_tours)',
-              },
-            ],
-          }));
-        }
-      },
-      (err) => handleFirestoreError(err, OperationType.GET, 'settings/main')
-    );
-
-    return () => {
-      unsubTours();
-      unsubDestinations();
-      unsubReviews();
-      unsubGallery();
-      unsubSettings();
-    };
-  }, [authReady]);
-
-  // Authenticated listeners (inquiries, bookings, and admin users list)
-  useEffect(() => {
-    if (!authReady || !user) return;
-
-    const inquiriesQuery = isBootstrappedAdminEmail
-      ? collection(db, 'inquiries')
-      : query(collection(db, 'inquiries'), where('userId', '==', user.uid));
-
-    const bookingsQuery = isBootstrappedAdminEmail
-      ? collection(db, 'bookings')
-      : query(collection(db, 'bookings'), where('userId', '==', user.uid));
-
-    const unsubInquiries = onSnapshot(
-      inquiriesQuery,
-      (snap) => {
-        const items: InquiryRecord[] = snap.docs.map((docSnap) => {
-          const d = docSnap.data();
-          return {
-            id: docSnap.id,
-            userId: d.userId,
-            customerName: d.customerName,
-            email: d.email,
-            whatsapp: d.whatsapp,
-            travelers: Number(d.travelers || 1),
-            destination: d.destination || '',
-            preferredDates: d.preferredDates || '',
-            tourType: d.tourType || '',
-            budget: d.budget || '',
-            tourSlug: d.tourSlug || '',
-            message: d.message || '',
-            status: d.status || 'pending',
-            internalNotes: d.internalNotes || '',
-            createdAt: d.createdAt,
-          };
-        });
-        setInquiries(items);
-      },
-      (err) => handleFirestoreError(err, OperationType.LIST, 'inquiries')
-    );
-
-    const unsubBookings = onSnapshot(
-      bookingsQuery,
-      (snap) => {
-        const items: BookingRecord[] = snap.docs.map((docSnap) => {
-          const d = docSnap.data();
-          return {
-            id: docSnap.id,
-            userId: d.userId,
-            customerName: d.customerName,
-            email: d.email,
-            whatsapp: d.whatsapp,
-            tourId: d.tourId,
-            tourTitle: d.tourTitle,
-            travelDates: d.travelDates || '',
-            travelers: Number(d.travelers || 1),
-            bookingStatus: d.bookingStatus || 'pending_confirmation',
-            paymentStatus: d.paymentStatus || 'unpaid',
-            paymentMethod: d.paymentMethod || 'JazzCash Manual Transfer',
-            notes: d.notes || '',
-            createdAt: d.createdAt,
-          };
-        });
-        setBookings(items);
-      },
-      (err) => handleFirestoreError(err, OperationType.LIST, 'bookings')
-    );
-
-    let unsubUsers = () => {};
-    if (isBootstrappedAdminEmail) {
-      unsubUsers = onSnapshot(
-        collection(db, 'users'),
-        (snap) => {
-          const list: UserProfileData[] = snap.docs.map((docSnap) => {
-            const d = docSnap.data();
-            return {
-              uid: d.uid || docSnap.id,
-              displayName: d.displayName || 'Traveler',
-              role: d.role || 'customer',
-              savedTourIds: Array.isArray(d.savedTourIds) ? d.savedTourIds : [],
-            };
-          });
-          setAllUsers(list);
-        },
-        (err) => handleFirestoreError(err, OperationType.LIST, 'users')
-      );
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      return {
+        success: false,
+        isAdmin: false,
+        redirectTo: '/login',
+        error: 'Please enter a valid email address (e.g. name@example.com).',
+      };
     }
 
-    return () => {
-      unsubInquiries();
-      unsubBookings();
-      unsubUsers();
-    };
-  }, [authReady, user, isBootstrappedAdminEmail]);
-
-  const signInWithGoogle = async (phoneInput?: string) => {
-    const cred = await signInWithPopup(auth, googleProvider);
-    if (cred.user) {
-      await ensureUserRecords(cred.user, phoneInput);
+    if (!password || password.length < 6) {
+      return {
+        success: false,
+        isAdmin: false,
+        redirectTo: '/login',
+        error: 'Password must be at least 6 characters long.',
+      };
     }
+
+    // Check Hardcoded Admin Credentials: admin@baigtreks.com / admin123
+    if (cleanEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      const adminUser: LocalUser = {
+        uid: 'admin_baigtreks',
+        name: 'Baig Admin',
+        displayName: 'Baig Admin',
+        email: ADMIN_EMAIL,
+        phone: business.phone,
+        role: 'admin',
+        savedTourIds: [],
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      };
+      window.localStorage.setItem(LS_KEYS.IS_ADMIN, 'true');
+      window.localStorage.setItem(LS_KEYS.USER_ROLE, 'admin');
+      writeStorage(LS_KEYS.CURRENT_USER, adminUser);
+      writeStorage(LS_KEYS.LEGACY_CURRENT_USER, adminUser);
+      broadcastStorageUpdate(LS_KEYS.IS_ADMIN, 'true');
+      setIsAdmin(true);
+      setUser(adminUser);
+      return {
+        success: true,
+        isAdmin: true,
+        redirectTo: '/',
+      };
+    }
+
+    // Check registered customers in localStorage 'users'
+    const storedUsers = readMergedUsers();
+    const matched = storedUsers.find(
+      (u) => u.email.toLowerCase() === cleanEmail && u.password === password
+    );
+
+    if (!matched) {
+      return {
+        success: false,
+        isAdmin: false,
+        redirectTo: '/login',
+        error:
+          'Invalid email or password. Please check your credentials or create an account on Sign Up.',
+      };
+    }
+
+    window.localStorage.setItem(LS_KEYS.IS_ADMIN, 'false');
+    window.localStorage.setItem(LS_KEYS.USER_ROLE, 'customer');
+    writeStorage(LS_KEYS.CURRENT_USER, matched);
+    writeStorage(LS_KEYS.LEGACY_CURRENT_USER, matched);
+    broadcastStorageUpdate(LS_KEYS.IS_ADMIN, 'false');
+    setIsAdmin(false);
+    setUser(matched);
+    return {
+      success: true,
+      isAdmin: false,
+      redirectTo: '/my-bookings',
+    };
   };
 
+  // 2. Signup in localStorage 'users' & auto-login into 'currentUser'
+  const signupWithCredentials = async (data: {
+    displayName: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }): Promise<{ success: boolean; redirectTo: string; error?: string }> => {
+    const cleanEmail = data.email.trim().toLowerCase();
+    const cleanName = data.displayName.trim();
+    const cleanPhone = (data.phone || '').trim();
+
+    if (!cleanName) {
+      return {
+        success: false,
+        redirectTo: '/signup',
+        error: 'Please enter your full name.',
+      };
+    }
+
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      return {
+        success: false,
+        redirectTo: '/signup',
+        error: 'Please enter a valid email address (e.g. name@example.com).',
+      };
+    }
+
+    if (!data.password || data.password.length < 6) {
+      return {
+        success: false,
+        redirectTo: '/signup',
+        error: 'Password must be at least 6 characters long.',
+      };
+    }
+
+    if (!cleanPhone) {
+      return {
+        success: false,
+        redirectTo: '/signup',
+        error: 'Please enter your phone or WhatsApp number.',
+      };
+    }
+
+    if (cleanEmail === ADMIN_EMAIL) {
+      return {
+        success: false,
+        redirectTo: '/login',
+        error: 'This is the reserved Admin email. Please sign in on the Login page using admin123.',
+      };
+    }
+
+    const storedUsers = readMergedUsers();
+    if (storedUsers.some((u) => u.email.toLowerCase() === cleanEmail)) {
+      return {
+        success: false,
+        redirectTo: '/signup',
+        error: 'An account with this email already exists. Please log in instead.',
+      };
+    }
+
+    const newUser: LocalUser = {
+      uid: `user_${Date.now()}`,
+      name: cleanName,
+      displayName: cleanName,
+      email: cleanEmail,
+      phone: cleanPhone,
+      role: 'customer',
+      savedTourIds: [],
+      password: data.password,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedUsers = [newUser, ...storedUsers];
+    writeStorage(LS_KEYS.USERS, updatedUsers);
+    writeStorage(LS_KEYS.LEGACY_USERS, updatedUsers);
+    writeStorage(LS_KEYS.CURRENT_USER, newUser);
+    writeStorage(LS_KEYS.LEGACY_CURRENT_USER, newUser);
+    window.localStorage.setItem(LS_KEYS.IS_ADMIN, 'false');
+    window.localStorage.setItem(LS_KEYS.USER_ROLE, 'customer');
+    broadcastStorageUpdate(LS_KEYS.IS_ADMIN, 'false');
+
+    setAllUsers(updatedUsers);
+    setIsAdmin(false);
+    setUser(newUser);
+    pushSharedStateToServer({ users: updatedUsers });
+    setSignupNotificationNote(
+      `Welcome, ${cleanName}! You are now signed in.`
+    );
+
+    return {
+      success: true,
+      redirectTo: '/my-bookings',
+    };
+  };
+
+  const signInWithGoogle = async (phoneInput?: string) => {
+    await signupWithCredentials({
+      displayName: 'Traveler',
+      email: `traveler_${Date.now()}@example.com`,
+      password: 'password123',
+      phone: phoneInput || '03155449778',
+    });
+  };
+
+  // 3. Logout (clears currentUser, isAdmin, userRole from localStorage)
   const signOut = async () => {
-    await firebaseSignOut(auth);
+    window.localStorage.removeItem(LS_KEYS.IS_ADMIN);
+    window.localStorage.removeItem(LS_KEYS.USER_ROLE);
+    window.localStorage.removeItem(LS_KEYS.CURRENT_USER);
+    window.localStorage.removeItem(LS_KEYS.LEGACY_CURRENT_USER);
+    broadcastStorageUpdate(LS_KEYS.IS_ADMIN, null);
+    setIsAdmin(false);
+    setUser(null);
   };
 
   const toggleSaveTour = async (tourId: string) => {
-    if (!user || !profile) return;
-    const current = profile.savedTourIds || [];
+    if (!user) return;
+    const current = user.savedTourIds || [];
     const exists = current.includes(tourId);
-    const updated = exists
-      ? current.filter((id) => id !== tourId)
-      : [...current, tourId].slice(0, 20);
+    const updatedIds = exists ? current.filter((id) => id !== tourId) : [...current, tourId];
+    const updatedUser: LocalUser = { ...user, savedTourIds: updatedIds };
+    setUser(updatedUser);
+    writeStorage(LS_KEYS.CURRENT_USER, updatedUser);
+    writeStorage(LS_KEYS.LEGACY_CURRENT_USER, updatedUser);
 
-    try {
-      await updateDoc(doc(db, 'users', user.uid), {
-        savedTourIds: updated,
-        updatedAt: serverTimestamp(),
-      });
-      setProfile({ ...profile, savedTourIds: updated });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
-    }
+    const updatedAll = allUsers.map((u) =>
+      u.email.toLowerCase() === user.email.toLowerCase() ? updatedUser : u
+    );
+    setAllUsers(updatedAll);
+    writeStorage(LS_KEYS.USERS, updatedAll);
+    writeStorage(LS_KEYS.LEGACY_USERS, updatedAll);
+    pushSharedStateToServer({ users: updatedAll });
   };
 
   const updateCustomerProfile = async (displayName: string, phone: string) => {
-    if (!user || !profile) return;
-    const cleanName = displayName.trim().slice(0, 100) || profile.displayName;
-    const cleanPhone = phone.trim().slice(0, 40);
+    if (!user) return;
+    const cleanName = displayName.trim() || user.displayName;
+    const updatedUser: LocalUser = {
+      ...user,
+      name: cleanName,
+      displayName: cleanName,
+      phone: phone.trim(),
+    };
+    setUser(updatedUser);
+    writeStorage(LS_KEYS.CURRENT_USER, updatedUser);
+    writeStorage(LS_KEYS.LEGACY_CURRENT_USER, updatedUser);
 
-    try {
-      await updateDoc(doc(db, 'users', user.uid), {
-        displayName: cleanName,
-        updatedAt: serverTimestamp(),
-      });
-      if (privateInfo) {
-        await updateDoc(doc(db, 'users', user.uid, 'private', 'info'), {
-          email: privateInfo.email,
-          phone: cleanPhone,
-          updatedAt: serverTimestamp(),
-        });
-        setPrivateInfo({ ...privateInfo, phone: cleanPhone });
-      }
-      setProfile({ ...profile, displayName: cleanName });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
+    const updatedAll = allUsers.map((u) =>
+      u.email.toLowerCase() === user.email.toLowerCase() ? updatedUser : u
+    );
+    setAllUsers(updatedAll);
+    writeStorage(LS_KEYS.USERS, updatedAll);
+    writeStorage(LS_KEYS.LEGACY_USERS, updatedAll);
+    pushSharedStateToServer({ users: updatedAll });
+  };
+
+  const changeCustomerPassword = async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!user) {
+      return { success: false, error: 'You must be logged in to change your password.' };
     }
+    if (!newPassword || newPassword.length < 6) {
+      return { success: false, error: 'New password must be at least 6 characters long.' };
+    }
+    if (user.password && currentPassword !== user.password) {
+      return { success: false, error: 'Current password does not match.' };
+    }
+
+    const updatedUser: LocalUser = {
+      ...user,
+      password: newPassword,
+    };
+    setUser(updatedUser);
+    writeStorage(LS_KEYS.CURRENT_USER, updatedUser);
+    writeStorage(LS_KEYS.LEGACY_CURRENT_USER, updatedUser);
+
+    const updatedAll = allUsers.map((u) =>
+      u.email.toLowerCase() === user.email.toLowerCase() ? updatedUser : u
+    );
+    setAllUsers(updatedAll);
+    writeStorage(LS_KEYS.USERS, updatedAll);
+    writeStorage(LS_KEYS.LEGACY_USERS, updatedAll);
+    pushSharedStateToServer({ users: updatedAll });
+    return { success: true };
   };
 
   const submitInquiry = async (data: {
@@ -602,255 +879,245 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     tourSlug?: string;
     message: string;
   }): Promise<{ persistedToDb: boolean }> => {
-    if (!user) {
-      // Unauthenticated visitors can still use the form and continue directly on WhatsApp
-      return { persistedToDb: false };
-    }
-    const inquiryId = `inq_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    try {
-      await setDoc(doc(db, 'inquiries', inquiryId), {
-        userId: user.uid,
-        customerName: data.customerName.trim().slice(0, 100) || 'Traveler',
-        email: data.email.trim().slice(0, 160),
-        whatsapp: data.whatsapp.trim().slice(0, 40),
-        travelers: Math.max(1, Math.min(200, Number(data.travelers) || 1)),
-        destination: data.destination.trim().slice(0, 100),
-        preferredDates: data.preferredDates.trim().slice(0, 100),
-        tourType: data.tourType.trim().slice(0, 80),
-        budget: data.budget.trim().slice(0, 80),
-        tourSlug: (data.tourSlug || '').trim().slice(0, 120),
-        message: data.message.trim().slice(0, 2000),
-        status: 'pending',
-        internalNotes: '',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      return { persistedToDb: true };
-    } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, `inquiries/${inquiryId}`);
-    }
+    const newInquiry: InquiryRecord = {
+      id: `inq_${Date.now()}`,
+      userId: user?.uid || 'guest',
+      customerName: data.customerName.trim() || 'Traveler',
+      email: data.email.trim(),
+      whatsapp: data.whatsapp.trim(),
+      travelers: Number(data.travelers) || 1,
+      destination: data.destination.trim(),
+      preferredDates: data.preferredDates.trim(),
+      tourType: data.tourType.trim(),
+      budget: data.budget.trim(),
+      tourSlug: data.tourSlug || '',
+      message: data.message.trim(),
+      status: 'pending',
+      internalNotes: '',
+      createdAt: new Date().toISOString(),
+    };
+    const next = [newInquiry, ...inquiries];
+    setInquiries(next);
+    writeStorage(LS_KEYS.INQUIRIES, next);
+    pushSharedStateToServer({ inquiries: next });
+    return { persistedToDb: true };
   };
 
+  // Save booking in localStorage 'bookings' with userEmail
   const submitBookingRequest = async (data: {
     customerName: string;
     email: string;
     whatsapp: string;
     tourId: string;
+    tourSlug?: string;
     tourTitle: string;
+    tourImage?: string;
+    pricePerPerson?: number;
     travelDates: string;
     travelers: number;
     notes: string;
-  }) => {
-    if (!user) throw new Error('Please sign in to save a booking request to your account.');
-    const bookingId = `bk_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    const cleanTourId = sanitizeId(data.tourId);
-
-    // Ensure the referenced tour exists in Firestore so the Global Consistency Invariant passes
-    const tourRef = doc(db, 'tours', cleanTourId);
-    const tourSnap = await getDoc(tourRef);
-    if (!tourSnap.exists() && isAdmin) {
-      const localTour = tours.find((t) => t.id === cleanTourId || t.slug === cleanTourId);
-      if (localTour) {
-        await saveTourAdmin(localTour);
-      }
-    }
-
-    try {
-      await setDoc(doc(db, 'bookings', bookingId), {
-        userId: user.uid,
-        customerName: data.customerName.trim().slice(0, 100) || 'Traveler',
-        email: data.email.trim().slice(0, 160),
-        whatsapp: data.whatsapp.trim().slice(0, 40),
-        tourId: cleanTourId,
-        tourTitle: data.tourTitle.trim().slice(0, 160),
-        travelDates: data.travelDates.trim().slice(0, 100),
-        travelers: Math.max(1, Math.min(200, Number(data.travelers) || 1)),
-        bookingStatus: 'pending_confirmation',
-        paymentStatus: 'unpaid',
-        paymentMethod: 'JazzCash Manual Transfer',
-        notes: data.notes.trim().slice(0, 1500),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, `bookings/${bookingId}`);
-    }
+  }): Promise<BookingRecord> => {
+    const resolvedEmail = (user?.email || data.email || '').trim().toLowerCase();
+    const newBooking: BookingRecord = {
+      id: `bk_${Date.now()}`,
+      userId: user?.uid || 'guest',
+      userEmail: resolvedEmail,
+      customerName: data.customerName.trim() || user?.displayName || 'Traveler',
+      email: resolvedEmail,
+      whatsapp: data.whatsapp.trim() || user?.phone || '',
+      tourId: data.tourId,
+      tourSlug: data.tourSlug || data.tourId,
+      tourTitle: data.tourTitle,
+      tourImage: data.tourImage,
+      pricePerPerson: data.pricePerPerson,
+      travelDates: data.travelDates,
+      travelers: Number(data.travelers) || 1,
+      bookingStatus: 'pending_confirmation',
+      paymentStatus: 'unpaid',
+      paymentMethod: 'JazzCash / Direct Confirmation',
+      notes: data.notes,
+      createdAt: new Date().toISOString(),
+    };
+    const next = [newBooking, ...bookings];
+    setBookings(next);
+    writeStorage(LS_KEYS.BOOKINGS, next);
+    writeStorage(LS_KEYS.LEGACY_BOOKINGS, next);
+    pushSharedStateToServer({ bookings: next });
+    return newBooking;
   };
 
-  // Admin CMS mutations
   const saveTourAdmin = async (tour: TourItem) => {
-    const docId = sanitizeId(tour.id || tour.slug);
-    const ref = doc(db, 'tours', docId);
-    try {
-      const existingSnap = await getDoc(ref);
-      const payload = {
-        slug: sanitizeId(tour.slug || docId),
-        title: tour.title.trim().slice(0, 160),
-        destination: tour.destination.trim().slice(0, 80),
-        duration: tour.duration.trim().slice(0, 60),
-        durationCategory: tour.durationCategory,
-        tourType: tour.tourType.trim().slice(0, 60),
-        startingLocation: (tour.startingLocation || '').slice(0, 100),
-        endingLocation: (tour.endingLocation || '').slice(0, 100),
-        groupSize: (tour.groupSize || '').slice(0, 80),
-        difficulty: (tour.difficulty || '').slice(0, 80),
-        bestSeason: (tour.bestSeason || '').slice(0, 100),
-        shortDescription: tour.shortDescription.slice(0, 400),
-        overview: tour.overview.slice(0, 3000),
-        badge: (tour.badge || '').slice(0, 40),
-        featured: Boolean(tour.featured),
-        bookingStatus: tour.bookingStatus,
-        pricePerPerson: Math.max(0, Number(tour.pricePerPerson) || 0),
-        couplePrice: Math.max(0, Number(tour.couplePrice) || 0),
-        childPrice: Math.max(0, Number(tour.childPrice) || 0),
-        groupPriceNote: (tour.groupPriceNote || 'Contact for group pricing').slice(0, 160),
-        imageUrl: (tour.imageUrl || INITIAL_TOURS[0].imageUrl).slice(0, 500),
-        itinerary: (tour.itinerary || []).slice(0, 20),
-        inclusions: (tour.inclusions || []).slice(0, 20).map((s) => s.slice(0, 200)),
-        exclusions: (tour.exclusions || []).slice(0, 20).map((s) => s.slice(0, 200)),
-        transportation: (tour.transportation || '').slice(0, 300),
-        accommodation: (tour.accommodation || '').slice(0, 300),
-        createdAt: existingSnap.exists() ? existingSnap.data().createdAt : serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-      await setDoc(ref, payload);
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `tours/${docId}`);
-    }
+    const cleanId = sanitizeId(tour.id || tour.slug || tour.title);
+    const cleanSlug = sanitizeId(tour.slug || cleanId);
+    const normalized: TourItem = {
+      ...tour,
+      id: cleanId,
+      slug: cleanSlug,
+      pricePerPerson: Math.max(0, Number(tour.pricePerPerson) || 0),
+      couplePrice: Math.max(0, Number(tour.couplePrice) || 0),
+      childPrice: Math.max(0, Number(tour.childPrice) || 0),
+    };
+
+    setTours((prev) => {
+      const idx = prev.findIndex((t) => t.id === cleanId || t.slug === cleanSlug);
+      let updated: TourItem[];
+      if (idx >= 0) {
+        updated = [...prev];
+        updated[idx] = normalized;
+      } else {
+        updated = [normalized, ...prev];
+      }
+      writeStorage(LS_KEYS.TOURS, updated);
+      pushSharedStateToServer({ tours: updated });
+      return updated;
+    });
   };
 
   const deleteTourAdmin = async (tourId: string) => {
+    setTours((prev) => {
+      const updated = prev.filter((t) => t.id !== tourId && t.slug !== tourId);
+      writeStorage(LS_KEYS.TOURS, updated);
+      pushSharedStateToServer({ tours: updated });
+      return updated;
+    });
+  };
+
+  const exportToursAsJson = () => {
+    const dataStr = JSON.stringify(tours, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `baig-treks-tours-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const importToursFromJson = (
+    jsonString: string
+  ): { success: boolean; count: number; error?: string } => {
     try {
-      await deleteDoc(doc(db, 'tours', tourId));
-    } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `tours/${tourId}`);
+      const parsed = JSON.parse(jsonString);
+      if (!Array.isArray(parsed)) {
+        return { success: false, count: 0, error: 'JSON file must contain an array of tours.' };
+      }
+      const validTours: TourItem[] = parsed
+        .filter((item) => item && typeof item === 'object' && item.title)
+        .map((item) => {
+          const cleanId = sanitizeId(item.id || item.slug || item.title);
+          return {
+            ...item,
+            id: cleanId,
+            slug: sanitizeId(item.slug || cleanId),
+            pricePerPerson: Math.max(0, Number(item.pricePerPerson) || 0),
+            couplePrice: Math.max(0, Number(item.couplePrice) || 0),
+            childPrice: Math.max(0, Number(item.childPrice) || 0),
+          } as TourItem;
+        });
+
+      if (validTours.length === 0) {
+        return { success: false, count: 0, error: 'No valid tour objects found in JSON.' };
+      }
+
+      setTours(validTours);
+      writeStorage(LS_KEYS.TOURS, validTours);
+      pushSharedStateToServer({ tours: validTours });
+      return { success: true, count: validTours.length };
+    } catch {
+      return { success: false, count: 0, error: 'Invalid JSON file format.' };
     }
+  };
+
+  const resetToursToDefault = () => {
+    setTours(INITIAL_TOURS);
+    writeStorage(LS_KEYS.TOURS, INITIAL_TOURS);
+    pushSharedStateToServer({ tours: INITIAL_TOURS });
   };
 
   const saveDestinationAdmin = async (dest: DestinationItem) => {
-    const docId = sanitizeId(dest.id || dest.slug);
-    const ref = doc(db, 'destinations', docId);
-    try {
-      const existingSnap = await getDoc(ref);
-      await setDoc(ref, {
-        slug: sanitizeId(dest.slug || docId),
-        name: dest.name.trim().slice(0, 100),
-        region: dest.region.trim().slice(0, 100),
-        shortDescription: dest.shortDescription.slice(0, 350),
-        description: dest.description.slice(0, 2500),
-        imageUrl: dest.imageUrl.slice(0, 500),
-        isConfirmedTourOffering: Boolean(dest.isConfirmedTourOffering),
-        createdAt: existingSnap.exists() ? existingSnap.data().createdAt : serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `destinations/${docId}`);
-    }
+    const cleanId = sanitizeId(dest.id || dest.slug || dest.name);
+    const normalized: DestinationItem = { ...dest, id: cleanId, slug: cleanId };
+    setDestinations((prev) => {
+      const idx = prev.findIndex((d) => d.id === cleanId);
+      const updated =
+        idx >= 0 ? prev.map((d, i) => (i === idx ? normalized : d)) : [normalized, ...prev];
+      writeStorage(LS_KEYS.DESTINATIONS, updated);
+      pushSharedStateToServer({ destinations: updated });
+      return updated;
+    });
   };
 
   const deleteDestinationAdmin = async (destId: string) => {
-    try {
-      await deleteDoc(doc(db, 'destinations', destId));
-    } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `destinations/${destId}`);
-    }
+    setDestinations((prev) => {
+      const updated = prev.filter((d) => d.id !== destId);
+      writeStorage(LS_KEYS.DESTINATIONS, updated);
+      pushSharedStateToServer({ destinations: updated });
+      return updated;
+    });
   };
 
   const saveBlogPostAdmin = async (post: BlogPostItem) => {
-    const docId = sanitizeId(post.id || post.slug);
-    const ref = doc(db, 'blogPosts', docId);
-    try {
-      const existingSnap = await getDoc(ref);
-      await setDoc(ref, {
-        slug: sanitizeId(post.slug || docId),
-        title: post.title.trim().slice(0, 180),
-        category: post.category.trim().slice(0, 80),
-        excerpt: post.excerpt.slice(0, 400),
-        content: post.content.slice(0, 15000),
-        imageUrl: post.imageUrl.slice(0, 500),
-        published: Boolean(post.published),
-        readTime: (post.readTime || '5 min read').slice(0, 40),
-        seoTitle: (post.seoTitle || post.title).slice(0, 160),
-        seoDescription: (post.seoDescription || post.excerpt).slice(0, 320),
-        createdAt: existingSnap.exists() ? existingSnap.data().createdAt : serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      setBlogPosts((prev) => {
-        const idx = prev.findIndex((p) => p.id === docId);
-        if (idx >= 0) {
-          const copy = [...prev];
-          copy[idx] = { ...post, id: docId };
-          return copy;
-        }
-        return [{ ...post, id: docId }, ...prev];
-      });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `blogPosts/${docId}`);
-    }
+    const cleanId = sanitizeId(post.id || post.slug || post.title);
+    const normalized: BlogPostItem = { ...post, id: cleanId, slug: cleanId };
+    setBlogPosts((prev) => {
+      const idx = prev.findIndex((p) => p.id === cleanId);
+      const updated =
+        idx >= 0 ? prev.map((p, i) => (i === idx ? normalized : p)) : [normalized, ...prev];
+      writeStorage(LS_KEYS.BLOG, updated);
+      pushSharedStateToServer({ blogPosts: updated });
+      return updated;
+    });
   };
 
   const deleteBlogPostAdmin = async (postId: string) => {
-    try {
-      await deleteDoc(doc(db, 'blogPosts', postId));
-      setBlogPosts((prev) => prev.filter((p) => p.id !== postId));
-    } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `blogPosts/${postId}`);
-    }
+    setBlogPosts((prev) => {
+      const updated = prev.filter((p) => p.id !== postId);
+      writeStorage(LS_KEYS.BLOG, updated);
+      pushSharedStateToServer({ blogPosts: updated });
+      return updated;
+    });
   };
 
   const saveGalleryImageAdmin = async (img: GalleryImageItem) => {
-    const docId = sanitizeId(img.id || `gal_${Date.now()}`);
-    const ref = doc(db, 'gallery', docId);
-    try {
-      const existingSnap = await getDoc(ref);
-      await setDoc(ref, {
-        imageUrl: img.imageUrl.slice(0, 500),
-        caption: img.caption.slice(0, 300),
-        altText: img.altText.slice(0, 300),
-        category: img.category.slice(0, 80),
-        destination: img.destination.slice(0, 80),
-        featured: Boolean(img.featured),
-        createdAt: existingSnap.exists() ? existingSnap.data().createdAt : serverTimestamp(),
-      });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `gallery/${docId}`);
-    }
+    const cleanId = sanitizeId(img.id || `gal_${Date.now()}`);
+    const normalized: GalleryImageItem = { ...img, id: cleanId };
+    setGallery((prev) => {
+      const updated = [normalized, ...prev];
+      writeStorage(LS_KEYS.GALLERY, updated);
+      pushSharedStateToServer({ gallery: updated });
+      return updated;
+    });
   };
 
   const deleteGalleryImageAdmin = async (imgId: string) => {
-    try {
-      await deleteDoc(doc(db, 'gallery', imgId));
-    } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `gallery/${imgId}`);
-    }
+    setGallery((prev) => {
+      const updated = prev.filter((g) => g.id !== imgId);
+      writeStorage(LS_KEYS.GALLERY, updated);
+      pushSharedStateToServer({ gallery: updated });
+      return updated;
+    });
   };
 
   const saveReviewAdmin = async (rev: ReviewItem) => {
-    const docId = sanitizeId(rev.id || `rev_${Date.now()}`);
-    const ref = doc(db, 'reviews', docId);
-    try {
-      const existingSnap = await getDoc(ref);
-      await setDoc(ref, {
-        customerName: rev.customerName.trim().slice(0, 100),
-        rating: Math.max(1, Math.min(5, Number(rev.rating) || 5)),
-        date: rev.date.slice(0, 40),
-        reviewText: rev.reviewText.slice(0, 2000),
-        photoUrl: (rev.photoUrl || '').slice(0, 500),
-        verified: Boolean(rev.verified),
-        source: (rev.source || 'Verified Traveler').slice(0, 60),
-        createdAt: existingSnap.exists() ? existingSnap.data().createdAt : serverTimestamp(),
-      });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `reviews/${docId}`);
-    }
+    const cleanId = sanitizeId(rev.id || `rev_${Date.now()}`);
+    const normalized: ReviewItem = { ...rev, id: cleanId };
+    setReviews((prev) => {
+      const updated = [normalized, ...prev];
+      writeStorage(LS_KEYS.REVIEWS, updated);
+      pushSharedStateToServer({ reviews: updated });
+      return updated;
+    });
   };
 
   const deleteReviewAdmin = async (revId: string) => {
-    try {
-      await deleteDoc(doc(db, 'reviews', revId));
-    } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `reviews/${revId}`);
-    }
+    setReviews((prev) => {
+      const updated = prev.filter((r) => r.id !== revId);
+      writeStorage(LS_KEYS.REVIEWS, updated);
+      pushSharedStateToServer({ reviews: updated });
+      return updated;
+    });
   };
 
   const updateInquiryAdmin = async (
@@ -858,15 +1125,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     status: InquiryRecord['status'],
     internalNotes: string
   ) => {
-    try {
-      await updateDoc(doc(db, 'inquiries', inquiryId), {
-        status,
-        internalNotes: internalNotes.slice(0, 1000),
-        updatedAt: serverTimestamp(),
-      });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `inquiries/${inquiryId}`);
-    }
+    setInquiries((prev) => {
+      const updated = prev.map((inq) =>
+        inq.id === inquiryId ? { ...inq, status, internalNotes } : inq
+      );
+      writeStorage(LS_KEYS.INQUIRIES, updated);
+      pushSharedStateToServer({ inquiries: updated });
+      return updated;
+    });
   };
 
   const updateBookingAdmin = async (
@@ -876,63 +1142,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     travelDates: string,
     notes: string
   ) => {
-    try {
-      await updateDoc(doc(db, 'bookings', bookingId), {
-        bookingStatus,
-        paymentStatus,
-        travelDates: travelDates.slice(0, 100),
-        notes: notes.slice(0, 1500),
-        updatedAt: serverTimestamp(),
-      });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `bookings/${bookingId}`);
-    }
+    setBookings((prev) => {
+      const updated = prev.map((bk) =>
+        bk.id === bookingId
+          ? { ...bk, bookingStatus, paymentStatus, travelDates, notes }
+          : bk
+      );
+      writeStorage(LS_KEYS.BOOKINGS, updated);
+      writeStorage(LS_KEYS.LEGACY_BOOKINGS, updated);
+      pushSharedStateToServer({ bookings: updated });
+      return updated;
+    });
   };
 
   const saveSiteSettingsAdmin = async (newSettings: Partial<BusinessConfig>) => {
-    const merged = { ...business, ...newSettings };
-    try {
-      await setDoc(doc(db, 'settings', 'main'), {
-        businessName: merged.name.slice(0, 120),
-        phone: merged.phone.slice(0, 40),
-        whatsapp: merged.whatsapp.slice(0, 40),
-        email: merged.email.slice(0, 160),
-        signupNotificationEmail: merged.signupNotificationEmail.slice(0, 160),
-        jazzcashNumber: merged.jazzcashNumber.slice(0, 40),
-        jazzcashName: merged.jazzcashName.slice(0, 100),
-        instagramPrimary: (merged.instagram[0]?.url || 'https://www.instagram.com/only_baig/').slice(0, 250),
-        instagramSecondary: (merged.instagram[1]?.url || 'https://www.instagram.com/baig_treks_and_tours/').slice(0, 250),
-        tagline: merged.tagline.slice(0, 200),
-        heroHeadline: merged.heroHeadline.slice(0, 200),
-        heroDescription: merged.heroDescription.slice(0, 500),
-        address: (merged.address || '').slice(0, 300),
-        businessHours: (merged.businessHours || '').slice(0, 200),
-        cancellationPolicy: (merged.cancellationPolicy || '').slice(0, 3000),
-        refundPolicy: (merged.refundPolicy || '').slice(0, 3000),
-        bookingPolicy: (merged.bookingPolicy || '').slice(0, 3000),
-        paymentInstructions: (merged.paymentInstructions || '').slice(0, 2000),
-        updatedAt: serverTimestamp(),
-      });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, 'settings/main');
-    }
+    setBusiness((prev) => {
+      const merged = { ...prev, ...newSettings };
+      writeStorage(LS_KEYS.SETTINGS, merged);
+      pushSharedStateToServer({ settings: merged });
+      return merged;
+    });
   };
 
   const seedInitialCatalogToFirestore = async () => {
-    if (!isAdmin) return;
-    for (const tour of INITIAL_TOURS) {
-      await saveTourAdmin(tour);
-    }
-    for (const dest of INITIAL_DESTINATIONS) {
-      await saveDestinationAdmin(dest);
-    }
-    for (const post of INITIAL_BLOG_POSTS) {
-      await saveBlogPostAdmin(post);
-    }
-    for (const img of INITIAL_GALLERY) {
-      await saveGalleryImageAdmin(img);
-    }
-    await saveSiteSettingsAdmin(defaultBusinessConfig);
+    resetToursToDefault();
+    writeStorage(LS_KEYS.DESTINATIONS, INITIAL_DESTINATIONS);
+    setDestinations(INITIAL_DESTINATIONS);
+    writeStorage(LS_KEYS.BLOG, INITIAL_BLOG_POSTS);
+    setBlogPosts(INITIAL_BLOG_POSTS);
+    writeStorage(LS_KEYS.GALLERY, INITIAL_GALLERY);
+    setGallery(INITIAL_GALLERY);
+    pushSharedStateToServer({
+      tours: INITIAL_TOURS,
+      destinations: INITIAL_DESTINATIONS,
+      blogPosts: INITIAL_BLOG_POSTS,
+      gallery: INITIAL_GALLERY,
+    });
   };
 
   return (
@@ -955,14 +1200,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         allUsers,
         signupNotificationNote,
         clearSignupNotificationNote: () => setSignupNotificationNote(null),
+        loginWithCredentials,
+        signupWithCredentials,
         signInWithGoogle,
         signOut,
         toggleSaveTour,
         updateCustomerProfile,
+        changeCustomerPassword,
         submitInquiry,
         submitBookingRequest,
         saveTourAdmin,
         deleteTourAdmin,
+        exportToursAsJson,
+        importToursFromJson,
+        resetToursToDefault,
         saveDestinationAdmin,
         deleteDestinationAdmin,
         saveBlogPostAdmin,

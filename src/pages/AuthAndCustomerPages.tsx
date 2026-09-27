@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { motion } from 'motion/react';
 import {
   LogOut,
   Bookmark,
@@ -7,448 +8,826 @@ import {
   Calendar,
   UserCheck,
   Shield,
+  KeyRound,
+  AlertCircle,
+  CheckCircle2,
+  User,
+  Phone,
+  Mail,
+  Lock,
+  Users,
+  ArrowRight,
+  Mountain,
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp, ADMIN_EMAIL, ADMIN_PASSWORD } from '../context/AppContext';
 import { TourCard } from '../components/InteractiveMapAndScroll';
 import { buildWhatsAppLink } from '../config/business';
+import { BrandLogo3D } from '../components/BrandLogo3D';
+import { VISUAL_ASSETS } from '../data/initialData';
 
 export const AuthPage: React.FC<{ mode: 'login' | 'signup' | 'forgot' | 'reset' }> = ({
   mode,
 }) => {
-  const { signInWithGoogle, user, business } = useApp();
+  const {
+    loginWithCredentials,
+    signupWithCredentials,
+    user,
+    isAdmin,
+    signOut,
+  } = useApp();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectParam = searchParams.get('redirect');
 
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [phoneInput, setPhoneInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  if (user) {
+  if (user || isAdmin) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
-        <div className="w-12 h-12 rounded-full bg-[#10B981]/20 text-[#10B981] flex items-center justify-center mx-auto">
-          <UserCheck className="w-6 h-6" />
-        </div>
-        <h1 className="font-display text-2xl font-bold text-white">
-          You Are Signed In
-        </h1>
-        <p className="text-sm text-[#94A3B8]">
-          Signed in as <span className="text-white font-semibold">{user.email}</span>
-        </p>
-        <div className="flex justify-center gap-3 pt-2">
-          <Link
-            to="/customer/dashboard"
-            className="px-5 py-2.5 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] rounded-lg"
-          >
-            Go to Customer Dashboard
-          </Link>
-          <Link
-            to="/tours"
-            className="px-5 py-2.5 text-xs font-semibold bg-white/10 text-white rounded-lg"
-          >
-            Browse Tours
-          </Link>
+      <div className="max-w-md mx-auto px-4 py-12 md:py-16 text-center space-y-5">
+        <div className="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto">
+            <UserCheck className="w-6 h-6" />
+          </div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">
+            {isAdmin ? 'Administrator Session Active' : 'You Are Logged In'}
+          </h1>
+          <p className="text-sm text-slate-600">
+            Signed in as{' '}
+            <span className="text-slate-900 font-semibold">
+              {user?.name || user?.displayName || ADMIN_EMAIL}
+            </span>{' '}
+            ({user?.email || ADMIN_EMAIL})
+          </p>
+          <div className="flex flex-col gap-2.5 pt-2">
+            {redirectParam && (
+              <Link
+                to={redirectParam}
+                className="w-full py-3 px-4 text-sm font-semibold bg-emerald-800 hover:bg-emerald-900 text-white rounded-2xl transition-colors"
+              >
+                Continue to Tour Booking
+              </Link>
+            )}
+            <Link
+              to="/my-bookings"
+              className="w-full py-3 px-4 text-sm font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl transition-colors"
+            >
+              My Bookings
+            </Link>
+            <Link
+              to="/profile"
+              className="w-full py-3 px-4 text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-2xl transition-colors"
+            >
+              Edit Profile &amp; Password
+            </Link>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="w-full py-3 px-4 text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-2xl transition-colors"
+              >
+                Open Admin Dashboard
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={async () => {
+                await signOut();
+                navigate('/login');
+              }}
+              className="w-full py-3 px-4 text-sm font-semibold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-2xl flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  const handleGoogleAuth = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+
+    // Client-side validation checks
+    const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setErrorMsg('Please enter a valid email address (e.g. name@example.com).');
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (mode === 'signup') {
+      if (!displayName.trim()) {
+        setErrorMsg('Please enter your full name.');
+        return;
+      }
+      if (!phoneInput.trim()) {
+        setErrorMsg('Please enter your phone or WhatsApp number.');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
-      await signInWithGoogle(phoneInput.trim());
-      navigate('/customer/dashboard');
-    } catch {
-      setErrorMsg('Authentication was cancelled or could not be completed. Please try again.');
+      if (mode === 'signup') {
+        const res = await signupWithCredentials({
+          displayName,
+          email: cleanEmail,
+          password,
+          phone: phoneInput,
+        });
+        if (!res.success) {
+          setErrorMsg(res.error || 'Could not create account.');
+        } else {
+          navigate(redirectParam || res.redirectTo);
+        }
+      } else {
+        const res = await loginWithCredentials(cleanEmail, password);
+        if (!res.success) {
+          setErrorMsg(res.error || 'Invalid login credentials.');
+        } else {
+          navigate(redirectParam || res.redirectTo);
+        }
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const handleFillAdminCredentials = () => {
+    setEmail(ADMIN_EMAIL);
+    setPassword(ADMIN_PASSWORD);
+    setErrorMsg(null);
+  };
+
   return (
-    <div className="max-w-md mx-auto px-4 py-16">
-      <div className="bg-[#111722] border border-white/10 rounded-xl p-6 sm:p-8 space-y-6">
+    <div className="max-w-md mx-auto px-4 py-10 md:py-14">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl p-5 sm:p-8 space-y-6 shadow-xl"
+      >
         <div className="space-y-2 text-center">
-          <div className="text-xs font-semibold text-[#0EA5E9] uppercase tracking-wider">
-            {business.name} Traveler Portal
+          <div className="flex justify-center pb-1">
+            <BrandLogo3D size="sm" variant="light" />
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold text-white">
-            {mode === 'signup'
-              ? 'Create Your Traveler Account'
-              : mode === 'forgot' || mode === 'reset'
-              ? 'Account Recovery'
-              : 'Welcome Back'}
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+            {mode === 'signup' ? 'Create Your Account' : 'Sign In to Your Account'}
           </h1>
-          <p className="text-xs sm:text-sm text-[#94A3B8]">
-            {mode === 'signup'
-              ? 'Save tours, track inquiries and bookings, and coordinate your Gilgit-Baltistan journey.'
-              : mode === 'forgot' || mode === 'reset'
-              ? 'Your account uses verified Google Authentication so you never have to worry about lost passwords.'
-              : 'Sign in securely to view your saved tours, inquiries, and trip reservations.'}
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            {redirectParam
+              ? 'Please log in or sign up first to complete your tour booking.'
+              : mode === 'signup'
+              ? 'Register with your name, email, password, and phone to book tours.'
+              : 'Enter your email and password or use Admin credentials.'}
           </p>
         </div>
 
-        <form onSubmit={handleGoogleAuth} className="space-y-4">
+        {/* Quick Admin Credentials Helper Box */}
+        {mode !== 'signup' && (
+          <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-2 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold text-emerald-900 flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Admin Login</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleFillAdminCredentials}
+                className="px-2.5 py-1 rounded-xl bg-emerald-800 text-white font-semibold hover:bg-emerald-900 transition-colors"
+              >
+                Auto-Fill Admin
+              </button>
+            </div>
+            <div className="text-slate-700 font-mono-num space-y-0.5 text-[11px]">
+              <div>
+                Email: <span className="text-slate-900 font-bold">{ADMIN_EMAIL}</span>
+              </div>
+              <div>
+                Password: <span className="text-slate-900 font-bold">{ADMIN_PASSWORD}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {mode === 'signup' && (
-            <div>
-              <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
-                WhatsApp / Phone Number (Optional for Trip Coordination)
-              </label>
+            <>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Full Name *
+                </label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    required
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Your full name"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Phone / WhatsApp Number *
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <input
+                    type="tel"
+                    required
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                    placeholder="e.g. 03155449778"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Email Address *
+            </label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
               <input
-                type="tel"
-                value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value)}
-                placeholder="e.g. 03155449778"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={mode === 'signup' ? 'you@example.com' : 'admin@baigtreks.com'}
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
               />
             </div>
-          )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Password (min 6 characters) *
+            </label>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === 'signup' ? 'At least 6 characters' : 'admin123'}
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white"
+              />
+            </div>
+          </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-lg bg-red-950/60 border border-red-500/40 text-xs text-red-200">
-              {errorMsg}
+            <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <span>{errorMsg}</span>
             </div>
           )}
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 text-xs sm:text-sm font-semibold bg-[#0EA5E9] text-[#0B0F14] hover:bg-[#38BDF8] rounded-lg transition-colors whitespace-nowrap"
+            className="w-full py-3 px-4 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-800 hover:to-teal-700 text-white rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {loading
-              ? 'CONNECTING...'
-              : mode === 'signup'
-              ? 'SIGN UP WITH GOOGLE'
-              : 'CONTINUE WITH GOOGLE'}
-          </button>
+            <KeyRound className="w-4 h-4" />
+            <span>
+              {loading
+                ? 'Please wait...'
+                : mode === 'signup'
+                ? 'Sign Up & Auto Login'
+                : 'Login'}
+            </span>
+          </motion.button>
         </form>
 
-        <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-[#94A3B8]">
-          {mode === 'login' ? (
+        <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+          {mode === 'signup' ? (
             <>
-              <Link to="/signup" className="text-[#0EA5E9] hover:underline">
-                Create a new account
-              </Link>
-              <Link to="/forgot-password" className="hover:text-white">
-                Account recovery info
+              <span>Already have an account?</span>
+              <Link
+                to={
+                  redirectParam
+                    ? `/login?redirect=${encodeURIComponent(redirectParam)}`
+                    : '/login'
+                }
+                className="text-emerald-800 font-semibold hover:underline"
+              >
+                Login here
               </Link>
             </>
           ) : (
-            <Link to="/login" className="text-[#0EA5E9] hover:underline">
-              Already have an account? Log in
-            </Link>
+            <>
+              <span>Don&apos;t have an account?</span>
+              <Link
+                to={
+                  redirectParam
+                    ? `/signup?redirect=${encodeURIComponent(redirectParam)}`
+                    : '/signup'
+                }
+                className="text-emerald-800 font-semibold hover:underline"
+              >
+                Create an account
+              </Link>
+            </>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
 
-// Section 20: CUSTOMER DASHBOARD
-export const CustomerDashboardPage: React.FC = () => {
+// Dedicated /my-bookings Page
+export const MyBookingsPage: React.FC = () => {
+  const { user, isAdmin, bookings, tours, business, profile } = useApp();
+
+  if (!user && !isAdmin) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
+          <Calendar className="w-10 h-10 text-emerald-700 mx-auto" />
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">
+            Login to View My Bookings
+          </h1>
+          <p className="text-sm text-slate-600">
+            Please log in or sign up to view your booked tours and reservation status.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-2.5">
+            <Link
+              to="/login?redirect=%2Fmy-bookings"
+              className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold bg-emerald-700 text-white rounded-2xl"
+            >
+              Login
+            </Link>
+            <Link
+              to="/signup?redirect=%2Fmy-bookings"
+              className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold bg-slate-100 text-slate-900 rounded-2xl"
+            >
+              Signup
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const activeEmail = (user?.email || ADMIN_EMAIL).toLowerCase();
+  const myBookings = bookings.filter(
+    (bk) =>
+      (bk.userEmail && bk.userEmail.toLowerCase() === activeEmail) ||
+      (bk.email && bk.email.toLowerCase() === activeEmail) ||
+      (user && bk.userId === user.uid)
+  );
+
+  const savedTours = tours.filter((t) => profile?.savedTourIds?.includes(t.id));
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-10 overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 pb-6">
+        <div className="space-y-1.5">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+            <Calendar className="w-3.5 h-3.5" />
+            <span>Traveler Reservations</span>
+          </span>
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+            My Bookings
+          </h1>
+          <p className="text-sm text-slate-600">
+            Showing booked tours for <strong className="text-slate-900">{activeEmail}</strong>
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            to="/tours"
+            className="w-full sm:w-auto px-4 py-2.5 text-xs sm:text-sm font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl text-center"
+          >
+            Browse More Tours
+          </Link>
+          <Link
+            to="/profile"
+            className="w-full sm:w-auto px-4 py-2.5 text-xs sm:text-sm font-semibold bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 rounded-2xl text-center"
+          >
+            Edit Profile
+          </Link>
+        </div>
+      </div>
+
+      {myBookings.length === 0 ? (
+        <div className="p-8 sm:p-12 rounded-3xl bg-white border border-slate-200 text-center space-y-4 shadow-lg shadow-slate-900/5">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto">
+            <Mountain className="w-6 h-6" />
+          </div>
+          <h2 className="font-display text-xl font-bold text-slate-900">
+            You Have No Booked Tours Yet
+          </h2>
+          <p className="text-sm text-slate-600 max-w-md mx-auto">
+            Click &ldquo;Book Now&rdquo; on any Gilgit-Baltistan tour package to reserve your trip. All bookings are saved automatically to your account.
+          </p>
+          <Link
+            to="/tours"
+            className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 text-white rounded-2xl shadow-sm"
+          >
+            <span>Explore Tours</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {myBookings.map((bk) => {
+            const matchedTour = tours.find(
+              (t) => t.id === bk.tourId || t.slug === bk.tourSlug
+            );
+            const thumb =
+              bk.tourImage || matchedTour?.imageUrl || VISUAL_ASSETS.heroKarakoram;
+
+            return (
+              <motion.div
+                key={bk.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-lg shadow-slate-900/5 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="relative aspect-[16/9] bg-slate-100 overflow-hidden">
+                    <img
+                      src={thumb}
+                      alt={bk.tourTitle}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-auto min-h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
+                    <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                      <span className="bg-emerald-800 text-white text-xs font-semibold px-3 py-1 rounded-2xl">
+                        {bk.bookingStatus.replace(/_/g, ' ')}
+                      </span>
+                      <span className="bg-white/95 text-slate-900 text-xs font-semibold px-3 py-1 rounded-2xl">
+                        Payment: {bk.paymentStatus.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div className="absolute bottom-3 left-4 right-4 text-white">
+                      <h3 className="font-display text-lg sm:text-xl font-bold tracking-tight">
+                        {bk.tourTitle}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="p-5 space-y-3">
+                    <div className="grid grid-cols-2 gap-3 text-xs bg-gray-50 p-3.5 rounded-2xl border border-slate-200/80">
+                      <div>
+                        <span className="text-slate-500 block">Travel Dates</span>
+                        <span className="font-semibold text-slate-900 flex items-center gap-1 mt-0.5">
+                          <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                          {bk.travelDates}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block">Travelers</span>
+                        <span className="font-semibold text-slate-900 flex items-center gap-1 mt-0.5">
+                          <Users className="w-3.5 h-3.5 text-teal-600" />
+                          {bk.travelers} Person(s)
+                        </span>
+                      </div>
+                    </div>
+
+                    {bk.notes && (
+                      <p className="text-xs text-slate-600">
+                        <strong className="text-slate-800">Notes:</strong> {bk.notes}
+                      </p>
+                    )}
+
+                    <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/90 text-xs space-y-1">
+                      <div className="font-bold text-amber-900">
+                        JazzCash Payment ({business.jazzcashNumber} — {business.jazzcashName})
+                      </div>
+                      <p className="text-slate-600">
+                        Confirm dates on WhatsApp before sending deposit.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-5 pb-5 pt-2 flex flex-col sm:flex-row gap-2.5">
+                  {matchedTour && (
+                    <Link
+                      to={`/tours/${matchedTour.slug}`}
+                      className="w-full sm:flex-1 py-2.5 px-4 text-xs font-semibold text-center bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl"
+                    >
+                      View Tour Page
+                    </Link>
+                  )}
+                  <a
+                    href={buildWhatsAppLink(
+                      `Hello Baig Treks & Tours, I am following up on my booking for "${bk.tourTitle}" (${bk.travelDates}, ${bk.travelers} travelers) under ${bk.userEmail}.`,
+                      business.whatsapp
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:flex-1 py-2.5 px-4 text-xs font-semibold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl flex items-center justify-center gap-1.5"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>Confirm on WhatsApp</span>
+                  </a>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {savedTours.length > 0 && (
+        <div className="space-y-4 pt-6 border-t border-slate-200">
+          <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            <Bookmark className="w-5 h-5 text-emerald-700" />
+            <span>Saved Wishlist Tours ({savedTours.length})</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {savedTours.map((t) => (
+              <TourCard key={t.id} tour={t} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Dedicated /profile Page to Edit Name/Phone & Change Password
+export const ProfilePage: React.FC = () => {
   const {
     user,
     profile,
     privateInfo,
     isAdmin,
-    tours,
-    inquiries,
-    bookings,
-    business,
     signOut,
     updateCustomerProfile,
+    changeCustomerPassword,
   } = useApp();
+  const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'saved' | 'inquiries' | 'bookings' | 'settings'>('saved');
-  const [nameInput, setNameInput] = useState(profile?.displayName || '');
-  const [phoneInput, setPhoneInput] = useState(privateInfo?.phone || '');
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [nameInput, setNameInput] = useState(
+    user?.name || profile?.displayName || ''
+  );
+  const [phoneInput, setPhoneInput] = useState(
+    user?.phone || privateInfo?.phone || ''
+  );
+  const [profileSaved, setProfileSaved] = useState(false);
 
-  if (!user) {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  if (!user && !isAdmin) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
-        <h1 className="font-display text-2xl font-bold text-white">
-          Sign In Required
-        </h1>
-        <p className="text-sm text-[#94A3B8]">
-          Please log in to view your saved tours, inquiries, and bookings.
-        </p>
-        <Link
-          to="/login"
-          className="inline-block px-6 py-3 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] rounded-lg"
-        >
-          GO TO LOGIN
-        </Link>
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">
+            Login Required
+          </h1>
+          <p className="text-sm text-slate-600">
+            Please log in to manage your profile and password.
+          </p>
+          <Link
+            to="/login?redirect=%2Fprofile"
+            className="inline-block px-6 py-2.5 text-sm font-semibold bg-emerald-700 text-white rounded-2xl"
+          >
+            Go to Login
+          </Link>
+        </div>
       </div>
     );
   }
 
-  const savedTours = tours.filter((t) => profile?.savedTourIds?.includes(t.id));
-  const myInquiries = inquiries.filter((inq) => inq.userId === user.uid);
-  const myBookings = bookings.filter((bk) => bk.userId === user.uid);
-
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaveMessage(null);
     await updateCustomerProfile(nameInput, phoneInput);
-    setSaveMessage('Profile updated.');
+    setProfileSaved(true);
+    setTimeout(() => setProfileSaved(false), 3000);
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(false);
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirmation do not match.');
+      return;
+    }
+
+    const res = await changeCustomerPassword(currentPassword, newPassword);
+    if (!res.success) {
+      setPasswordError(res.error || 'Could not update password.');
+    } else {
+      setPasswordSuccess(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    }
   };
 
   return (
-    <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+    <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-8 overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <div className="text-xs font-semibold text-[#0EA5E9] uppercase tracking-wider">
-            Customer Portal
-          </div>
-          <h1 className="font-display text-3xl font-bold text-white mt-1">
-            Welcome, {profile?.displayName || user.displayName || 'Traveler'}
+          <span className="text-xs font-semibold text-emerald-800">Account Management</span>
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+            Profile &amp; Security
           </h1>
-          <p className="text-xs text-[#94A3B8] mt-0.5">{user.email}</p>
+          <p className="text-sm text-slate-600">{user?.email || ADMIN_EMAIL}</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className="px-4 py-2 text-xs font-semibold border border-[#D4AF37]/50 text-[#D4AF37] rounded-lg flex items-center gap-1.5"
-            >
-              <Shield className="w-3.5 h-3.5" />
-              Open Admin Dashboard
-            </Link>
-          )}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            to="/my-bookings"
+            className="px-4 py-2.5 text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-2xl"
+          >
+            My Bookings
+          </Link>
           <button
             type="button"
-            onClick={() => signOut()}
-            className="px-4 py-2 text-xs font-semibold bg-white/10 hover:bg-white/15 text-white rounded-lg flex items-center gap-1.5"
+            onClick={async () => {
+              await signOut();
+              navigate('/');
+            }}
+            className="px-4 py-2.5 text-xs font-semibold bg-red-50 text-red-600 border border-red-200 rounded-2xl flex items-center gap-1.5"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            Log Out
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
           </button>
         </div>
       </div>
 
-      {/* Interactive Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {[
-          { id: 'saved', label: `Saved Tours (${savedTours.length})` },
-          { id: 'inquiries', label: `My Inquiries (${myInquiries.length})` },
-          { id: 'bookings', label: `My Bookings (${myBookings.length})` },
-          { id: 'settings', label: 'Account Settings' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id as typeof activeTab)}
-            className={`px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
-              activeTab === tab.id
-                ? 'bg-[#0EA5E9] text-[#0B0F14]'
-                : 'bg-[#111722] text-[#CBD5E1] border border-white/10 hover:border-white/25'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab 1: Saved Tours */}
-      {activeTab === 'saved' && (
-        <div className="space-y-6">
-          {savedTours.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {savedTours.map((tour) => (
-                <TourCard key={tour.id} tour={tour} />
-              ))}
-            </div>
-          ) : (
-            <div className="p-10 rounded-xl bg-[#111722] border border-white/10 text-center space-y-3">
-              <Bookmark className="w-6 h-6 text-[#0EA5E9] mx-auto" />
-              <h2 className="font-display text-lg font-bold text-white">
-                No Saved Tours Yet
-              </h2>
-              <p className="text-xs sm:text-sm text-[#94A3B8]">
-                Click the bookmark icon on any tour package to save it here for easy comparison.
-              </p>
-              <Link
-                to="/tours"
-                className="inline-block px-5 py-2.5 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] rounded-lg"
-              >
-                Explore Tours
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab 2: My Inquiries */}
-      {activeTab === 'inquiries' && (
-        <div className="space-y-4">
-          {myInquiries.length > 0 ? (
-            myInquiries.map((inq) => (
-              <div
-                key={inq.id}
-                className="p-5 rounded-xl bg-[#111722] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-xs text-[#94A3B8]">
-                    <span className="font-semibold text-[#0EA5E9] uppercase">
-                      Status: {inq.status}
-                    </span>
-                    <span aria-hidden="true">·</span>
-                    <span>{inq.destination}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{inq.travelers} Travelers</span>
-                  </div>
-                  <div className="font-display text-base font-bold text-white">
-                    {inq.tourType} — Preferred Dates: {inq.preferredDates}
-                  </div>
-                  <p className="text-xs text-[#CBD5E1]">{inq.message}</p>
-                </div>
-                <a
-                  href={buildWhatsAppLink(
-                    `Hello ${business.name}, following up on my inquiry for ${inq.destination} (${inq.preferredDates}).`,
-                    business.whatsapp
-                  )}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 text-xs font-semibold bg-[#10B981] text-[#0B0F14] rounded-lg whitespace-nowrap flex items-center gap-1.5 shrink-0"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  Follow Up on WhatsApp
-                </a>
-              </div>
-            ))
-          ) : (
-            <div className="p-10 rounded-xl bg-[#111722] border border-white/10 text-center space-y-3">
-              <h2 className="font-display text-lg font-bold text-white">
-                No Inquiries Submitted Yet
-              </h2>
-              <Link
-                to="/contact"
-                className="inline-block px-5 py-2.5 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] rounded-lg"
-              >
-                Submit a Travel Inquiry
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab 3: My Bookings & Payment Status */}
-      {activeTab === 'bookings' && (
-        <div className="space-y-6">
-          {myBookings.length > 0 ? (
-            <div className="space-y-4">
-              {myBookings.map((bk) => (
-                <div
-                  key={bk.id}
-                  className="p-6 rounded-xl bg-[#111722] border border-white/10 space-y-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
-                    <div>
-                      <h3 className="font-display text-lg font-bold text-white">
-                        {bk.tourTitle}
-                      </h3>
-                      <div className="text-xs text-[#94A3B8] mt-0.5">
-                        Dates: {bk.travelDates} · Travelers: {bk.travelers}
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      <span className="px-3 py-1 rounded bg-white/5 border border-white/10 text-[#E2E8F0]">
-                        Booking: {bk.bookingStatus.replace('_', ' ')}
-                      </span>
-                      <span className="px-3 py-1 rounded bg-white/5 border border-[#D4AF37]/40 text-[#D4AF37]">
-                        Payment: {bk.paymentStatus.replace(/_/g, ' ')}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-[#CBD5E1]">{bk.notes}</p>
-                  <div className="p-3.5 rounded-lg bg-[#0B0F14] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                    <div>
-                      <span className="text-white font-semibold">JazzCash Payment: </span>
-                      <span className="font-mono-num text-[#D4AF37]">
-                        {business.jazzcashNumber}
-                      </span>{' '}
-                      ({business.jazzcashName})
-                    </div>
-                    <a
-                      href={buildWhatsAppLink(
-                        `Hello ${business.name}, I am checking on my booking request for "${bk.tourTitle}" (${bk.travelDates}).`,
-                        business.whatsapp
-                      )}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#10B981] font-semibold hover:underline"
-                    >
-                      Confirm Availability / Share Receipt on WhatsApp →
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="p-10 rounded-xl bg-[#111722] border border-white/10 text-center space-y-3">
-              <Calendar className="w-6 h-6 text-[#0EA5E9] mx-auto" />
-              <h2 className="font-display text-lg font-bold text-white">
-                No Active Booking Requests
-              </h2>
-              <p className="text-xs sm:text-sm text-[#94A3B8]">
-                Select any tour package to request availability and track your reservation status here.
-              </p>
-              <Link
-                to="/tours"
-                className="inline-block px-5 py-2.5 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] rounded-lg"
-              >
-                Browse Tour Packages
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab 4: Account Settings */}
-      {activeTab === 'settings' && (
-        <div className="max-w-xl bg-[#111722] border border-white/10 rounded-xl p-6 space-y-5">
-          <h2 className="font-display text-xl font-bold text-white">
-            Profile &amp; Contact Settings
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Edit Name & Phone */}
+        <form
+          onSubmit={handleProfileSave}
+          className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200 space-y-4 shadow-lg shadow-slate-900/5"
+        >
+          <h2 className="font-display text-xl font-bold tracking-tight text-slate-900">
+            Personal Information
           </h2>
-          <form onSubmit={handleProfileSave} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-[#CBD5E1] mb-1">
-                Display Name
-              </label>
-              <input
-                type="text"
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white"
-              />
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              disabled
+              value={user?.email || ADMIN_EMAIL}
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-100 border border-slate-200 text-sm text-slate-500 cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Full Name *
+            </label>
+            <input
+              type="text"
+              required
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Phone / WhatsApp Number *
+            </label>
+            <input
+              type="tel"
+              required
+              value={phoneInput}
+              onChange={(e) => setPhoneInput(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+            />
+          </div>
+
+          {profileSaved && (
+            <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2 font-semibold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+              <span>Profile updated in localStorage!</span>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-[#CBD5E1] mb-1">
-                WhatsApp / Phone Number
-              </label>
-              <input
-                type="tel"
-                value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value)}
-                placeholder="03155449778"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white"
-              />
+          )}
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            className="w-full py-3 px-4 text-sm font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm"
+          >
+            Save Profile Changes
+          </motion.button>
+        </form>
+
+        {/* Change Password */}
+        <form
+          onSubmit={handlePasswordChange}
+          className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200 space-y-4 shadow-lg shadow-slate-900/5"
+        >
+          <h2 className="font-display text-xl font-bold tracking-tight text-slate-900">
+            Change Password
+          </h2>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Current Password
+            </label>
+            <input
+              type="password"
+              required
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              New Password (min 6 characters) *
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Confirm New Password *
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repeat new password"
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+            />
+          </div>
+
+          {passwordError && (
+            <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{passwordError}</span>
             </div>
-            {saveMessage && (
-              <div className="text-xs text-[#10B981] font-semibold">{saveMessage}</div>
-            )}
-            <button
-              type="submit"
-              className="px-5 py-2.5 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] rounded-lg"
-            >
-              Save Profile Changes
-            </button>
-          </form>
-        </div>
-      )}
+          )}
+
+          {passwordSuccess && (
+            <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2 font-semibold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+              <span>Password changed successfully!</span>
+            </div>
+          )}
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            className="w-full py-3 px-4 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-sm"
+          >
+            Update Password
+          </motion.button>
+        </form>
+      </div>
     </div>
   );
+};
+
+export const CustomerDashboardPage: React.FC = () => {
+  return <MyBookingsPage />;
 };

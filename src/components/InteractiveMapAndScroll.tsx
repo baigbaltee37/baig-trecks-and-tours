@@ -1,663 +1,865 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Bookmark, ArrowRight, MessageCircle, Compass, CheckCircle2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Bookmark,
+  ArrowRight,
+  MessageCircle,
+  Compass,
+  CheckCircle2,
+  Edit3,
+  Trash2,
+  Star,
+  MapPin,
+  Calendar,
+  Users,
+  Mountain,
+  X,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { TourItem, VISUAL_ASSETS } from '../data/initialData';
-import { buildTourWhatsAppMessage, buildWhatsAppLink } from '../config/business';
+import { buildWhatsAppLink } from '../config/business';
 
 export const TourCard: React.FC<{ tour: TourItem }> = ({ tour }) => {
-  const { business, user, profile, toggleSaveTour } = useApp();
+  const {
+    business,
+    user,
+    profile,
+    isAdmin,
+    toggleSaveTour,
+    deleteTourAdmin,
+    submitBookingRequest,
+  } = useApp();
+  const navigate = useNavigate();
   const isSaved = Boolean(profile?.savedTourIds?.includes(tour.id));
 
-  const waUrl = buildWhatsAppLink(
-    buildTourWhatsAppMessage(tour.title, business.name),
-    business.whatsapp
-  );
-
-  return (
-    <article className="group bg-[#111722] border border-white/10 rounded-xl overflow-hidden flex flex-col justify-between transition-colors hover:border-white/25">
-      <div>
-        <div className="relative aspect-[4/3] overflow-hidden bg-[#0E1520]">
-          <img
-            src={tour.imageUrl || VISUAL_ASSETS.heroKarakoram}
-            alt={`${tour.title} — ${tour.destination} in Gilgit-Baltistan`}
-            referrerPolicy="no-referrer"
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-          {/* Optional Configurable Admin Badge (Never auto-assigned unless admin sets it) */}
-          {tour.badge && (
-            <div className="absolute top-3 left-3 bg-[#0B0F14]/90 border border-[#D4AF37]/50 text-[#D4AF37] text-[11px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded">
-              {tour.badge}
-            </div>
-          )}
-
-          {user && (
-            <button
-              type="button"
-              onClick={() => toggleSaveTour(tour.id)}
-              aria-label={isSaved ? 'Remove from saved tours' : 'Save tour'}
-              className={`absolute top-3 right-3 p-2 rounded-lg border transition-colors ${
-                isSaved
-                  ? 'bg-[#0EA5E9] text-[#0B0F14] border-[#0EA5E9]'
-                  : 'bg-black/60 text-white border-white/15 hover:bg-black/80'
-              }`}
-            >
-              <Bookmark className="w-4 h-4 fill-current" />
-            </button>
-          )}
-
-          <div className="absolute bottom-3 left-4 right-4">
-            {/* Zero-Pill Metadata Discipline: Clean unboxed text with · separators */}
-            <div className="flex flex-wrap items-center gap-1.5 text-xs text-[#CBD5E1]">
-              <span>{tour.destination}</span>
-              <span aria-hidden="true">·</span>
-              <span>{tour.duration}</span>
-              <span aria-hidden="true">·</span>
-              <span>{tour.tourType}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-5 space-y-3">
-          <h3 className="font-display text-lg font-bold text-white leading-snug">
-            <Link to={`/tours/${tour.slug}`} className="hover:text-[#0EA5E9] transition-colors">
-              {tour.title}
-            </Link>
-          </h3>
-
-          <p className="text-sm text-[#94A3B8] line-clamp-2 leading-relaxed">
-            {tour.shortDescription}
-          </p>
-        </div>
-      </div>
-
-      <div className="px-5 pb-5 pt-3 border-t border-white/10 space-y-4">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-xs text-[#94A3B8]">Starting Price</span>
-          {tour.pricePerPerson > 0 ? (
-            <span className="font-mono-num text-base font-semibold text-[#D4AF37]">
-              PKR {tour.pricePerPerson.toLocaleString()} / person
-            </span>
-          ) : (
-            <span className="text-xs font-medium text-[#E2E8F0]">
-              Contact us for current pricing
-            </span>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-2.5">
-          <Link
-            to={`/tours/${tour.slug}`}
-            className="py-2.5 px-3 text-xs font-semibold text-center text-white bg-white/10 hover:bg-white/15 rounded-lg transition-colors whitespace-nowrap"
-          >
-            View Details
-          </Link>
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="py-2.5 px-3 text-xs font-semibold text-center bg-[#0EA5E9] text-[#0B0F14] hover:bg-[#38BDF8] rounded-lg transition-colors whitespace-nowrap flex items-center justify-center gap-1.5"
-          >
-            <span>Inquire Now</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </a>
-        </div>
-      </div>
-    </article>
-  );
-};
-
-// Section 26: Cinematic Scroll-Driven Journey through Gilgit-Baltistan
-const SCROLL_JOURNEY_STOPS = [
-  {
-    step: '01',
-    name: 'Hunza',
-    subtitle: 'Terraced Valleys & Karakoram Giants',
-    elevation: '2,438 m',
-    description:
-      'Begin amidst ancient apricot orchards and panoramic viewpoints overlooking Rakaposhi and Ultar Sar along the Karakoram Highway.',
-    image: VISUAL_ASSETS.heroKarakoram,
-  },
-  {
-    step: '02',
-    name: 'Attabad Lake',
-    subtitle: 'Glacial Turquoise Waters',
-    elevation: '2,559 m',
-    description:
-      'Glide across vivid glacial waters carved between sheer limestone and granite cliffs in Upper Hunza.',
-    image: VISUAL_ASSETS.attabadPassu,
-  },
-  {
-    step: '03',
-    name: 'Passu',
-    subtitle: 'Cathedral Spires of Tupopdan',
-    elevation: '2,480 m',
-    description:
-      'Stand before the unmistakable jagged crown of the Passu Cones, Passu Glacier, and suspension bridges over the Hunza River.',
-    image: VISUAL_ASSETS.attabadPassu,
-  },
-  {
-    step: '04',
-    name: 'Skardu',
-    subtitle: 'Confluence of the Indus & High Desert',
-    elevation: '2,228 m',
-    description:
-      'Enter Baltistan where cold desert sand dunes, turquoise lakes, and wide river valleys frame the approach to the high Karakoram.',
-    image: VISUAL_ASSETS.skarduValley,
-  },
-  {
-    step: '05',
-    name: 'Khaplu',
-    subtitle: 'Shyok River & Eastern Baltistan Heritage',
-    elevation: '2,600 m',
-    description:
-      'Follow the winding Shyok River into tranquil mountain settlements surrounded by towering granite walls and historic architecture.',
-    image: VISUAL_ASSETS.deosaiPlains,
-  },
-  {
-    step: '06',
-    name: 'Deosai',
-    subtitle: 'The High Alpine Roof of the World',
-    elevation: '4,114 m',
-    description:
-      'Cross rolling summer wildflower plains, crystal-clear snowmelt streams, and the mirror-like expanse of Sheosar Lake.',
-    image: VISUAL_ASSETS.deosaiPlains,
-  },
-  {
-    step: '07',
-    name: 'Astore',
-    subtitle: 'Emerald Valleys & Rama Pine Forests',
-    elevation: '2,600 m',
-    description:
-      'Descend from the high plateau into forested valleys, glacial streams, and eastern viewpoints of Nanga Parbat.',
-    image: VISUAL_ASSETS.fairyMeadows,
-  },
-  {
-    step: '08',
-    name: 'Fairy Meadows',
-    subtitle: 'Beneath the Raikot Face of Nanga Parbat',
-    elevation: '3,300 m',
-    description:
-      'Culminate your northern journey in lush alpine pastures directly facing the snow-covered wall of Nanga Parbat.',
-    image: VISUAL_ASSETS.fairyMeadows,
-  },
-];
-
-export const CinematicDestinationScroller: React.FC = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const { business } = useApp();
-  const activeStop = SCROLL_JOURNEY_STOPS[activeIndex] || SCROLL_JOURNEY_STOPS[0];
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      {/* Left Interactive Vertical Route Sequence */}
-      <div className="lg:col-span-5 space-y-2">
-        {SCROLL_JOURNEY_STOPS.map((stop, idx) => {
-          const isActive = idx === activeIndex;
-          return (
-            <button
-              key={stop.name}
-              type="button"
-              onClick={() => setActiveIndex(idx)}
-              className={`w-full text-left p-4 rounded-xl border transition-colors flex items-start justify-between gap-4 ${
-                isActive
-                  ? 'bg-[#111927] border-[#0EA5E9] text-white'
-                  : 'bg-[#0E131B]/60 border-white/10 text-[#94A3B8] hover:border-white/25 hover:text-white'
-              }`}
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="font-mono-num text-[#0EA5E9] font-semibold">{stop.step}.</span>
-                  <span className="font-display font-bold text-base text-white">{stop.name}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{stop.subtitle}</span>
-                </div>
-                {isActive && (
-                  <p className="text-xs text-[#CBD5E1] leading-relaxed pt-1">
-                    {stop.description}
-                  </p>
-                )}
-              </div>
-              <span className="font-mono-num text-xs text-[#D4AF37] shrink-0">
-                {stop.elevation}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Right Sticky Visual Stage */}
-      <div className="lg:col-span-7 lg:sticky lg:top-24">
-        <div className="relative aspect-[16/10] rounded-xl overflow-hidden border border-white/15 bg-[#0E1520]">
-          <img
-            src={activeStop.image}
-            alt={`${activeStop.name} — ${activeStop.subtitle} in Gilgit-Baltistan`}
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover transition-all duration-500"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-          <div className="absolute bottom-6 left-6 right-6 space-y-3">
-            <div className="flex items-center gap-2 text-xs text-[#CBD5E1]">
-              <span className="font-mono-num text-[#0EA5E9]">STOP {activeStop.step} / 08</span>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono-num text-[#D4AF37]">ELEVATION {activeStop.elevation}</span>
-            </div>
-            <h3 className="font-display text-2xl sm:text-3xl font-bold text-white">
-              {activeStop.name} — {activeStop.subtitle}
-            </h3>
-            <p className="text-sm text-[#E2E8F0] max-w-2xl leading-relaxed">
-              {activeStop.description}
-            </p>
-            <div className="pt-2 flex flex-wrap items-center gap-3">
-              <Link
-                to="/destinations"
-                className="px-4 py-2 text-xs font-semibold bg-white text-[#0B0F14] hover:bg-[#E2E8F0] rounded-lg transition-colors whitespace-nowrap"
-              >
-                Explore Destination
-              </Link>
-              <a
-                href={buildWhatsAppLink(
-                  `Hello ${business.name}, I would like to include ${activeStop.name} in my Gilgit-Baltistan journey. Please share available tour options.`,
-                  business.whatsapp
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 text-xs font-semibold bg-[#10B981] text-[#0B0F14] hover:bg-[#34D399] rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
-              >
-                <MessageCircle className="w-3.5 h-3.5" />
-                Inquire About {activeStop.name}
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Section 27: Interactive Stylized Gilgit-Baltistan Map with all 14 Markers
-export const InteractiveGilgitBaltistanMap: React.FC = () => {
-  const { destinations, tours, business } = useApp();
-  const [selectedSlug, setSelectedSlug] = useState<string>('hunza');
-
-  const selectedDest =
-    destinations.find((d) => d.slug === selectedSlug) || destinations[0];
-
-  const matchingTours = tours.filter(
-    (t) =>
-      t.destination.toLowerCase().includes(selectedDest.name.toLowerCase().split(' ')[0]) ||
-      t.title.toLowerCase().includes(selectedDest.name.toLowerCase().split(' ')[0])
-  );
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-      {/* Left Interactive Stylized Topographic SVG Map */}
-      <div className="lg:col-span-7 bg-[#0D131C] border border-white/10 rounded-xl p-4 sm:p-6 flex flex-col justify-between">
-        <div className="flex items-center justify-between gap-4 pb-4 border-b border-white/10">
-          <div>
-            <div className="text-xs text-[#94A3B8]">INTERACTIVE REGIONAL ATLAS</div>
-            <h3 className="font-display text-lg font-bold text-white">
-              Gilgit-Baltistan 14-Point Corridor Map
-            </h3>
-          </div>
-          <div className="text-xs text-[#94A3B8] flex items-center gap-3">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37]" />
-              Active Package
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#0EA5E9]" />
-              Regional Landmark
-            </span>
-          </div>
-        </div>
-
-        <div className="relative w-full aspect-[16/11] my-4 bg-[#080C12] rounded-lg border border-white/5 overflow-hidden">
-          {/* Stylized Contour & River Network SVG */}
-          <svg
-            viewBox="0 0 100 78"
-            className="w-full h-full"
-            role="img"
-            aria-label="Interactive map of Gilgit-Baltistan destinations"
-          >
-            <defs>
-              <radialGradient id="mapGlow" cx="50%" cy="45%" r="55%">
-                <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.16" />
-                <stop offset="100%" stopColor="#080C12" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-            <rect width="100" height="78" fill="url(#mapGlow)" />
-
-            {/* Topographic Grid Lines */}
-            {[15, 30, 45, 60].map((y) => (
-              <line
-                key={`h-${y}`}
-                x1="0"
-                y1={y}
-                x2="100"
-                y2={y}
-                stroke="rgba(255,255,255,0.04)"
-                strokeWidth="0.2"
-              />
-            ))}
-            {[20, 40, 60, 80].map((x) => (
-              <line
-                key={`v-${x}`}
-                x1={x}
-                y1="0"
-                x2={x}
-                y2="78"
-                stroke="rgba(255,255,255,0.04)"
-                strokeWidth="0.2"
-              />
-            ))}
-
-            {/* Stylized Karakoram Highway & Indus/Shyok River Corridors */}
-            <path
-              d="M 34 58 Q 38 42 46 27 T 56 15 L 60 8"
-              fill="none"
-              stroke="#0EA5E9"
-              strokeWidth="0.55"
-              strokeDasharray="1.5 1"
-              opacity="0.7"
-            />
-            <path
-              d="M 22 34 Q 38 42 68 58 L 84 56"
-              fill="none"
-              stroke="#D4AF37"
-              strokeWidth="0.5"
-              strokeDasharray="1.2 1"
-              opacity="0.65"
-            />
-            <path
-              d="M 34 58 Q 46 66 58 68 T 68 58 L 72 48"
-              fill="none"
-              stroke="#10B981"
-              strokeWidth="0.45"
-              opacity="0.55"
-            />
-
-            {/* 14 Destination Markers */}
-            {destinations.map((dest) => {
-              const isSelected = dest.slug === selectedDest.slug;
-              return (
-                <g
-                  key={dest.id}
-                  transform={`translate(${dest.coordinates.x}, ${dest.coordinates.y})`}
-                  onClick={() => setSelectedSlug(dest.slug)}
-                  className="cursor-pointer"
-                >
-                  {isSelected && (
-                    <circle
-                      r="3.4"
-                      fill="none"
-                      stroke="#0EA5E9"
-                      strokeWidth="0.4"
-                      opacity="0.9"
-                    />
-                  )}
-                  <circle
-                    r={isSelected ? '1.8' : '1.3'}
-                    fill={dest.isConfirmedTourOffering ? '#D4AF37' : '#0EA5E9'}
-                  />
-                  <text
-                    y="-2.4"
-                    textAnchor="middle"
-                    fill={isSelected ? '#FFFFFF' : '#CBD5E1'}
-                    fontSize={isSelected ? '2.5' : '2.1'}
-                    fontWeight={isSelected ? 'bold' : 'normal'}
-                  >
-                    {dest.name.replace(' Valley', '').replace(' Pass', '')}
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-
-        {/* Accessible Keyboard Button Selector for all 14 Markers */}
-        <div className="flex flex-wrap gap-1.5 pt-2">
-          {destinations.map((dest) => {
-            const active = dest.slug === selectedDest.slug;
-            return (
-              <button
-                key={dest.id}
-                type="button"
-                onClick={() => setSelectedSlug(dest.slug)}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors whitespace-nowrap ${
-                  active
-                    ? 'bg-[#0EA5E9] text-[#0B0F14] font-semibold'
-                    : 'bg-white/5 text-[#CBD5E1] hover:bg-white/10'
-                }`}
-              >
-                {dest.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Right Selected Marker Details Panel */}
-      <div className="lg:col-span-5 bg-[#111722] border border-white/10 rounded-xl overflow-hidden flex flex-col justify-between">
-        <div>
-          <div className="relative aspect-[16/9] bg-[#0B0F14]">
-            <img
-              src={selectedDest.imageUrl}
-              alt={selectedDest.name}
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#111722] via-black/30 to-transparent" />
-            <div className="absolute bottom-3 left-5 right-5 flex items-center justify-between text-xs text-[#CBD5E1]">
-              <span>{selectedDest.region}</span>
-              <span className="font-mono-num text-[#D4AF37]">
-                Approx. {selectedDest.elevation}
-              </span>
-            </div>
-          </div>
-
-          <div className="p-6 space-y-4">
-            <div className="space-y-1">
-              <div className="text-xs text-[#0EA5E9] font-medium">
-                {selectedDest.isConfirmedTourOffering
-                  ? `Configured ${business.name} Tour Destination`
-                  : 'Gilgit-Baltistan Regional Destination (Custom Inquiry Available)'}
-              </div>
-              <h3 className="font-display text-2xl font-bold text-white">
-                {selectedDest.name}
-              </h3>
-            </div>
-
-            <p className="text-sm text-[#CBD5E1] leading-relaxed">
-              {selectedDest.description}
-            </p>
-
-            {/* Available Tours for this Destination */}
-            <div className="pt-2 space-y-2">
-              <div className="text-xs font-semibold text-white uppercase tracking-wider">
-                Available Tours ({matchingTours.length})
-              </div>
-              {matchingTours.length > 0 ? (
-                <div className="space-y-2">
-                  {matchingTours.map((t) => (
-                    <Link
-                      key={t.id}
-                      to={`/tours/${t.slug}`}
-                      className="block p-3 rounded-lg bg-[#0B0F14] border border-white/10 hover:border-[#0EA5E9] transition-colors"
-                    >
-                      <div className="text-xs font-semibold text-white">{t.title}</div>
-                      <div className="text-[11px] text-[#94A3B8] mt-0.5">
-                        {t.duration} · {t.tourType}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-3 rounded-lg bg-[#0B0F14] border border-white/10 text-xs text-[#94A3B8]">
-                  Custom private or group itinerary available for {selectedDest.name}. Contact{' '}
-                  {business.name} for current information.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 pt-0 grid grid-cols-2 gap-3">
-          <Link
-            to={`/destinations/${selectedDest.slug}`}
-            className="py-2.5 px-4 text-xs font-semibold text-center bg-white/10 hover:bg-white/15 text-white rounded-lg transition-colors whitespace-nowrap"
-          >
-            Explore {selectedDest.name}
-          </Link>
-          <a
-            href={buildWhatsAppLink(
-              `Hello ${business.name}, I am interested in visiting ${selectedDest.name}. Please share current tour packages and travel details.`,
-              business.whatsapp
-            )}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="py-2.5 px-4 text-xs font-semibold text-center bg-[#10B981] text-[#0B0F14] hover:bg-[#34D399] rounded-lg transition-colors whitespace-nowrap flex items-center justify-center gap-1.5"
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-            WhatsApp Inquiry
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Section 37 & 38: Validated Inquiry Form with Continue on WhatsApp workflow
-export const InquiryFormSection: React.FC<{ defaultDestination?: string; defaultTourSlug?: string }> = ({
-  defaultDestination = 'Hunza',
-  defaultTourSlug = '',
-}) => {
-  const { business, user, profile, privateInfo, submitInquiry } = useApp();
-
-  const [customerName, setCustomerName] = useState(profile?.displayName || '');
-  const [email, setEmail] = useState(privateInfo?.email || user?.email || '');
-  const [whatsapp, setWhatsapp] = useState(privateInfo?.phone || '');
+  // 3D Tilt State on Hover
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [travelDates, setTravelDates] = useState('');
   const [travelers, setTravelers] = useState(2);
-  const [destination, setDestination] = useState(defaultDestination);
-  const [preferredDates, setPreferredDates] = useState('');
-  const [tourType, setTourType] = useState('Family Holidays');
-  const [budget, setBudget] = useState('Contact for current pricing');
-  const [message, setMessage] = useState('');
-  const [honeypot, setHoneypot] = useState(''); // Spam protection
-
+  const [phoneInput, setPhoneInput] = useState(user?.phone || '');
+  const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [submittedWaLink, setSubmittedWaLink] = useState<string | null>(null);
-  const [savedToAccount, setSavedToAccount] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({
+      rotateX: -y * 7,
+      rotateY: x * 7,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ rotateX: 0, rotateY: 0 });
+  };
+
+  // Book Now Flow: If not logged in -> redirect to /login with return URL; if logged in -> open booking modal
+  const handleBookNowClick = () => {
+    if (!user && !isAdmin) {
+      const returnUrl = `/tours/${tour.slug}?book=true`;
+      navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+    setPhoneInput(user?.phone || '');
+    setBookingSuccess(false);
+    setBookingModalOpen(true);
+  };
+
+  const handleConfirmBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg(null);
-
-    if (honeypot) return; // Silently drop spam bots
-
-    if (!customerName.trim() || !email.trim() || !whatsapp.trim()) {
-      setErrorMsg('Please enter your Name, Email, and WhatsApp number.');
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setErrorMsg('Please enter a valid email address.');
-      return;
-    }
-
     setSubmitting(true);
     try {
-      const res = await submitInquiry({
-        customerName,
-        email,
-        whatsapp,
-        travelers,
-        destination,
-        preferredDates: preferredDates || 'Flexible dates',
-        tourType,
-        budget,
-        tourSlug: defaultTourSlug,
-        message: message || 'Please share itinerary and current pricing details.',
+      await submitBookingRequest({
+        customerName: user?.name || user?.displayName || 'Traveler',
+        email: user?.email || 'admin@baigtreks.com',
+        whatsapp: phoneInput || user?.phone || business.phone,
+        tourId: tour.id,
+        tourSlug: tour.slug,
+        tourTitle: tour.title,
+        tourImage: tour.imageUrl,
+        pricePerPerson: tour.pricePerPerson,
+        travelDates: travelDates || 'Flexible 2026 Dates',
+        travelers: Number(travelers) || 1,
+        notes,
       });
-
-      setSavedToAccount(res.persistedToDb);
-
-      const waText = [
-        `Hello ${business.name}, I just submitted a travel inquiry:`,
-        `• Name: ${customerName.trim()}`,
-        `• Email: ${email.trim()}`,
-        `• WhatsApp: ${whatsapp.trim()}`,
-        `• Travelers: ${travelers}`,
-        `• Destination: ${destination}`,
-        `• Preferred Dates: ${preferredDates || 'Flexible'}`,
-        `• Tour Type: ${tourType}`,
-        `• Budget Preference: ${budget}`,
-        `• Message: ${message || 'Please share current package details and availability.'}`,
-      ].join('\n');
-
-      setSubmittedWaLink(buildWhatsAppLink(waText, business.whatsapp));
-    } catch {
-      setErrorMsg('Something went wrong. Please try again or contact us on WhatsApp.');
+      setBookingSuccess(true);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-[#111722] border border-white/10 rounded-xl p-6 sm:p-8">
-      {submittedWaLink ? (
-        <div className="space-y-5 py-4">
-          <div className="flex items-center gap-3 text-[#10B981]">
-            <CheckCircle2 className="w-7 h-7 shrink-0" />
-            <h3 className="font-display text-2xl font-bold text-white">
-              Inquiry Prepared for {business.name}
-            </h3>
+    <>
+      <motion.article
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-40px' }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          transformPerspective: 1000,
+          rotateX: tilt.rotateX,
+          rotateY: tilt.rotateY,
+        }}
+        className="group bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl overflow-hidden flex flex-col justify-between shadow-lg shadow-slate-900/5 hover:shadow-xl hover:border-emerald-500/40 transition-shadow duration-300"
+      >
+        <div>
+          {/* Image Container with Zoom on Hover, Price Badge & Star Rating */}
+          <div className="relative overflow-hidden bg-slate-100 aspect-[4/3]">
+            <img
+              src={tour.imageUrl || VISUAL_ASSETS.heroKarakoram}
+              alt={`${tour.title} — ${tour.destination} in Gilgit-Baltistan`}
+              referrerPolicy="no-referrer"
+              loading="lazy"
+              className="w-full h-auto min-h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/15 to-transparent" />
+
+            {/* Top Left Location & Optional Badge */}
+            <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5">
+              <span className="bg-white/90 backdrop-blur-md text-slate-900 text-xs font-semibold px-3 py-1 rounded-2xl shadow-xs flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-emerald-700" />
+                <span>{tour.destination}</span>
+              </span>
+              {tour.badge && (
+                <span className="bg-emerald-800/95 backdrop-blur-md text-white text-xs font-semibold px-3 py-1 rounded-2xl shadow-xs">
+                  {tour.badge}
+                </span>
+              )}
+            </div>
+
+            {/* Save / Wishlist Button */}
+            {user && (
+              <button
+                type="button"
+                onClick={() => toggleSaveTour(tour.id)}
+                aria-label={isSaved ? 'Remove from saved tours' : 'Save tour'}
+                className={`absolute top-3 right-3 p-2 rounded-2xl border transition-all duration-200 ${
+                  isSaved
+                    ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
+                    : 'bg-white/90 backdrop-blur-md text-slate-700 border-white/60 hover:bg-white'
+                }`}
+              >
+                <Bookmark className="w-4 h-4 fill-current" />
+              </button>
+            )}
+
+            {/* Price Badge & Star Rating on Image Bottom */}
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
+              <span className="bg-white/95 backdrop-blur-md text-slate-900 text-xs font-bold px-3 py-1.5 rounded-2xl shadow-sm">
+                {tour.pricePerPerson > 0
+                  ? `PKR ${tour.pricePerPerson.toLocaleString()}`
+                  : 'Custom Quote'}
+              </span>
+              <span className="bg-slate-900/85 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-2xl flex items-center gap-1">
+                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <span>4.9</span>
+              </span>
+            </div>
           </div>
-          <p className="text-sm text-[#CBD5E1] leading-relaxed">
-            {savedToAccount
-              ? 'Your inquiry has been saved to your Customer Dashboard. Click below to continue your conversation directly with our team on WhatsApp with your pre-filled trip details.'
-              : 'Your inquiry details are ready. Click below to continue directly on WhatsApp with your pre-filled travel details, or sign in to track inquiries in your dashboard.'}
+
+          {/* Card Body */}
+          <div className="p-4 md:p-5 space-y-2.5">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 font-medium">
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                <span>{tour.duration}</span>
+              </span>
+              <span aria-hidden="true">·</span>
+              <span className="inline-flex items-center gap-1">
+                <Users className="w-3.5 h-3.5 text-teal-600" />
+                <span>{tour.tourType}</span>
+              </span>
+            </div>
+
+            <h3 className="font-display text-lg md:text-xl font-bold tracking-tight text-slate-900 leading-snug">
+              <Link
+                to={`/tours/${tour.slug}`}
+                className="hover:text-emerald-700 transition-colors"
+              >
+                {tour.title}
+              </Link>
+            </h3>
+
+            <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
+              {tour.shortDescription}
+            </p>
+          </div>
+        </div>
+
+        {/* Card Footer — Full Width Buttons on Mobile */}
+        <div className="px-4 md:px-5 pb-4 md:pb-5 pt-3 border-t border-slate-100 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Link
+                to={`/tours/${tour.slug}`}
+                className="w-full py-2.5 px-3 text-sm font-semibold text-center text-slate-800 bg-slate-100 hover:bg-slate-200/80 rounded-2xl transition-colors block"
+              >
+                View Details
+              </Link>
+            </motion.div>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={handleBookNowClick}
+              className="w-full py-2.5 px-3 text-sm font-semibold text-center bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-800 hover:to-teal-700 text-white rounded-2xl shadow-sm flex items-center justify-center gap-1.5"
+            >
+              <span>Book Now</span>
+              <ArrowRight className="w-4 h-4" />
+            </motion.button>
+          </div>
+
+          {/* Inline Admin Controls visible when isAdmin=true */}
+          {isAdmin && (
+            <div className="pt-2.5 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+              <Link
+                to={`/admin?editTour=${encodeURIComponent(tour.id)}`}
+                className="w-full sm:flex-1 py-2 px-3 text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 rounded-2xl flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit in Admin</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => deleteTourAdmin(tour.id)}
+                className="w-full sm:w-auto py-2 px-3 text-xs font-semibold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-2xl flex items-center justify-center gap-1 transition-colors"
+                title="Delete Tour"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </motion.article>
+
+      {/* Instant Book Now Modal when Logged In */}
+      <AnimatePresence>
+        {bookingModalOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              className="bg-white border border-slate-200 rounded-3xl shadow-2xl max-w-md w-full p-5 sm:p-6 space-y-4 relative overflow-hidden"
+            >
+              <button
+                type="button"
+                onClick={() => setBookingModalOpen(false)}
+                className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {bookingSuccess ? (
+                <div className="text-center space-y-4 py-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-display text-xl font-bold text-slate-900">
+                    Tour Booked Successfully!
+                  </h3>
+                  <p className="text-sm text-slate-600">
+                    Your booking for <strong className="text-slate-900">{tour.title}</strong> has been saved to your account.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+                    <Link
+                      to="/my-bookings"
+                      onClick={() => setBookingModalOpen(false)}
+                      className="w-full py-2.5 px-4 text-sm font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl text-center"
+                    >
+                      View My Bookings
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setBookingModalOpen(false)}
+                      className="w-full py-2.5 px-4 text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleConfirmBooking} className="space-y-4">
+                  <div className="pr-8">
+                    <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                      <Mountain className="w-3.5 h-3.5" /> Instant Tour Reservation
+                    </span>
+                    <h3 className="font-display text-xl font-bold text-slate-900 mt-0.5">
+                      {tour.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Booking as <strong className="text-slate-800">{user?.email || 'admin@baigtreks.com'}</strong>
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Preferred Travel Dates *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={travelDates}
+                      onChange={(e) => setTravelDates(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Travelers *
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={50}
+                        required
+                        value={travelers}
+                        onChange={(e) => setTravelers(Number(e.target.value))}
+                        className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Phone / WhatsApp *
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={phoneInput}
+                        onChange={(e) => setPhoneInput(e.target.value)}
+                        placeholder="03155449778"
+                        className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Special Requests / Notes
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Departure city, hotel preference, etc."
+                      className="w-full px-3.5 py-2 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+                    />
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full py-3 px-4 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-800 hover:to-teal-700 text-white rounded-2xl shadow-md"
+                  >
+                    {submitting ? 'Saving Booking...' : 'Confirm & Save Booking'}
+                  </motion.button>
+                </form>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
+// Journey through Gilgit-Baltistan
+const SCROLL_JOURNEY_STOPS = [
+  {
+    step: '01',
+    name: 'Hunza Valley',
+    subtitle: 'Terraced Valleys & Karakoram Giants',
+    description:
+      'Begin in Karimabad surrounded by Rakaposhi and Ultar Sar, ancient heritage forts, and panoramic viewpoints across the Hunza River.',
+    image: VISUAL_ASSETS.heroKarakoram,
+    slug: 'hunza',
+  },
+  {
+    step: '02',
+    name: 'Attabad Lake & Passu Cones',
+    subtitle: 'Turquoise Glacial Waters & Cathedral Peaks',
+    description:
+      'Cruise across the vivid turquoise waters of Attabad Lake before following the Karakoram Highway to the dramatic jagged spires of Passu and Hussaini Suspension Bridge.',
+    image: VISUAL_ASSETS.attabadPassu,
+    slug: 'attabad-lake',
+  },
+  {
+    step: '03',
+    name: 'Khunjerab Pass',
+    subtitle: 'High-Altitude Border Corridor',
+    description:
+      'Ascend through Khunjerab National Park along paved alpine switchbacks to the snow-rimmed Pakistan-China border plateau.',
+    image: VISUAL_ASSETS.attabadPassu,
+    slug: 'khunjerab-pass',
+  },
+  {
+    step: '04',
+    name: 'Skardu & Cold Desert',
+    subtitle: 'Confluence of the Indus & Shigar Rivers',
+    description:
+      'Enter Baltistan’s gateway valley where high-altitude cold desert dunes meet tranquil mountain lakes and centuries-old rock forts.',
+    image: VISUAL_ASSETS.skarduValley,
+    slug: 'skardu',
+  },
+  {
+    step: '05',
+    name: 'Deosai Plains & Khaplu',
+    subtitle: 'High-Altitude Plateau & Heritage Palaces',
+    description:
+      'Cross the sweeping alpine meadows and crystal streams of Deosai before exploring the apricot orchards and royal heritage of Khaplu Valley.',
+    image: VISUAL_ASSETS.deosaiPlains,
+    slug: 'deosai-plains',
+  },
+];
+
+export const CinematicDestinationScroller: React.FC = () => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const currentStop = SCROLL_JOURNEY_STOPS[activeIndex] || SCROLL_JOURNEY_STOPS[0];
+
+  return (
+    <section className="max-w-7xl mx-auto px-4 md:px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-3xl p-4 md:p-8 shadow-xl shadow-slate-900/5"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
+          <div className="lg:col-span-6 space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+              <Mountain className="w-3.5 h-3.5" />
+              <span>Signature Route Preview</span>
+            </div>
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+              Journey Through Gilgit-Baltistan
+            </h2>
+            <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+              Select each stop below to explore how our road trips and expeditions connect the iconic valleys, lakes, and mountain passes of Northern Pakistan.
+            </p>
+
+            <div className="relative rounded-3xl overflow-hidden border border-slate-200 aspect-[16/10] bg-slate-100 shadow-lg">
+              <img
+                src={currentStop.image}
+                alt={`${currentStop.name} — Gilgit-Baltistan`}
+                referrerPolicy="no-referrer"
+                className="w-full h-auto min-h-full object-cover transition-all duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/25 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 space-y-1 text-white">
+                <div className="text-xs font-semibold text-emerald-300">
+                  Stop {currentStop.step} · {currentStop.subtitle}
+                </div>
+                <div className="font-display text-xl md:text-2xl font-bold tracking-tight">
+                  {currentStop.name}
+                </div>
+                <p className="text-xs sm:text-sm text-slate-200 max-w-xl">
+                  {currentStop.description}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 space-y-3">
+            {SCROLL_JOURNEY_STOPS.map((stop, idx) => {
+              const isActive = idx === activeIndex;
+              return (
+                <div
+                  key={stop.step}
+                  onClick={() => setActiveIndex(idx)}
+                  className={`cursor-pointer p-4 md:p-5 rounded-3xl border transition-all duration-300 ${
+                    isActive
+                      ? 'bg-emerald-50/80 border-emerald-600 shadow-sm'
+                      : 'bg-gray-50/80 border-slate-200 hover:bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-xs font-bold px-2.5 py-1 rounded-xl ${
+                          isActive
+                            ? 'bg-emerald-800 text-white'
+                            : 'bg-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {stop.step}
+                      </span>
+                      <div>
+                        <h3 className="font-display text-base md:text-lg font-bold tracking-tight text-slate-900">
+                          {stop.name}
+                        </h3>
+                        <p className="text-xs md:text-sm text-slate-500">{stop.subtitle}</p>
+                      </div>
+                    </div>
+                    <Link
+                      to={`/destinations/${stop.slug}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs md:text-sm font-semibold text-emerald-800 hover:text-emerald-900 inline-flex items-center gap-1"
+                    >
+                      <span>Explore</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </motion.div>
+    </section>
+  );
+};
+
+// Interactive Map of Gilgit-Baltistan
+const MAP_COORDINATES: Record<string, { x: number; y: number }> = {
+  hunza: { x: 48, y: 24 },
+  'attabad-lake': { x: 53, y: 21 },
+  'passu-cones': { x: 55, y: 17 },
+  'khunjerab-pass': { x: 61, y: 9 },
+  gilgit: { x: 39, y: 34 },
+  'nagar-valley': { x: 47, y: 29 },
+  'fairy-meadows': { x: 28, y: 48 },
+  'nanga-parbat-base-camp': { x: 26, y: 54 },
+  'astore-valley': { x: 36, y: 52 },
+  'deosai-plains': { x: 49, y: 56 },
+  skardu: { x: 60, y: 46 },
+  'shigar-valley': { x: 65, y: 39 },
+  'khaplu-valley': { x: 76, y: 45 },
+  'basho-valley': { x: 54, y: 43 },
+};
+
+export const InteractiveGilgitBaltistanMap: React.FC = () => {
+  const { destinations, tours, business } = useApp();
+  const [selectedSlug, setSelectedSlug] = useState<string>('hunza');
+
+  const activeDestination =
+    destinations.find((d) => d.slug === selectedSlug) || destinations[0];
+
+  const matchingTours = tours.filter(
+    (t) =>
+      activeDestination &&
+      (t.destination.toLowerCase().includes(activeDestination.name.split(' ')[0].toLowerCase()) ||
+        t.title.toLowerCase().includes(activeDestination.name.split(' ')[0].toLowerCase()))
+  );
+
+  return (
+    <section className="max-w-7xl mx-auto px-4 md:px-6 space-y-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="space-y-2 max-w-2xl">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold">
+            <MapPin className="w-3.5 h-3.5" />
+            <span>Interactive Destination Map</span>
+          </span>
+          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+            Explore 14 Iconic Destinations
+          </h2>
+        </div>
+        <p className="text-sm md:text-base text-slate-600 max-w-md">
+          Tap any marker or destination below to inspect regional highlights and available tours.
+        </p>
+      </div>
+
+      {/* Mobile-Friendly Quick Selector Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        {destinations.map((dest) => {
+          const isSelected = dest.slug === activeDestination?.slug;
+          return (
+            <button
+              key={dest.id}
+              type="button"
+              onClick={() => setSelectedSlug(dest.slug)}
+              className={`px-3.5 py-2 rounded-2xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all ${
+                isSelected
+                  ? 'bg-emerald-800 text-white shadow-sm'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:border-emerald-500'
+              }`}
+            >
+              {dest.name}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Topographical SVG Map */}
+        <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 relative overflow-hidden flex flex-col justify-between min-h-[300px] sm:min-h-[420px] shadow-xl">
+          <div className="flex items-center justify-between text-xs text-slate-300 z-10 pb-2">
+            <span className="flex items-center gap-1.5">
+              <Mountain className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Karakoram · Himalaya · Hindu Kush</span>
+            </span>
+            <span className="text-emerald-400 font-medium">Tap a Pin to Inspect</span>
+          </div>
+
+          <div className="relative w-full aspect-[16/11] my-auto">
+            <svg
+              viewBox="0 0 100 70"
+              className="w-full h-full stroke-slate-700 fill-none"
+              aria-label="Topographical Map of Gilgit-Baltistan"
+            >
+              <path d="M 5 20 Q 35 10, 65 18 T 95 15" strokeWidth="0.3" />
+              <path d="M 8 35 Q 40 25, 70 35 T 95 30" strokeWidth="0.3" />
+              <path d="M 10 50 Q 45 42, 75 52 T 96 48" strokeWidth="0.3" />
+              <path
+                d="M 22 65 C 32 50, 38 38, 48 24 C 53 20, 56 15, 61 9"
+                stroke="#10B981"
+                strokeWidth="0.6"
+                strokeDasharray="1.5 1"
+              />
+              <path
+                d="M 39 34 C 48 40, 54 44, 60 46 C 67 46, 72 45, 76 45"
+                stroke="#F59E0B"
+                strokeWidth="0.5"
+                strokeDasharray="1.2 1.2"
+              />
+            </svg>
+
+            {destinations.map((dest) => {
+              const coords = MAP_COORDINATES[dest.slug] || { x: 50, y: 35 };
+              const isSelected = activeDestination?.slug === dest.slug;
+              return (
+                <button
+                  key={dest.id}
+                  type="button"
+                  onClick={() => setSelectedSlug(dest.slug)}
+                  style={{ left: `${coords.x}%`, top: `${coords.y}%` }}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none z-20"
+                  aria-label={`Select ${dest.name}`}
+                >
+                  <span
+                    className={`flex items-center justify-center rounded-full transition-all ${
+                      isSelected
+                        ? 'w-5 h-5 bg-amber-400 text-slate-900 ring-4 ring-amber-400/30 scale-110'
+                        : 'w-3.5 h-3.5 bg-emerald-400 hover:bg-white ring-2 ring-slate-900'
+                    }`}
+                  />
+                  <span
+                    className={`hidden sm:block absolute left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap pointer-events-none transition-opacity ${
+                      isSelected
+                        ? 'bg-amber-400 text-slate-950 opacity-100'
+                        : 'bg-slate-900/90 text-white opacity-80 group-hover:opacity-100'
+                    }`}
+                  >
+                    {dest.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 pt-2 border-t border-slate-800 z-10">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Selected Destination
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" /> Available Stop
+            </span>
+          </div>
+        </div>
+
+        {/* Selected Destination Card */}
+        {activeDestination && (
+          <div className="lg:col-span-5 bg-white border border-slate-200 rounded-3xl overflow-hidden flex flex-col justify-between shadow-xl shadow-slate-900/5">
+            <div>
+              <div className="relative aspect-[16/9] bg-slate-100 overflow-hidden">
+                <img
+                  src={activeDestination.imageUrl || VISUAL_ASSETS.heroKarakoram}
+                  alt={activeDestination.name}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-auto min-h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+                <div className="absolute bottom-3 left-4 right-4 text-white">
+                  <div className="text-xs font-semibold text-emerald-300">
+                    {activeDestination.region} · Best Season: {activeDestination.bestSeason || 'April to October'}
+                  </div>
+                  <h3 className="font-display text-xl md:text-2xl font-bold tracking-tight">
+                    {activeDestination.name}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="p-4 md:p-6 space-y-4">
+                <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+                  {activeDestination.description}
+                </p>
+
+                <div className="space-y-1.5">
+                  <div className="text-xs font-semibold text-slate-500">Key Attractions</div>
+                  <p className="text-xs md:text-sm text-slate-700 font-medium">
+                    {(activeDestination.attractions || ['Scenic Viewpoints', 'Mountain Panoramas']).join(' · ')}
+                  </p>
+                </div>
+
+                {matchingTours.length > 0 && (
+                  <div className="pt-2 border-t border-slate-100 space-y-2">
+                    <div className="text-xs font-semibold text-slate-500">
+                      Available Tours ({matchingTours.length})
+                    </div>
+                    <div className="space-y-1.5">
+                      {matchingTours.slice(0, 2).map((t) => (
+                        <Link
+                          key={t.id}
+                          to={`/tours/${t.slug}`}
+                          className="p-2.5 rounded-2xl bg-gray-50 hover:bg-emerald-50/60 border border-slate-200/80 text-xs font-semibold text-slate-800 flex items-center justify-between transition-colors"
+                        >
+                          <span className="truncate pr-2">{t.title}</span>
+                          <span className="text-emerald-700 shrink-0">{t.duration}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 md:p-6 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <Link
+                to={`/destinations/${activeDestination.slug}`}
+                className="w-full py-2.5 px-4 text-sm font-semibold text-center bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl transition-colors"
+              >
+                Explore Guide
+              </Link>
+              <a
+                href={buildWhatsAppLink(
+                  `Hello ${business.name}, I am interested in visiting ${activeDestination.name} in Gilgit-Baltistan.`,
+                  business.whatsapp
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 px-4 text-sm font-semibold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl transition-colors flex items-center justify-center gap-1.5"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Inquire on WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+// Custom Tour Inquiry Form
+export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDestination?: string }> = ({
+  defaultTourSlug = '',
+  defaultDestination = 'Hunza Valley',
+}) => {
+  const { submitInquiry, business, user, profile, privateInfo } = useApp();
+  const [customerName, setCustomerName] = useState(profile?.displayName || '');
+  const [email, setEmail] = useState(privateInfo?.email || user?.email || '');
+  const [whatsapp, setWhatsapp] = useState(privateInfo?.phone || '');
+  const [travelers, setTravelers] = useState(2);
+  const [destination, setDestination] = useState(defaultDestination);
+  const [preferredDates, setPreferredDates] = useState('');
+  const [tourType, setTourType] = useState('Private Customized Tour');
+  const [budget] = useState('Flexible / Request Quote');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    if (!customerName.trim() || !whatsapp.trim()) {
+      setErrorMsg('Please provide your name and WhatsApp / phone number.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await submitInquiry({
+        customerName,
+        email: email.trim() || 'not-provided@baigtreks.com',
+        whatsapp,
+        travelers: Number(travelers) || 1,
+        destination,
+        preferredDates: preferredDates || 'Flexible dates',
+        tourType,
+        budget,
+        tourSlug: defaultTourSlug,
+        message: message || `Inquiry for ${destination}`,
+      });
+      setSubmitted(true);
+    } catch {
+      setErrorMsg('Could not submit inquiry. Please use the WhatsApp button to message us.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const directWaUrl = buildWhatsAppLink(
+    `Hello ${business.name}, my name is ${customerName || 'a traveler'}. I want to plan a ${tourType} to ${destination} for ${travelers} travelers (${preferredDates || 'flexible dates'}). ${message}`,
+    business.whatsapp
+  );
+
+  return (
+    <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl shadow-slate-900/5">
+      {submitted ? (
+        <div className="space-y-4 py-6 text-center max-w-lg mx-auto">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <h3 className="font-display text-2xl font-bold tracking-tight text-slate-900">
+            Inquiry Received by {business.name}
+          </h3>
+          <p className="text-sm md:text-base text-slate-600">
+            Your trip request for <strong className="text-slate-900">{destination}</strong> has been saved. Our team will respond via WhatsApp or email with a tailored itinerary.
           </p>
-          <div className="flex flex-wrap items-center gap-3 pt-2">
+          <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3">
             <a
-              href={submittedWaLink}
+              href={directWaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-3 text-sm font-semibold bg-[#10B981] text-[#0B0F14] hover:bg-[#34D399] rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+              className="w-full sm:w-auto px-5 py-3 text-sm font-semibold bg-emerald-700 text-white hover:bg-emerald-800 rounded-2xl flex items-center justify-center gap-2"
             >
               <MessageCircle className="w-4 h-4" />
-              CONTINUE ON WHATSAPP
+              <span>Continue on WhatsApp ({business.phone})</span>
             </a>
             <button
               type="button"
-              onClick={() => setSubmittedWaLink(null)}
-              className="px-4 py-3 text-xs font-semibold text-[#CBD5E1] hover:text-white border border-white/15 rounded-lg"
+              onClick={() => setSubmitted(false)}
+              className="w-full sm:w-auto px-5 py-3 text-sm font-semibold bg-slate-100 text-slate-800 hover:bg-slate-200 rounded-2xl"
             >
-              Submit Another Inquiry
+              Send Another Inquiry
             </button>
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-          {/* Hidden Honeypot Field */}
-          <input
-            type="text"
-            name="company_website_hp"
-            value={honeypot}
-            onChange={(e) => setHoneypot(e.target.value)}
-            className="hidden"
-            tabIndex={-1}
-            autoComplete="off"
-          />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1">
+            <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1.5">
+              <Compass className="w-3.5 h-3.5" />
+              <span>Custom Itinerary &amp; Quote Request</span>
+            </span>
+            <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Plan Your Gilgit-Baltistan Trip
+            </h3>
+            <p className="text-sm text-slate-600">
+              Share your travel preferences below or message us directly on WhatsApp at {business.phone}.
+            </p>
+          </div>
+
+          {errorMsg && (
+            <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-700">
+              {errorMsg}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Full Name *
               </label>
               <input
@@ -666,26 +868,11 @@ export const InquiryFormSection: React.FC<{ defaultDestination?: string; default
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Your full name"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
               />
             </div>
-
             <div>
-              <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
-                Email Address *
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 WhatsApp / Phone Number *
               </label>
               <input
@@ -694,12 +881,44 @@ export const InquiryFormSection: React.FC<{ defaultDestination?: string; default
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
                 placeholder="e.g. 03155449778"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
               />
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Destination
+              </label>
+              <select
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
+              >
+                <option value="Hunza Valley">Hunza Valley</option>
+                <option value="Skardu & Baltistan">Skardu &amp; Baltistan</option>
+                <option value="Hunza + Skardu Combined">Hunza + Skardu Combined</option>
+                <option value="Fairy Meadows & Nanga Parbat">Fairy Meadows &amp; Nanga Parbat</option>
+                <option value="Deosai & Astore Valley">Deosai &amp; Astore Valley</option>
+                <option value="Khaplu & Shigar Valleys">Khaplu &amp; Shigar Valleys</option>
+                <option value="Custom Multi-Valley Expedition">Custom Multi-Valley Expedition</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Number of Travelers
               </label>
               <input
@@ -707,138 +926,78 @@ export const InquiryFormSection: React.FC<{ defaultDestination?: string; default
                 min={1}
                 max={100}
                 value={travelers}
-                onChange={(e) => setTravelers(Number(e.target.value) || 1)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9] font-mono-num"
+                onChange={(e) => setTravelers(Number(e.target.value))}
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
               />
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
-                Preferred Destination
-              </label>
-              <select
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
-              >
-                {[
-                  'Hunza',
-                  'Skardu',
-                  'Hunza & Skardu Circuit',
-                  'Gilgit',
-                  'Fairy Meadows',
-                  'Naltar',
-                  'Khaplu',
-                  'Shigar',
-                  'Astore',
-                  'Deosai',
-                  'Ghizer',
-                  'Passu & Attabad Lake',
-                  'Custom Multi-Valley Route',
-                ].map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
-                Preferred Travel Dates
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Preferred Travel Dates / Month
               </label>
               <input
                 type="text"
                 value={preferredDates}
                 onChange={(e) => setPreferredDates(e.target.value)}
-                placeholder="e.g. October 2026 / 5 Days"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
+                placeholder="e.g. May 15 - May 22 or Flexible"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
               />
             </div>
-
             <div>
-              <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
-                Tour Type
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Experience Type
               </label>
               <select
                 value={tourType}
                 onChange={(e) => setTourType(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
               >
-                {[
-                  'Family Holidays',
-                  'Honeymoon Tours',
-                  'Adventure Tours',
-                  'Trekking',
-                  'Cultural Trips',
-                  'Road Trips',
-                  'Group Tours',
-                  'Private Tours',
-                  'Custom Tours',
-                ].map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
-                Budget Preference
-              </label>
-              <select
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
-              >
-                <option value="Contact for current pricing">Discuss current pricing options</option>
-                <option value="Standard Comfort">Standard Comfort Package</option>
-                <option value="Deluxe 3-4 Star">Deluxe 3–4 Star Preference</option>
-                <option value="Luxury Private">Luxury Private Expedition</option>
+                <option value="Private Customized Tour">Private Customized Tour</option>
+                <option value="Family Holiday">Family Holiday</option>
+                <option value="Honeymoon / Couple Tour">Honeymoon / Couple Tour</option>
+                <option value="Group Tour">Group Tour</option>
+                <option value="Trekking & Camping">Trekking &amp; Camping</option>
+                <option value="Jeep Safari & Road Trip">Jeep Safari &amp; Road Trip</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
-              Trip Requirements &amp; Questions
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Trip Notes or Special Requests
             </label>
             <textarea
               rows={3}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Tell us about your departure city, vehicle preferences (e.g. Prado, Hiace, Coaster), or special requests..."
-              className="w-full px-3.5 py-2.5 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
+              placeholder="Tell us your departure city, hotel preference, or places you want to include..."
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
             />
           </div>
 
-          {errorMsg && (
-            <div className="p-3 rounded-lg bg-red-950/60 border border-red-500/40 text-xs text-red-200">
-              {errorMsg}
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-            <button
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={submitting}
-              className="px-6 py-3 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] hover:bg-[#38BDF8] rounded-lg transition-colors whitespace-nowrap flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-800 hover:to-teal-700 text-white rounded-2xl shadow-sm transition-all disabled:opacity-50"
             >
-              <Compass className="w-4 h-4" />
-              {submitting ? 'PROCESSING...' : 'SEND INQUIRY'}
-            </button>
-            <span className="text-xs text-[#94A3B8]">
-              Or WhatsApp directly:{' '}
-              <a
-                href={business.whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#10B981] font-mono-num hover:underline"
-              >
-                {business.phone}
-              </a>
-            </span>
+              {submitting ? 'Submitting Request...' : 'Send Trip Inquiry'}
+            </motion.button>
+            <motion.a
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              href={directWaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto px-5 py-3 text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 rounded-2xl transition-colors flex items-center justify-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Instant WhatsApp Quote</span>
+            </motion.a>
           </div>
         </form>
       )}

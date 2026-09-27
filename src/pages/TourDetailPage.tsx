@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { motion } from 'motion/react';
 import {
   MessageCircle,
   Bookmark,
@@ -7,547 +8,517 @@ import {
   XCircle,
   ArrowLeft,
   Calendar,
+  Star,
+  MapPin,
+  Users,
+  Mountain,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { VISUAL_ASSETS } from '../data/initialData';
 import { buildTourWhatsAppMessage, buildWhatsAppLink } from '../config/business';
 import { InquiryFormSection } from '../components/InteractiveMapAndScroll';
 
 export const TourDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const bookingSectionRef = useRef<HTMLDivElement>(null);
+
   const {
     tours,
     business,
     user,
     profile,
     privateInfo,
+    isAdmin,
     toggleSaveTour,
     submitBookingRequest,
   } = useApp();
 
   const tour = tours.find((t) => t.slug === slug || t.id === slug);
 
+  const [bookingName, setBookingName] = useState(user?.name || profile?.displayName || '');
+  const [bookingEmail, setBookingEmail] = useState(privateInfo?.email || user?.email || '');
+  const [bookingWhatsapp, setBookingWhatsapp] = useState(privateInfo?.phone || user?.phone || '');
   const [bookingDates, setBookingDates] = useState('');
   const [bookingTravelers, setBookingTravelers] = useState(2);
   const [bookingNotes, setBookingNotes] = useState('');
-  const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [bookingError, setBookingError] = useState<string | null>(null);
+  const [bookingSubmitted, setBookingSubmitted] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [highlightBookingBox, setHighlightBookingBox] = useState(false);
+
+  // Sync user fields when user logs in
+  useEffect(() => {
+    if (user) {
+      setBookingName(user.name || user.displayName || '');
+      setBookingEmail(user.email || '');
+      setBookingWhatsapp(user.phone || '');
+    }
+  }, [user]);
+
+  // If user came back from /login with ?book=true, scroll to & highlight booking form
+  useEffect(() => {
+    if (searchParams.get('book') === 'true') {
+      if (!user && !isAdmin) {
+        navigate(`/login?redirect=${encodeURIComponent(`/tours/${slug}?book=true`)}`, {
+          replace: true,
+        });
+        return;
+      }
+      setHighlightBookingBox(true);
+      setTimeout(() => {
+        bookingSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+    }
+  }, [searchParams, user, isAdmin, slug, navigate]);
 
   if (!tour) {
     return (
-      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center space-y-4">
-        <h1 className="font-display text-3xl font-bold text-white">Tour Package Not Found</h1>
-        <p className="text-sm text-[#94A3B8]">
-          Contact {business.name} for current information or browse all available journeys.
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          Tour Package Not Found
+        </h1>
+        <p className="text-sm md:text-base text-slate-600">
+          The requested tour could not be found. Browse our active Gilgit-Baltistan tours below.
         </p>
         <Link
           to="/tours"
-          className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] rounded-lg"
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-emerald-700 text-white rounded-2xl"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to All Tours
+          <span>Back to All Tours</span>
         </Link>
       </div>
     );
   }
 
   const isSaved = Boolean(profile?.savedTourIds?.includes(tour.id));
-  const waLink = buildWhatsAppLink(
+  const waUrl = buildWhatsAppLink(
     buildTourWhatsAppMessage(tour.title, business.name),
     business.whatsapp
   );
-  const pricingWaLink = buildWhatsAppLink(
-    `Hello ${business.name}, please share the latest per-person, couple, and group pricing for the "${tour.title}".`,
-    business.whatsapp
-  );
+
+  // Book Now Flow: Check login first; if not logged in, redirect to login and return here
+  const handleBookNowAction = () => {
+    if (!user && !isAdmin) {
+      const returnUrl = `/tours/${tour.slug}?book=true`;
+      navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+    setHighlightBookingBox(true);
+    bookingSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBookingError(null);
-    if (!user) {
-      setBookingError('Please log in or sign up to save a reservation request to your dashboard, or inquire directly via WhatsApp.');
+    if (!user && !isAdmin) {
+      const returnUrl = `/tours/${tour.slug}?book=true`;
+      navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`);
       return;
     }
+    if (!bookingName.trim() || !bookingWhatsapp.trim()) return;
+    setBookingLoading(true);
     try {
       await submitBookingRequest({
-        customerName: profile?.displayName || user.displayName || 'Traveler',
-        email: privateInfo?.email || user.email || '',
-        whatsapp: privateInfo?.phone || business.phone,
+        customerName: bookingName,
+        email: user?.email || bookingEmail || 'admin@baigtreks.com',
+        whatsapp: bookingWhatsapp,
         tourId: tour.id,
+        tourSlug: tour.slug,
         tourTitle: tour.title,
-        travelDates: bookingDates || 'Flexible dates (To be confirmed)',
-        travelers: bookingTravelers,
-        notes: bookingNotes || 'Submitted from tour page. Awaiting availability & final price confirmation.',
+        tourImage: tour.imageUrl,
+        pricePerPerson: tour.pricePerPerson,
+        travelDates: bookingDates || 'Flexible dates',
+        travelers: Number(bookingTravelers) || 1,
+        notes: bookingNotes,
       });
-      setBookingSuccess(true);
-    } catch {
-      setBookingError('Something went wrong. Please try again or contact us on WhatsApp.');
+      setBookingSubmitted(true);
+    } finally {
+      setBookingLoading(false);
     }
   };
 
   return (
-    <div className="space-y-16 pb-16">
-      {/* Tour Header Hero */}
-      <section className="relative min-h-[54vh] flex items-end border-b border-white/10 overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={tour.imageUrl}
-            alt={tour.title}
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F14] via-[#0B0F14]/70 to-[#0B0F14]/30" />
-        </div>
-
-        <div className="relative z-10 max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full space-y-4">
+    <div className="space-y-10 pb-16 overflow-x-hidden">
+      {/* Header & Banner Image */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 pt-6 space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             to="/tours"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#CBD5E1] hover:text-white"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-emerald-700 transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            All Gilgit-Baltistan Tours
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Tours</span>
           </Link>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs text-[#D4AF37]">
-            <span>{tour.destination}</span>
-            <span aria-hidden="true">·</span>
-            <span>{tour.duration}</span>
-            <span aria-hidden="true">·</span>
-            <span>{tour.tourType}</span>
-            {tour.badge && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span className="font-semibold text-white">{tour.badge}</span>
-              </>
-            )}
-          </div>
-
-          <h1 className="font-display text-3xl sm:text-5xl font-extrabold text-white max-w-4xl">
-            {tour.title}
-          </h1>
-
-          <div className="pt-2 flex flex-wrap items-center gap-3">
-            <a
-              href="#book-this-tour"
-              className="px-6 py-3 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] hover:bg-[#38BDF8] rounded-lg transition-colors whitespace-nowrap"
-            >
-              BOOK THIS TOUR
-            </a>
-            <a
-              href={waLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 text-xs font-semibold bg-[#10B981] text-[#0B0F14] hover:bg-[#34D399] rounded-lg transition-colors whitespace-nowrap flex items-center gap-2"
-            >
-              <MessageCircle className="w-4 h-4" />
-              INQUIRE ON WHATSAPP
-            </a>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-2xl">
+              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+              <span>4.9 Verified Route</span>
+            </span>
             {user && (
               <button
                 type="button"
                 onClick={() => toggleSaveTour(tour.id)}
-                className="px-4 py-3 text-xs font-semibold bg-white/10 hover:bg-white/15 text-white rounded-lg flex items-center gap-2 whitespace-nowrap"
+                className={`px-3 py-1.5 rounded-2xl text-xs font-semibold border flex items-center gap-1.5 transition-colors ${
+                  isSaved
+                    ? 'bg-emerald-700 text-white border-emerald-700'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                }`}
               >
-                <Bookmark className="w-4 h-4" />
-                {isSaved ? 'SAVED IN DASHBOARD' : 'SAVE TOUR'}
+                <Bookmark className="w-3.5 h-3.5 fill-current" />
+                <span>{isSaved ? 'Saved' : 'Save Tour'}</span>
               </button>
             )}
           </div>
         </div>
+
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-semibold text-emerald-800">
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="w-4 h-4" />
+                <span>{tour.destination}</span>
+              </span>
+              <span>·</span>
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                <span>{tour.duration}</span>
+              </span>
+              <span>·</span>
+              <span className="inline-flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                <span>{tour.tourType}</span>
+              </span>
+            </div>
+            <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+              {tour.title}
+            </h1>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            type="button"
+            onClick={handleBookNowAction}
+            className="w-full md:w-auto px-6 py-3 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 text-white rounded-2xl shadow-md flex items-center justify-center gap-2 shrink-0"
+          >
+            <Calendar className="w-4 h-4" />
+            <span>Book Now</span>
+          </motion.button>
+        </div>
+
+        <div className="relative rounded-3xl overflow-hidden border border-slate-200 bg-slate-100 aspect-[16/9] sm:aspect-[21/9] shadow-xl">
+          <img
+            src={tour.imageUrl || VISUAL_ASSETS.heroKarakoram}
+            alt={tour.title}
+            referrerPolicy="no-referrer"
+            className="w-full h-auto min-h-full object-cover"
+          />
+        </div>
       </section>
 
-      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        {/* Left Main Content (8 Columns) */}
-        <div className="lg:col-span-8 space-y-12">
-          {/* Section 11: Overview */}
-          <section className="bg-[#111722] border border-white/10 rounded-xl p-6 sm:p-8 space-y-6">
-            <h2 className="font-display text-2xl font-bold text-white">
-              01. Tour Overview
-            </h2>
-            <p className="text-sm sm:text-base text-[#CBD5E1] leading-relaxed">
-              {tour.overview || `Contact ${business.name} for current information.`}
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-white/10 text-xs">
-              <div>
-                <div className="text-[#94A3B8]">Destination</div>
-                <div className="text-white font-semibold mt-0.5">
-                  {tour.destination || `Contact ${business.name} for current information.`}
-                </div>
-              </div>
-              <div>
-                <div className="text-[#94A3B8]">Duration</div>
-                <div className="text-white font-semibold mt-0.5">
-                  {tour.duration || `Contact ${business.name} for current information.`}
-                </div>
-              </div>
-              <div>
-                <div className="text-[#94A3B8]">Tour Type</div>
-                <div className="text-white font-semibold mt-0.5">
-                  {tour.tourType || `Contact ${business.name} for current information.`}
-                </div>
-              </div>
-              <div>
-                <div className="text-[#94A3B8]">Starting Location</div>
-                <div className="text-white font-semibold mt-0.5">
-                  {tour.startingLocation || `Contact ${business.name} for current information.`}
-                </div>
-              </div>
-              <div>
-                <div className="text-[#94A3B8]">Ending Location</div>
-                <div className="text-white font-semibold mt-0.5">
-                  {tour.endingLocation || `Contact ${business.name} for current information.`}
-                </div>
-              </div>
-              <div>
-                <div className="text-[#94A3B8]">Group Size</div>
-                <div className="text-white font-semibold mt-0.5">
-                  {tour.groupSize || `Contact ${business.name} for current information.`}
-                </div>
-              </div>
-              <div>
-                <div className="text-[#94A3B8]">Difficulty</div>
-                <div className="text-white font-semibold mt-0.5">
-                  {tour.difficulty || `Contact ${business.name} for current information.`}
-                </div>
-              </div>
-              <div>
-                <div className="text-[#94A3B8]">Best Season</div>
-                <div className="text-white font-semibold mt-0.5">
-                  {tour.bestSeason || `Contact ${business.name} for current information.`}
-                </div>
-              </div>
-              <div>
-                <div className="text-[#94A3B8]">Booking Status</div>
-                <div className="text-[#D4AF37] font-semibold mt-0.5">
-                  {tour.bookingStatus}
-                </div>
+      {/* Main Content + Sticky Booking Sidebar */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
+        {/* Left 8 Columns */}
+        <div className="lg:col-span-8 space-y-6 md:space-y-8">
+          {/* Quick Facts Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 md:p-5 rounded-3xl bg-white border border-slate-200 shadow-sm">
+            <div>
+              <div className="text-xs text-slate-500">Start / End</div>
+              <div className="text-sm font-semibold text-slate-900 mt-0.5">
+                {tour.startingLocation}
               </div>
             </div>
+            <div>
+              <div className="text-xs text-slate-500">Group Size</div>
+              <div className="text-sm font-semibold text-slate-900 mt-0.5">
+                {tour.groupSize}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500">Difficulty</div>
+              <div className="text-sm font-semibold text-slate-900 mt-0.5">
+                {tour.difficulty}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500">Best Season</div>
+              <div className="text-sm font-semibold text-emerald-800 mt-0.5">
+                {tour.bestSeason}
+              </div>
+            </div>
+          </div>
+
+          {/* Overview */}
+          <section className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 space-y-3 shadow-sm">
+            <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Tour Overview
+            </h2>
+            <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+              {tour.overview}
+            </p>
           </section>
 
-          {/* Section 12: Tour Itinerary */}
-          <section className="bg-[#111722] border border-white/10 rounded-xl p-6 sm:p-8 space-y-6">
-            <h2 className="font-display text-2xl font-bold text-white">
-              02. Day-by-Day Itinerary
+          {/* Day-by-Day Itinerary */}
+          <section className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 space-y-4 shadow-sm">
+            <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Day-by-Day Itinerary
             </h2>
             {tour.itinerary && tour.itinerary.length > 0 ? (
-              <div className="space-y-4 border-l-2 border-[#0EA5E9]/40 pl-5">
+              <div className="space-y-3">
                 {tour.itinerary.map((day, idx) => (
-                  <div key={idx} className="p-4 rounded-lg bg-[#0B0F14] border border-white/10 space-y-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-mono-num text-xs font-bold text-[#0EA5E9]">
-                        {day.dayNumber || `DAY 0${idx + 1}`}
-                      </span>
-                      <span className="text-sm font-bold text-white">{day.route}</span>
+                  <div
+                    key={idx}
+                    className="p-4 rounded-2xl bg-gray-50 border border-slate-200/80 space-y-1"
+                  >
+                    <div className="text-xs font-bold text-emerald-800">
+                      {day.dayTitle || day.dayNumber || `Day ${idx + 1}`} · {day.route}
                     </div>
-                    <p className="text-xs sm:text-sm text-[#CBD5E1] leading-relaxed">
-                      {day.description}
-                    </p>
-                    {(day.overnightLocation || day.meals || day.transportation) && (
-                      <div className="flex flex-wrap gap-3 pt-2 text-[11px] text-[#94A3B8] border-t border-white/5">
-                        {day.overnightLocation && <span>Overnight: {day.overnightLocation}</span>}
-                        {day.meals && <span>Meals: {day.meals}</span>}
-                        {day.transportation && <span>Transport: {day.transportation}</span>}
-                      </div>
-                    )}
+                    <p className="text-sm text-slate-600">{day.description}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="p-5 rounded-lg bg-[#0B0F14] border border-white/10 space-y-3">
-                <p className="text-sm text-[#E2E8F0]">
-                  Detailed itinerary coming soon — contact {business.name} for the latest itinerary.
+              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2">
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  To ensure your trip matches current seasonal road conditions, flight or road preferences, and your group’s pace, <strong>{business.name}</strong> prepares a personalized day-by-day itinerary upon booking or inquiry.
                 </p>
                 <a
-                  href={waLink}
+                  href={waUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-[#10B981] text-[#0B0F14] rounded-lg"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 hover:underline"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
-                  Request Day-by-Day Itinerary on WhatsApp
+                  <span>Request detailed day-by-day plan on WhatsApp ({business.phone})</span>
                 </a>
               </div>
             )}
           </section>
 
-          {/* Section 13 & 14: What's Included & What's Not Included */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-[#111722] border border-white/10 rounded-xl p-6 space-y-4">
-              <h2 className="font-display text-xl font-bold text-white">
-                WHAT&apos;S INCLUDED
-              </h2>
+          {/* Inclusions & Exclusions */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200 space-y-3 shadow-sm">
+              <div className="flex items-center gap-2 text-sm font-bold text-emerald-800">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Inclusions</span>
+              </div>
               {tour.inclusions && tour.inclusions.length > 0 ? (
-                <ul className="space-y-2.5 text-sm text-[#CBD5E1]">
-                  {tour.inclusions.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-[#10B981] shrink-0 mt-0.5" />
-                      <span>{item}</span>
+                <ul className="space-y-2 text-sm text-slate-600">
+                  {tour.inclusions.map((inc, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-emerald-700 font-bold">•</span>
+                      <span>{inc}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
-                  Inclusions (such as transport, hotel, breakfast, guide, or jeep rides) are tailored to your selected package tier. Contact {business.name} for current information.
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Inclusions (transport, hotel category, meals, and 4x4 jeeps) are customized according to your selected package tier.
                 </p>
               )}
             </div>
 
-            <div className="bg-[#111722] border border-white/10 rounded-xl p-6 space-y-4">
-              <h2 className="font-display text-xl font-bold text-white">
-                WHAT&apos;S NOT INCLUDED
-              </h2>
+            <div className="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200 space-y-3 shadow-sm">
+              <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                <XCircle className="w-4 h-4 text-slate-400" />
+                <span>Exclusions</span>
+              </div>
               {tour.exclusions && tour.exclusions.length > 0 ? (
-                <ul className="space-y-2.5 text-sm text-[#CBD5E1]">
-                  {tour.exclusions.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2.5">
-                      <XCircle className="w-4 h-4 text-[#94A3B8] shrink-0 mt-0.5" />
-                      <span>{item}</span>
+                <ul className="space-y-2 text-sm text-slate-600">
+                  {tour.exclusions.map((exc, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-slate-400">•</span>
+                      <span>{exc}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
-                  Exclusions depend on your finalized package configuration. Contact {business.name} for current information.
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Personal expenses, optional activities, and items not specified in your written confirmation are excluded.
                 </p>
               )}
             </div>
           </section>
 
-          {/* Section 15 & 16: Transportation & Accommodation */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-[#111722] border border-white/10 rounded-xl p-6 space-y-3">
-              <h2 className="font-display text-xl font-bold text-white">
-                03. Transportation
-              </h2>
-              <p className="text-xs sm:text-sm text-[#CBD5E1] leading-relaxed">
-                {tour.transportation
-                  ? tour.transportation
-                  : `Contact ${business.name} for current information on confirmed vehicle options (such as Prado, Grand Cabin Hiace, or Saloon Coaster) for your group size.`}
-              </p>
-            </div>
-
-            <div className="bg-[#111722] border border-white/10 rounded-xl p-6 space-y-3">
-              <h2 className="font-display text-xl font-bold text-white">
-                04. Accommodation
-              </h2>
-              <p className="text-xs sm:text-sm text-[#CBD5E1] leading-relaxed">
-                {tour.accommodation
-                  ? tour.accommodation
-                  : 'Accommodation details will be confirmed during booking.'}
-              </p>
-            </div>
-          </section>
-
-          {/* Section 19: HOW TO BOOK (4 Steps) */}
-          <section className="bg-[#111722] border border-white/10 rounded-xl p-6 sm:p-8 space-y-6">
-            <h2 className="font-display text-2xl font-bold text-white">
-              HOW TO BOOK
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-[#0B0F14] border border-white/10 space-y-1.5">
-                <div className="font-mono-num text-xs font-bold text-[#0EA5E9]">
-                  01 — CHOOSE YOUR TOUR
-                </div>
-                <p className="text-xs text-[#CBD5E1]">
-                  Select your preferred package or custom Gilgit-Baltistan valley route.
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-[#0B0F14] border border-white/10 space-y-1.5">
-                <div className="font-mono-num text-xs font-bold text-[#0EA5E9]">
-                  02 — CONTACT US
-                </div>
-                <p className="text-xs text-[#CBD5E1]">
-                  Send your details through WhatsApp, email, or the inquiry form below.
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-[#0B0F14] border border-white/10 space-y-1.5">
-                <div className="font-mono-num text-xs font-bold text-[#0EA5E9]">
-                  03 — CONFIRM AVAILABILITY
-                </div>
-                <p className="text-xs text-[#CBD5E1]">
-                  {business.name} confirms dates, availability, and final price.
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-[#0B0F14] border border-white/10 space-y-1.5">
-                <div className="font-mono-num text-xs font-bold text-[#0EA5E9]">
-                  04 — RESERVE YOUR SEAT
-                </div>
-                <p className="text-xs text-[#CBD5E1]">
-                  Follow the company&apos;s current payment instructions once confirmed.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Package Inquiry Form */}
-          <section className="space-y-4">
-            <h2 className="font-display text-2xl font-bold text-white">
-              Send a Custom Inquiry for {tour.title}
-            </h2>
-            <InquiryFormSection
-              defaultDestination={tour.destination}
-              defaultTourSlug={tour.slug}
-            />
-          </section>
+          {/* Inquiry Form */}
+          <InquiryFormSection defaultTourSlug={tour.slug} defaultDestination={tour.destination} />
         </div>
 
-        {/* Right Sticky Pricing & Booking Sidebar (4 Columns) */}
-        <aside id="book-this-tour" className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
-          {/* Section 17: Pricing Card */}
-          <div className="bg-[#111722] border border-white/15 rounded-xl p-6 space-y-5">
-            <div className="border-b border-white/10 pb-4">
-              <div className="text-xs font-semibold text-[#D4AF37] uppercase tracking-wider">
-                Package Pricing
-              </div>
-              <h3 className="font-display text-xl font-bold text-white mt-1">
-                {tour.title}
-              </h3>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              <div className="p-3.5 rounded-lg bg-[#0B0F14] border border-white/10 flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#CBD5E1]">PER PERSON</span>
-                {tour.pricePerPerson > 0 ? (
-                  <span className="font-mono-num font-bold text-[#D4AF37]">
-                    PKR {tour.pricePerPerson.toLocaleString()}
-                  </span>
-                ) : (
-                  <span className="text-xs text-[#94A3B8]">Contact us for current pricing.</span>
-                )}
-              </div>
-
-              <div className="p-3.5 rounded-lg bg-[#0B0F14] border border-white/10 flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#CBD5E1]">COUPLE</span>
-                {tour.couplePrice > 0 ? (
-                  <span className="font-mono-num font-bold text-[#D4AF37]">
-                    PKR {tour.couplePrice.toLocaleString()}
-                  </span>
-                ) : (
-                  <span className="text-xs text-[#94A3B8]">Contact us for current pricing.</span>
-                )}
-              </div>
-
-              <div className="p-3.5 rounded-lg bg-[#0B0F14] border border-white/10 flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#CBD5E1]">GROUP</span>
-                <span className="text-xs text-[#E2E8F0]">
-                  {tour.groupPriceNote || 'Contact for group pricing'}
-                </span>
-              </div>
-            </div>
-
-            {/* Section 18 & 60: Booking & WhatsApp CTAs */}
-            <div className="space-y-2.5 pt-2">
-              <a
-                href={waLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3 px-4 text-xs font-semibold bg-[#10B981] text-[#0B0F14] hover:bg-[#34D399] rounded-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
-              >
-                <MessageCircle className="w-4 h-4" />
-                INQUIRE ON WHATSAPP
-              </a>
-              <a
-                href={pricingWaLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-2.5 px-4 text-xs font-semibold bg-white/10 text-white hover:bg-white/15 rounded-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
-              >
-                DISCUSS PRICING ON WHATSAPP
-              </a>
-            </div>
-
-            {/* Section 45: Check Availability / Request Reservation to Customer Dashboard */}
-            <div className="pt-4 border-t border-white/10 space-y-4">
-              <div className="flex items-center gap-2 text-xs font-semibold text-white">
-                <Calendar className="w-4 h-4 text-[#0EA5E9]" />
-                <span>REQUEST SEAT RESERVATION</span>
-              </div>
-
-              {bookingSuccess ? (
-                <div className="p-4 rounded-lg bg-[#0B0F14] border border-[#10B981]/40 space-y-3 text-xs">
-                  <div className="text-[#10B981] font-semibold">
-                    Reservation Inquiry Logged in Your Account
+        {/* Right 4 Columns: Pricing & Book Now Flow */}
+        <aside
+          ref={bookingSectionRef}
+          className="lg:col-span-4 space-y-6 lg:sticky lg:top-24"
+        >
+          <div
+            className={`p-4 sm:p-6 rounded-3xl bg-white border transition-all duration-300 shadow-xl space-y-5 ${
+              highlightBookingBox
+                ? 'border-emerald-600 ring-4 ring-emerald-500/15'
+                : 'border-slate-200'
+            }`}
+          >
+            <div className="space-y-1 border-b border-slate-100 pb-4">
+              <span className="text-xs font-semibold text-emerald-800 flex items-center gap-1">
+                <Mountain className="w-3.5 h-3.5" />
+                <span>Package Pricing &amp; Booking</span>
+              </span>
+              {tour.pricePerPerson > 0 ? (
+                <div className="space-y-1 pt-1">
+                  <div className="font-mono-num text-2xl font-bold text-slate-900">
+                    PKR {tour.pricePerPerson.toLocaleString()}{' '}
+                    <span className="text-xs text-slate-500 font-normal">/ person</span>
                   </div>
-                  <p className="text-[#CBD5E1] leading-relaxed">
-                    Status: <span className="font-semibold text-white">Pending Availability Confirmation</span>. Please message us on WhatsApp to finalize your dates and current rate before sending any payment.
-                  </p>
-                  <Link
-                    to="/customer/dashboard"
-                    className="inline-block text-[#0EA5E9] font-semibold hover:underline"
-                  >
-                    View in Customer Dashboard →
-                  </Link>
+                  {tour.couplePrice > 0 && (
+                    <div className="text-xs text-slate-600">
+                      Couple Package:{' '}
+                      <span className="font-mono-num font-semibold text-slate-900">
+                        PKR {tour.couplePrice.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <form onSubmit={handleBookingSubmit} className="space-y-3">
+                <div className="pt-1">
+                  <div className="font-display text-lg font-bold text-slate-900">
+                    Contact us for current pricing
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Rates depend on travel dates, group size, and hotel tier.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Book Now Section: Requires Login First */}
+            {!user && !isAdmin ? (
+              <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-3">
+                <div className="text-sm font-bold text-slate-900">
+                  Book This Tour Online
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Please log in or create an account first to book <strong>{tour.title}</strong> and track it in your My Bookings page.
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="button"
+                  onClick={handleBookNowAction}
+                  className="w-full py-3 px-4 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 text-white rounded-2xl shadow-sm"
+                >
+                  Login to Book Now
+                </motion.button>
+              </div>
+            ) : bookingSubmitted ? (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 space-y-3">
+                <div className="flex items-center gap-2 font-bold text-sm text-emerald-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                  <span>Booking Saved to Your Account!</span>
+                </div>
+                <p className="leading-relaxed">
+                  Your reservation for <strong>{tour.title}</strong> has been saved to localStorage. You can view it anytime in <strong>My Bookings</strong>.
+                </p>
+                <Link
+                  to="/my-bookings"
+                  className="w-full py-2.5 px-4 text-xs font-semibold bg-emerald-700 text-white rounded-xl block text-center"
+                >
+                  Go to My Bookings
+                </Link>
+              </div>
+            ) : (
+              <form onSubmit={handleBookingSubmit} className="space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                  <Calendar className="w-4 h-4 text-emerald-700" />
+                  <span>Book Now ({user?.email || 'Admin'})</span>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={bookingName}
+                  onChange={(e) => setBookingName(e.target.value)}
+                  placeholder="Your Full Name *"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+                />
+                <input
+                  type="tel"
+                  required
+                  value={bookingWhatsapp}
+                  onChange={(e) => setBookingWhatsapp(e.target.value)}
+                  placeholder="WhatsApp / Phone Number *"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+                />
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] text-[#94A3B8] mb-1">
-                      Preferred Dates
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Travel Date *
                     </label>
                     <input
-                      type="text"
+                      type="date"
                       required
                       value={bookingDates}
                       onChange={(e) => setBookingDates(e.target.value)}
-                      placeholder="e.g. 15–20 Oct 2026"
-                      className="w-full px-3 py-2 rounded-lg bg-[#0B0F14] border border-white/15 text-xs text-white"
+                      className="w-full px-3 py-2 rounded-2xl bg-gray-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-emerald-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-[#94A3B8] mb-1">
-                      Travelers
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Travelers *
                     </label>
                     <input
                       type="number"
                       min={1}
                       max={100}
+                      required
                       value={bookingTravelers}
-                      onChange={(e) => setBookingTravelers(Number(e.target.value) || 1)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#0B0F14] border border-white/15 text-xs text-white font-mono-num"
+                      onChange={(e) => setBookingTravelers(Number(e.target.value))}
+                      className="w-full px-3 py-2 rounded-2xl bg-gray-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-emerald-600"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[11px] text-[#94A3B8] mb-1">
-                      Notes (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={bookingNotes}
-                      onChange={(e) => setBookingNotes(e.target.value)}
-                      placeholder="Departure city or room preference"
-                      className="w-full px-3 py-2 rounded-lg bg-[#0B0F14] border border-white/15 text-xs text-white"
-                    />
-                  </div>
-                  {bookingError && (
-                    <div className="text-[11px] text-amber-300 bg-amber-950/40 border border-amber-500/30 p-2.5 rounded">
-                      {bookingError}
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    className="w-full py-2.5 px-4 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] hover:bg-[#38BDF8] rounded-lg transition-colors whitespace-nowrap"
-                  >
-                    CHECK AVAILABILITY &amp; SAVE REQUEST
-                  </button>
-                </form>
-              )}
-            </div>
+                </div>
+                <textarea
+                  rows={2}
+                  value={bookingNotes}
+                  onChange={(e) => setBookingNotes(e.target.value)}
+                  placeholder="Hotel preference or special requests..."
+                  className="w-full px-3.5 py-2 rounded-2xl bg-gray-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-emerald-600"
+                />
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={bookingLoading}
+                  className="w-full py-3 px-4 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-800 hover:to-teal-700 text-white rounded-2xl shadow-sm transition-all"
+                >
+                  {bookingLoading ? 'Saving Booking...' : 'Confirm & Save Booking'}
+                </motion.button>
+              </form>
+            )}
 
-            {/* Section 2: Official JazzCash Payment Information (No fake auto-verification) */}
-            <div className="p-4 rounded-lg bg-[#0B0F14] border border-white/10 space-y-1.5 text-xs">
-              <div className="font-semibold text-white">JazzCash Payment</div>
-              <div className="text-[#CBD5E1]">
+            {/* Direct WhatsApp Button */}
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-2.5 px-4 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl transition-colors flex items-center justify-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4 text-emerald-700" />
+              <span>Chat on WhatsApp ({business.phone})</span>
+            </a>
+
+            {/* Official JazzCash Instructions */}
+            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-1.5 text-xs">
+              <div className="text-amber-900 font-bold">JazzCash Payment</div>
+              <div className="text-slate-700">
                 Account / Number:{' '}
-                <span className="font-mono-num text-[#D4AF37] font-semibold">
+                <span className="font-mono-num text-slate-900 font-bold">
                   {business.jazzcashNumber}
                 </span>
               </div>
-              <div className="text-[#CBD5E1]">
+              <div className="text-slate-700">
                 Account Name:{' '}
-                <span className="text-white font-semibold">{business.jazzcashName}</span>
+                <span className="text-slate-900 font-bold">{business.jazzcashName}</span>
               </div>
-              <p className="text-[11px] text-[#94A3B8] pt-1 leading-relaxed">
+              <p className="text-slate-600 pt-1 leading-relaxed">
                 {business.paymentInstructions}
               </p>
             </div>

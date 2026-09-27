@@ -1,193 +1,175 @@
 import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { MessageCircle } from 'lucide-react';
+import { motion } from 'motion/react';
+import { MessageCircle, Search, Mountain } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { TourCard } from '../components/InteractiveMapAndScroll';
 import { buildWhatsAppLink } from '../config/business';
 
 export const ToursPage: React.FC = () => {
   const { tours, business } = useApp();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
-  const initialType = searchParams.get('type') || 'All';
   const initialDest = searchParams.get('destination') || 'All';
-
-  const [destFilter, setDestFilter] = useState(initialDest);
+  const [destinationFilter, setDestinationFilter] = useState(initialDest);
   const [durationFilter, setDurationFilter] = useState('All');
-  const [typeFilter, setTypeFilter] = useState(initialType);
+  const [typeFilter, setTypeFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
   const filtered = useMemo(() => {
-    return tours.filter((t) => {
+    return tours.filter((tour) => {
       const matchesDest =
-        destFilter === 'All' ||
-        t.destination.toLowerCase().includes(destFilter.toLowerCase()) ||
-        t.title.toLowerCase().includes(destFilter.toLowerCase());
-      const matchesDuration =
-        durationFilter === 'All' || t.durationCategory === durationFilter;
-      const matchesType =
-        typeFilter === 'All' || t.tourType.toLowerCase() === typeFilter.toLowerCase();
-      const matchesQuery =
-        !searchQuery.trim() ||
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.destination.toLowerCase().includes(searchQuery.toLowerCase());
+        destinationFilter === 'All' ||
+        tour.destination.toLowerCase().includes(destinationFilter.toLowerCase()) ||
+        tour.title.toLowerCase().includes(destinationFilter.toLowerCase());
 
-      return matchesDest && matchesDuration && matchesType && matchesQuery;
+      const matchesDuration =
+        durationFilter === 'All' || tour.durationCategory === durationFilter;
+
+      const matchesType =
+        typeFilter === 'All' || tour.tourType.toLowerCase() === typeFilter.toLowerCase();
+
+      const matchesSearch =
+        !searchQuery.trim() ||
+        tour.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tour.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tour.destination.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesDest && matchesDuration && matchesType && matchesSearch;
     });
-  }, [tours, destFilter, durationFilter, typeFilter, searchQuery]);
+  }, [tours, destinationFilter, durationFilter, typeFilter, searchQuery]);
+
+  const customWaUrl = buildWhatsAppLink(
+    `Hello Baig Treks & Tours, I am browsing your tour packages and would like a customized itinerary and quote for Gilgit-Baltistan.`,
+    business.whatsapp
+  );
 
   return (
-    <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
-      <div className="space-y-3 border-b border-white/10 pb-8">
-        <div className="text-xs font-semibold text-[#0EA5E9] uppercase tracking-wider">
-          {business.name} — Tour Catalog
+    <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-8 overflow-x-hidden">
+      {/* Page Header — Max text-2xl on mobile, text-4xl on desktop */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
+        <div className="space-y-2 max-w-2xl">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+            <Mountain className="w-3.5 h-3.5" />
+            <span>Gilgit-Baltistan Expeditions &amp; Packages</span>
+          </span>
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+            Tours &amp; Travel Packages
+          </h1>
+          <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+            Explore curated private and group itineraries across Hunza, Skardu, Fairy Meadows, Deosai, and Khunjerab Pass.
+          </p>
         </div>
-        <h1 className="font-display text-3xl sm:text-5xl font-extrabold text-white">
-          GILGIT-BALTISTAN TOUR PACKAGES
-        </h1>
-        <p className="text-sm sm:text-base text-[#94A3B8] max-w-2xl leading-relaxed">
-          Browse customizable journeys through Hunza, Skardu, Attabad Lake, Passu, Deosai, and Fairy Meadows. Filter by destination, duration, or travel style.
-        </p>
+
+        <motion.a
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          href={customWaUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full md:w-auto px-5 py-3 text-sm font-semibold bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-800 hover:to-teal-700 text-white rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 shrink-0"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span>Request Custom Tour</span>
+        </motion.a>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-[#111722] border border-white/10 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div>
-          <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
-            Keyword Search
-          </label>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search Hunza, Skardu, Trekking..."
-            className="w-full px-3.5 py-2 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
-          />
-        </div>
+      <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl p-4 md:p-6 shadow-lg shadow-slate-900/5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">
+              Search Keyword
+            </label>
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Hunza, Skardu, Trek..."
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+              />
+            </div>
+          </div>
 
-        <div>
-          <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
-            Destination
-          </label>
-          <select
-            value={destFilter}
-            onChange={(e) => {
-              setDestFilter(e.target.value);
-              setSearchParams({});
-            }}
-            className="w-full px-3.5 py-2 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
-          >
-            <option value="All">All Destinations</option>
-            {[
-              'Hunza',
-              'Skardu',
-              'Gilgit',
-              'Fairy Meadows',
-              'Naltar',
-              'Khaplu',
-              'Shigar',
-              'Astore',
-              'Ghizer',
-              'Passu',
-            ].map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">
+              Destination
+            </label>
+            <select
+              value={destinationFilter}
+              onChange={(e) => setDestinationFilter(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+            >
+              <option value="All">All Destinations</option>
+              <option value="Hunza">Hunza Valley</option>
+              <option value="Skardu">Skardu Valley</option>
+              <option value="Fairy Meadows">Fairy Meadows</option>
+              <option value="Deosai">Deosai Plains</option>
+              <option value="Khunjerab">Khunjerab Pass</option>
+              <option value="Shigar">Shigar &amp; Khaplu</option>
+            </select>
+          </div>
 
-        <div>
-          <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
-            Duration
-          </label>
-          <select
-            value={durationFilter}
-            onChange={(e) => setDurationFilter(e.target.value)}
-            className="w-full px-3.5 py-2 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
-          >
-            <option value="All">All Durations</option>
-            <option value="1-3 Days">1–3 Days</option>
-            <option value="4-6 Days">4–6 Days</option>
-            <option value="7-10 Days">7–10 Days</option>
-            <option value="10+ Days">10+ Days</option>
-          </select>
-        </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">
+              Duration
+            </label>
+            <select
+              value={durationFilter}
+              onChange={(e) => setDurationFilter(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+            >
+              <option value="All">Any Duration</option>
+              <option value="4-6 Days">4–6 Days</option>
+              <option value="7-10 Days">7–10 Days</option>
+            </select>
+          </div>
 
-        <div>
-          <label className="block text-xs font-medium text-[#CBD5E1] mb-1.5">
-            Tour Type
-          </label>
-          <select
-            value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value);
-              setSearchParams({});
-            }}
-            className="w-full px-3.5 py-2 rounded-lg bg-[#0B0F14] border border-white/15 text-sm text-white focus:outline-none focus:border-[#0EA5E9]"
-          >
-            <option value="All">All Tour Types</option>
-            {[
-              'Family Holidays',
-              'Honeymoon Tours',
-              'Adventure Tours',
-              'Trekking',
-              'Cultural Trips',
-              'Road Trips',
-              'Group Tours',
-              'Private Tours',
-              'Custom Tours',
-            ].map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">
+              Tour Style
+            </label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
+            >
+              <option value="All">All Styles</option>
+              <option value="Family Holidays">Family Holidays</option>
+              <option value="Road Trips">Road Trips</option>
+              <option value="Adventure & Trekking">Adventure &amp; Trekking</option>
+              <option value="Custom Private Tours">Custom Private Tours</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Results Grid */}
-      {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Tour Cards Grid: 1 Col Mobile, 2 Col Tablet, 3-4 Col Desktop */}
+      {filtered.length === 0 ? (
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-10 text-center space-y-4 shadow-sm">
+          <p className="text-sm md:text-base text-slate-600">
+            No tours matched your current search criteria.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setDestinationFilter('All');
+              setDurationFilter('All');
+              setTypeFilter('All');
+              setSearchQuery('');
+            }}
+            className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold bg-emerald-700 text-white rounded-2xl"
+          >
+            Reset Filters
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {filtered.map((tour) => (
             <TourCard key={tour.id} tour={tour} />
           ))}
-        </div>
-      ) : (
-        <div className="p-10 rounded-xl bg-[#111722] border border-white/10 text-center space-y-4">
-          <h2 className="font-display text-xl font-bold text-white">
-            Custom Itinerary Available for Your Filter Selection
-          </h2>
-          <p className="text-sm text-[#94A3B8] max-w-xl mx-auto">
-            Contact {business.name} for current information and custom route planning matching your preferred valley and duration.
-          </p>
-          <div className="flex justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setDestFilter('All');
-                setDurationFilter('All');
-                setTypeFilter('All');
-                setSearchQuery('');
-              }}
-              className="px-4 py-2.5 text-xs font-semibold bg-white/10 text-white rounded-lg"
-            >
-              Show All Tours
-            </button>
-            <a
-              href={buildWhatsAppLink(
-                `Hello ${business.name}, I would like to request current information for a tour in ${destFilter !== 'All' ? destFilter : 'Gilgit-Baltistan'}.`,
-                business.whatsapp
-              )}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-5 py-2.5 text-xs font-semibold bg-[#10B981] text-[#0B0F14] rounded-lg flex items-center gap-1.5"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Chat on WhatsApp
-            </a>
-          </div>
         </div>
       )}
     </div>

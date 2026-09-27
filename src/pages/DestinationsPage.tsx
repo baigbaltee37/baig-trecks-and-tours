@@ -1,110 +1,106 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MessageCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { motion } from 'motion/react';
+import { MessageCircle, ArrowRight, ArrowLeft, MapPin, Calendar } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { buildWhatsAppLink } from '../config/business';
-import {
-  TourCard,
-  InteractiveGilgitBaltistanMap,
-  CinematicDestinationScroller,
-} from '../components/InteractiveMapAndScroll';
+import { TourCard, InquiryFormSection } from '../components/InteractiveMapAndScroll';
+import { VISUAL_ASSETS } from '../data/initialData';
 
 export const DestinationsPage: React.FC = () => {
   const { destinations, business } = useApp();
 
   return (
-    <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-      <div className="space-y-3 border-b border-white/10 pb-8">
-        <div className="text-xs font-semibold text-[#0EA5E9] uppercase tracking-wider">
-          Journey Through Gilgit-Baltistan
-        </div>
-        <h1 className="font-display text-3xl sm:text-5xl font-extrabold text-white">
-          DESTINATIONS OF NORTHERN PAKISTAN
+    <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-8 overflow-x-hidden">
+      <div className="max-w-3xl space-y-2 border-b border-slate-200 pb-6">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+          <MapPin className="w-3.5 h-3.5" />
+          <span>Gilgit-Baltistan Destination Directory</span>
+        </span>
+        <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+          Explore 14 Iconic Destinations
         </h1>
-        <p className="text-sm sm:text-base text-[#94A3B8] max-w-2xl leading-relaxed">
-          Explore the valleys, alpine lakes, mountain passes, and high plateaus of Gilgit-Baltistan.
+        <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+          From the terraced orchards of Hunza and the turquoise glacial waters of Attabad Lake to the alpine meadows of Deosai and Skardu Valley.
         </p>
       </div>
 
-      {/* Interactive Map */}
-      <InteractiveGilgitBaltistanMap />
-
-      {/* All 14 Destinations Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {destinations.map((dest) => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {destinations.map((dest, idx) => {
           const waUrl = buildWhatsAppLink(
-            `Hello ${business.name}, I would like to inquire about visiting ${dest.name}.`,
+            `Hello Baig Treks & Tours, I would like to plan a tour to ${dest.name} in Gilgit-Baltistan.`,
             business.whatsapp
           );
           return (
-            <article
+            <motion.article
               key={dest.id}
-              className="bg-[#111722] border border-white/10 hover:border-white/25 rounded-xl overflow-hidden flex flex-col justify-between transition-colors"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: idx * 0.04 }}
+              className="group bg-white border border-slate-200 rounded-3xl overflow-hidden flex flex-col justify-between shadow-lg shadow-slate-900/5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5"
             >
               <div>
-                <div className="relative aspect-[16/10] bg-[#0B0F14]">
+                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                   <img
-                    src={dest.imageUrl}
+                    src={dest.imageUrl || VISUAL_ASSETS.heroKarakoram}
                     alt={dest.name}
                     referrerPolicy="no-referrer"
                     loading="lazy"
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto min-h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#111722] via-black/20 to-transparent" />
-                  <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-xs text-[#CBD5E1]">
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+                  <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md text-slate-900 text-xs font-semibold px-3 py-1 rounded-2xl flex items-center gap-1 shadow-xs">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-700" />
                     <span>{dest.region}</span>
-                    <span className="font-mono-num text-[#D4AF37]">{dest.elevation}</span>
+                  </div>
+                  <div className="absolute bottom-3 left-4 right-4 text-white">
+                    <div className="text-xs text-emerald-300 font-medium flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>Season: {dest.bestSeason || 'April to October'}</span>
+                    </div>
+                    <h2 className="font-display text-xl font-bold tracking-tight">
+                      <Link
+                        to={`/destinations/${dest.slug}`}
+                        className="hover:text-emerald-300 transition-colors"
+                      >
+                        {dest.name}
+                      </Link>
+                    </h2>
                   </div>
                 </div>
 
-                <div className="p-5 space-y-2.5">
-                  <div className="text-[11px] text-[#0EA5E9] font-medium">
-                    {dest.isConfirmedTourOffering
-                      ? `Active ${business.name} Tour Destination`
-                      : 'Regional Destination · Custom Route Available'}
-                  </div>
-                  <h2 className="font-display text-xl font-bold text-white">
-                    <Link
-                      to={`/destinations/${dest.slug}`}
-                      className="hover:text-[#0EA5E9] transition-colors"
-                    >
-                      {dest.name}
-                    </Link>
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
-                    {dest.shortDescription}
+                <div className="p-4 md:p-5 space-y-3">
+                  <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">
+                    {dest.description}
                   </p>
+                  <div className="text-xs text-slate-500">
+                    <span className="text-slate-800 font-semibold">Highlights: </span>
+                    {(dest.attractions || ['Scenic Viewpoints', 'Mountain Panoramas']).join(' · ')}
+                  </div>
                 </div>
               </div>
 
-              <div className="p-5 pt-0 grid grid-cols-2 gap-2.5">
+              <div className="px-4 md:px-5 pb-4 md:pb-5 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Link
                   to={`/destinations/${dest.slug}`}
-                  className="py-2.5 px-3 text-xs font-semibold text-center bg-white/10 hover:bg-white/15 text-white rounded-lg transition-colors whitespace-nowrap"
+                  className="w-full py-2.5 px-3 text-sm font-semibold text-center bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl transition-colors"
                 >
-                  Explore
+                  Explore Guide
                 </Link>
                 <a
                   href={waUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="py-2.5 px-3 text-xs font-semibold text-center bg-[#10B981] text-[#0B0F14] hover:bg-[#34D399] rounded-lg transition-colors whitespace-nowrap flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 px-3 text-sm font-semibold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl transition-colors flex items-center justify-center gap-1.5"
                 >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  WhatsApp
+                  <span>Inquire</span>
+                  <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
-            </article>
+            </motion.article>
           );
         })}
-      </div>
-
-      {/* Cinematic Scroll Sequence */}
-      <div className="pt-8 border-t border-white/10 space-y-6">
-        <h2 className="font-display text-2xl sm:text-3xl font-bold text-white">
-          Route Sequence: From Hunza to Fairy Meadows
-        </h2>
-        <CinematicDestinationScroller />
       </div>
     </div>
   );
@@ -114,18 +110,20 @@ export const DestinationDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const { destinations, tours, business } = useApp();
 
-  const dest = destinations.find((d) => d.slug === slug || d.id === slug);
+  const destination = destinations.find((d) => d.slug === slug || d.id === slug);
 
-  if (!dest) {
+  if (!destination) {
     return (
-      <div className="max-w-[1360px] mx-auto px-4 py-20 text-center space-y-4">
-        <h1 className="font-display text-3xl font-bold text-white">Destination Not Found</h1>
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          Destination Not Found
+        </h1>
         <Link
           to="/destinations"
-          className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] rounded-lg"
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-emerald-700 text-white rounded-2xl"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Destinations
+          <span>All Destinations</span>
         </Link>
       </div>
     );
@@ -133,91 +131,109 @@ export const DestinationDetailPage: React.FC = () => {
 
   const relatedTours = tours.filter(
     (t) =>
-      t.destination.toLowerCase().includes(dest.name.toLowerCase().split(' ')[0]) ||
-      t.title.toLowerCase().includes(dest.name.toLowerCase().split(' ')[0])
+      t.destination.toLowerCase().includes(destination.name.split(' ')[0].toLowerCase()) ||
+      t.title.toLowerCase().includes(destination.name.split(' ')[0].toLowerCase())
   );
 
   const waUrl = buildWhatsAppLink(
-    `Hello ${business.name}, I would like to plan a trip to ${dest.name}. Please send available tour options and current details.`,
+    `Hello Baig Treks & Tours, I want to plan a trip to ${destination.name} in Gilgit-Baltistan.`,
     business.whatsapp
   );
 
   return (
-    <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-      <Link
-        to="/destinations"
-        className="inline-flex items-center gap-1.5 text-xs text-[#CBD5E1] hover:text-white"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        All Gilgit-Baltistan Destinations
-      </Link>
+    <div className="space-y-12 pb-16 overflow-x-hidden">
+      <section className="max-w-7xl mx-auto px-4 md:px-6 pt-6 space-y-5">
+        <Link
+          to="/destinations"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-emerald-700"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>All Destinations</span>
+        </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        <div className="lg:col-span-6 space-y-4">
-          <div className="flex items-center gap-2 text-xs text-[#D4AF37]">
-            <span>{dest.region}</span>
-            <span aria-hidden="true">·</span>
-            <span className="font-mono-num">Elevation {dest.elevation}</span>
+        <div className="space-y-2">
+          <div className="text-xs sm:text-sm font-semibold text-emerald-800">
+            {destination.region} · Best Season: {destination.bestSeason || 'April to October'}
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-white">
-            {dest.name}
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+            {destination.name}
           </h1>
-          <p className="text-base text-[#CBD5E1] leading-relaxed">{dest.description}</p>
-          <div className="pt-2 flex flex-wrap gap-3">
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 text-xs font-semibold bg-[#10B981] text-[#0B0F14] rounded-lg flex items-center gap-2"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Inquire About {dest.name} on WhatsApp
-            </a>
-            <Link
-              to="/contact"
-              className="px-5 py-3 text-xs font-semibold bg-white/10 text-white rounded-lg"
-            >
-              Request Custom Itinerary
-            </Link>
-          </div>
+          <p className="text-sm md:text-base text-slate-600 max-w-2xl">
+            {destination.shortDescription}
+          </p>
         </div>
 
-        <div className="lg:col-span-6 aspect-[16/10] rounded-xl overflow-hidden border border-white/15">
+        <div className="relative rounded-3xl overflow-hidden border border-slate-200 bg-slate-100 aspect-[16/9] sm:aspect-[21/9] shadow-xl">
           <img
-            src={dest.imageUrl}
-            alt={dest.name}
+            src={destination.imageUrl || VISUAL_ASSETS.heroKarakoram}
+            alt={destination.name}
             referrerPolicy="no-referrer"
-            className="w-full h-full object-cover"
+            className="w-full h-auto min-h-full object-cover"
           />
         </div>
-      </div>
+      </section>
 
-      <div className="space-y-6 pt-8 border-t border-white/10">
-        <h2 className="font-display text-2xl font-bold text-white">
-          Tours Featuring {dest.name}
-        </h2>
-        {relatedTours.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {relatedTours.map((t) => (
-              <TourCard key={t.id} tour={t} />
-            ))}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+        <div className="lg:col-span-8 space-y-6">
+          <div className="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200 space-y-3 shadow-sm">
+            <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              About {destination.name}
+            </h2>
+            <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+              {destination.description}
+            </p>
           </div>
-        ) : (
-          <div className="p-6 rounded-xl bg-[#111722] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <p className="text-sm text-[#CBD5E1]">
-              {dest.name} can be included in any custom private or group tour. Contact {business.name} for current information.
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+            <div className="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200 space-y-2 shadow-sm">
+              <div className="text-xs font-semibold text-emerald-800">Key Attractions</div>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {(destination.attractions || ['Scenic Viewpoints', 'Mountain Panoramas']).join(' · ')}
+              </p>
+            </div>
+            <div className="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200 space-y-2 shadow-sm">
+              <div className="text-xs font-semibold text-teal-700">Ideal For</div>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {(destination.idealFor || ['Families', 'Couples', 'Adventure Travelers']).join(' · ')}
+              </p>
+            </div>
+          </div>
+
+          {relatedTours.length > 0 && (
+            <div className="space-y-4 pt-2">
+              <h2 className="font-display text-2xl font-bold tracking-tight text-slate-900">
+                Tours Visiting {destination.name}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                {relatedTours.map((t) => (
+                  <TourCard key={t.id} tour={t} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <InquiryFormSection defaultDestination={destination.name} />
+        </div>
+
+        <aside className="lg:col-span-4 space-y-4">
+          <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200 shadow-lg space-y-4">
+            <h3 className="font-display text-lg font-bold tracking-tight text-slate-900">
+              Plan Your Visit to {destination.name}
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              {business.name} organizes private and group tours to {destination.name} with customized transport and accommodation.
             </p>
             <a
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2.5 text-xs font-semibold bg-[#0EA5E9] text-[#0B0F14] rounded-lg whitespace-nowrap flex items-center gap-1.5"
+              className="w-full py-3 px-4 text-sm font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl flex items-center justify-center gap-2 transition-colors"
             >
-              <span>Plan Custom Trip</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <MessageCircle className="w-4 h-4" />
+              <span>Inquire on WhatsApp</span>
             </a>
           </div>
-        )}
+        </aside>
       </div>
     </div>
   );

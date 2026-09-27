@@ -2,26 +2,35 @@
 
 @layer base {
   :root {
-    --font-display: 'Syne', sans-serif;
-    --font-editorial: 'Cormorant Garamond', serif;
+    --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
   }
 
+  html {
+    scroll-behavior: smooth;
+    font-family: var(--font-sans);
+    font-weight: 400;
+  }
+
   body {
     font-family: var(--font-sans);
-    background-color: #0B0F14;
-    color: #F8FAFC;
+    font-weight: 400;
+    background-color: #f9fafb;
+    color: #0f172a;
     overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
   }
 
-  h1, h2, h3, .font-display {
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
     font-family: var(--font-display);
-    text-wrap: balance;
-  }
-
-  .font-editorial {
-    font-family: var(--font-editorial);
+    font-weight: 600;
+    letter-spacing: -0.025em;
   }
 
   .font-mono-num {
@@ -30,15 +39,17 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+/* Subtle 2026 Modern Grid Background Pattern */
+.bg-grid-pattern {
+  background-image: linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.bg-grid-pattern-light {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 /* Custom subtle scrollbar */
@@ -47,12 +58,12 @@
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0B0F14;
+  background: #f1f5f9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #94a3b8;
 }

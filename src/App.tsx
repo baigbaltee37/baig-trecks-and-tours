@@ -20,7 +20,12 @@ import {
   ContactPage,
   NotFoundPage,
 } from './pages/SecondaryPages';
-import { AuthPage, CustomerDashboardPage } from './pages/AuthAndCustomerPages';
+import {
+  AuthPage,
+  CustomerDashboardPage,
+  MyBookingsPage,
+  ProfilePage,
+} from './pages/AuthAndCustomerPages';
 import { AdminLoginPage, AdminDashboardPage } from './pages/AdminPages';
 
 export default function App() {
@@ -44,6 +49,8 @@ export default function App() {
             <Route path="/signup" element={<AuthPage mode="signup" />} />
             <Route path="/forgot-password" element={<AuthPage mode="forgot" />} />
             <Route path="/reset-password" element={<AuthPage mode="reset" />} />
+            <Route path="/my-bookings" element={<MyBookingsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/customer" element={<CustomerDashboardPage />} />
             <Route path="/customer/dashboard" element={<CustomerDashboardPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />

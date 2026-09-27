@@ -2,11 +2,50 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import nodemailer from 'nodemailer';
 import path from 'path';
+import fs from 'fs';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const PORT = 3000;
+const SHARED_STATE_FILE = path.join(process.cwd(), '.btt-shared-state.json');
+
+interface SharedAppState {
+  updatedAt: number;
+  tours?: unknown[];
+  destinations?: unknown[];
+  blogPosts?: unknown[];
+  gallery?: unknown[];
+  reviews?: unknown[];
+  inquiries?: unknown[];
+  bookings?: unknown[];
+  users?: unknown[];
+  settings?: Record<string, unknown>;
+}
+
+function readSharedStateFromDisk(): SharedAppState {
+  try {
+    if (fs.existsSync(SHARED_STATE_FILE)) {
+      const raw = fs.readFileSync(SHARED_STATE_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        return parsed as SharedAppState;
+      }
+    }
+  } catch (err) {
+    console.warn('[State Sync] Could not read shared state file:', err);
+  }
+  return { updatedAt: 0 };
+}
+
+function writeSharedStateToDisk(nextState: SharedAppState): SharedAppState {
+  try {
+    fs.writeFileSync(SHARED_STATE_FILE, JSON.stringify(nextState, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('[State Sync] Could not write shared state file:', err);
+  }
+  return nextState;
+}
 
 // Simple in-memory rate limiter per IP for email/inquiry endpoints
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -75,7 +114,28 @@ async function sendNotificationEmail({
 
 async function startServer() {
   const app = express();
-  app.use(express.json({ limit: '64kb' }));
+  // Allow up to 8MB JSON payloads so uploaded base64 tour images sync across mobile, tablet, and laptop tabs
+  app.use(express.json({ limit: '8mb' }));
+
+  // 0. Cross-Device & Cross-Tab Shared State Endpoint (syncs Laptop, Tablet, and Mobile automatically)
+  app.get('/api/shared-state', (_req, res) => {
+    const state = readSharedStateFromDisk();
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(state);
+  });
+
+  app.post('/api/shared-state', (req, res) => {
+    const current = readSharedStateFromDisk();
+    const incoming = req.body || {};
+    const merged: SharedAppState = {
+      ...current,
+      ...incoming,
+      updatedAt: Date.now(),
+    };
+    writeSharedStateToDisk(merged);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ ok: true, updatedAt: merged.updatedAt });
+  });
 
   // 1. Server-side Customer Registration Notification to skardubhai1@gmail.com
   app.post('/api/notify-signup', async (req, res) => {
@@ -131,7 +191,6 @@ async function startServer() {
       html,
     });
 
-    // Never falsely claim an email was sent if SMTP is not configured
     res.json({
       recorded: true,
       emailNotificationSent: result.sent,

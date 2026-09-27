@@ -13,7 +13,8 @@ export const VISUAL_ASSETS = {
 };
 
 export interface ItineraryDayItem {
-  dayNumber: string;
+  dayNumber?: string;
+  dayTitle?: string;
   route: string;
   description: string;
   placesVisited?: string;
@@ -30,7 +31,7 @@ export interface TourItem {
   title: string;
   destination: string;
   duration: string;
-  durationCategory: '1-3 Days' | '4-6 Days' | '7-10 Days' | '10+ Days' | 'Custom';
+  durationCategory: string;
   tourType: string;
   startingLocation?: string;
   endingLocation?: string;
@@ -59,12 +60,16 @@ export interface DestinationItem {
   slug: string;
   name: string;
   region: string;
-  elevation: string;
-  coordinates: { x: number; y: number }; // Stylized SVG map coordinates (0-100)
+  elevation?: string;
+  coordinates?: { x: number; y: number }; // Stylized SVG map coordinates (0-100)
   shortDescription: string;
   description: string;
+  attractions: string[];
+  bestSeason: string;
+  idealFor: string[];
   imageUrl: string;
-  isConfirmedTourOffering: boolean;
+  isConfirmedTourOffering?: boolean;
+  activeTourOffering?: boolean;
 }
 
 export interface ExperienceCategoryItem {
@@ -264,8 +269,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Terraced orchards, ancient forts, and panoramic views of Rakaposhi and Ultar Sar.',
     description:
       'Situated along the Karakoram Highway, Hunza Valley is celebrated for its dramatic mountain amphitheater, historic settlements, and welcoming mountain communities.',
+    attractions: ['Baltit Fort', 'Altit Fort', 'Eagle’s Nest Viewpoint', 'Karimabad Bazaar'],
+    bestSeason: 'April to November',
+    idealFor: ['Families', 'Couples', 'Photographers', 'Cultural Travelers'],
     imageUrl: heroKarakoramImg,
     isConfirmedTourOffering: true,
+    activeTourOffering: true,
   },
   {
     id: 'skardu',
@@ -277,8 +286,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Gateway to the high Karakoram peaks, alpine lakes, and cold desert landscapes.',
     description:
       'Skardu sits at the wide confluence of the Indus and Shigar rivers, serving as the cultural and expedition hub of Baltistan.',
+    attractions: ['Shangrila & Lower Kachura', 'Upper Kachura Lake', 'Katpana Cold Desert', 'Kharpocho Fort'],
+    bestSeason: 'May to October',
+    idealFor: ['Families', 'Adventure Travelers', 'Road Trippers'],
     imageUrl: skarduValleyImg,
     isConfirmedTourOffering: true,
+    activeTourOffering: true,
   },
   {
     id: 'gilgit',
@@ -290,8 +303,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Historic crossroads of the Silk Route and administrative heart of Gilgit-Baltistan.',
     description:
       'Surrounded by rugged peaks where the Gilgit and Hunza rivers meet the Indus, Gilgit is the central hub connecting all major northern valleys.',
+    attractions: ['Kargah Buddha', 'Gilgit River Suspension Bridge', 'Three Mountain Ranges Junction'],
+    bestSeason: 'Year-Round',
+    idealFor: ['Road Trippers', 'Cultural Explorers', 'Families'],
     imageUrl: heroKarakoramImg,
     isConfirmedTourOffering: true,
+    activeTourOffering: true,
   },
   {
     id: 'attabad-lake',
@@ -303,8 +320,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Brilliant turquoise glacial waters framed by sheer Karakoram rock walls.',
     description:
       'One of Northern Pakistan’s most striking natural landmarks, Attabad Lake offers serene boat rides and views along the tunnels of the Karakoram Highway.',
+    attractions: ['Turquoise Lake Boating', 'Jet Skiing', 'KKH Attabad Tunnels', 'Lakeside Cafes'],
+    bestSeason: 'April to November',
+    idealFor: ['Couples', 'Families', 'Sightseers', 'Photographers'],
     imageUrl: attabadPassuImg,
     isConfirmedTourOffering: true,
+    activeTourOffering: true,
   },
   {
     id: 'passu',
@@ -316,8 +337,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Home to the iconic jagged Passu Cones (Tupopdan) and white Passu Glacier.',
     description:
       'Passu is an unforgettable stop along the Upper Hunza riverbed, dominated by cathedral-like granite spires that glow gold at sunrise and sunset.',
+    attractions: ['Passu Cathedral Cones', 'Hussaini Suspension Bridge', 'Passu Glacier Viewpoint', 'Borith Lake'],
+    bestSeason: 'April to November',
+    idealFor: ['Photographers', 'Road Trippers', 'Nature Lovers'],
     imageUrl: attabadPassuImg,
     isConfirmedTourOffering: true,
+    activeTourOffering: true,
   },
   {
     id: 'khunjerab',
@@ -329,8 +354,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'High-altitude paved mountain pass at the northern frontier of Pakistan.',
     description:
       'Surrounded by snow-dusted alpine meadows and Khunjerab National Park habitats, the pass marks the northern culmination of the Karakoram Highway.',
+    attractions: ['Pak-China Border Monument', 'Khunjerab National Park', 'Marco Polo Sheep & Ibex Habitat'],
+    bestSeason: 'May to November',
+    idealFor: ['Road Trippers', 'Adventure Travelers', 'Families'],
     imageUrl: heroKarakoramImg,
     isConfirmedTourOffering: false,
+    activeTourOffering: true,
   },
   {
     id: 'karimabad',
@@ -342,8 +371,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Cultural heart of Hunza overlooking Rakaposhi, Diran, and Ultar peaks.',
     description:
       'Karimabad blends centuries-old Baltit and Altit architectural heritage with vibrant bazaars, cafes, and panoramic viewpoints.',
+    attractions: ['Baltit Heritage Fort', 'Karimabad Stone Street', 'Ultar Meadow View', 'Duikar Sunrise'],
+    bestSeason: 'March to November',
+    idealFor: ['Families', 'Honeymooners', 'History & Culture Enthusiasts'],
     imageUrl: heroKarakoramImg,
     isConfirmedTourOffering: false,
+    activeTourOffering: true,
   },
   {
     id: 'shigar',
@@ -355,8 +388,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Orchard-filled valley along the Shigar River leading toward the high Karakoram.',
     description:
       'Known for its historic wooden and stone architecture, apricot groves, and dramatic riverbeds, Shigar offers a tranquil cultural experience near Skardu.',
+    attractions: ['Shigar Fort (Fong-Khar)', 'Amburiq Mosque', 'Sarfaranga Cold Desert', 'Blind Lake'],
+    bestSeason: 'May to October',
+    idealFor: ['Families', 'Heritage Travelers', 'Couples'],
     imageUrl: skarduValleyImg,
     isConfirmedTourOffering: false,
+    activeTourOffering: true,
   },
   {
     id: 'khaplu',
@@ -368,8 +405,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Scenic eastern Baltistan valley along the Shyok River with Masherbrum views.',
     description:
       'Khaplu is renowned for its peaceful villages, Chaqchan heritage, and winding mountain roads framed by towering granite peaks.',
+    attractions: ['Khaplu Palace (Yabgo Khar)', 'Chaqchan Mosque', 'Saling Fish Farm', 'Machulo Viewpoint'],
+    bestSeason: 'May to October',
+    idealFor: ['Cultural Travelers', 'Families', 'Photographers'],
     imageUrl: deosaiPlainsImg,
     isConfirmedTourOffering: false,
+    activeTourOffering: true,
   },
   {
     id: 'deosai',
@@ -381,8 +422,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Legendary high-altitude alpine plateau carpeted with summer wildflowers and streams.',
     description:
       'Spanning thousands of square kilometers between Skardu and Astore, Deosai offers boundless horizons, Sheosar Lake, and crisp alpine air during summer months.',
+    attractions: ['Sheosar Lake', 'Bara Pani Crossing', 'Kala Pani', 'Himalayan Brown Bear Sanctuary'],
+    bestSeason: 'June to September',
+    idealFor: ['Adventure Travelers', 'Nature Lovers', '4x4 Expeditions'],
     imageUrl: deosaiPlainsImg,
     isConfirmedTourOffering: true,
+    activeTourOffering: true,
   },
   {
     id: 'astore',
@@ -394,8 +439,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Lush green side valleys, Rama Meadow, and eastern approaches to Nanga Parbat.',
     description:
       'Astore features pine forests, glacial lakes, and dramatic mountain roads connecting the Karakoram Highway to Deosai.',
+    attractions: ['Rama Meadow & Rama Lake', 'Minimerg & Rainbow Lake', 'Rupal Face Viewpoint'],
+    bestSeason: 'May to October',
+    idealFor: ['Nature Lovers', 'Trekkers', 'Jeep Safari Enthusiasts'],
     imageUrl: fairyMeadowsImg,
     isConfirmedTourOffering: false,
+    activeTourOffering: true,
   },
   {
     id: 'naltar',
@@ -407,8 +456,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Forested alpine valley famous for multi-colored glacial lakes and spruce slopes.',
     description:
       'Accessible via mountain track from Nomal near Gilgit, Naltar captivates travelers with dense pine forests and jewel-toned alpine lakes.',
+    attractions: ['Satrangi (Seven-Color) Lake', 'Blue Lake (Pari Lake)', 'Pine & Spruce Forests'],
+    bestSeason: 'June to October & Winter Ski Season',
+    idealFor: ['Adventure Travelers', 'Photographers', 'Day Trippers'],
     imageUrl: fairyMeadowsImg,
     isConfirmedTourOffering: false,
+    activeTourOffering: true,
   },
   {
     id: 'fairy-meadows',
@@ -420,8 +473,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Iconic alpine grassland directly facing the snow wall of Nanga Parbat.',
     description:
       'Reached by a thrilling mountain jeep track and scenic forest trail, Fairy Meadows offers unforgettable stargazing and views of the ninth-highest mountain on Earth.',
+    attractions: ['Raikot Jeep Track', 'Beyal Camp Trail', 'Nanga Parbat Base Camp Viewpoint', 'Reflection Pond'],
+    bestSeason: 'May to October',
+    idealFor: ['Trekkers', 'Campers', 'Mountain Photographers'],
     imageUrl: fairyMeadowsImg,
     isConfirmedTourOffering: true,
+    activeTourOffering: true,
   },
   {
     id: 'ghizer',
@@ -433,8 +490,12 @@ export const INITIAL_DESTINATIONS: DestinationItem[] = [
     shortDescription: 'Crystal-clear rivers, Phander Lake, and serene autumn foliage toward Shandur.',
     description:
       'Stretching west from Gilgit, Ghizer is a peaceful corridor of turquoise rivers, trout streams, and welcoming mountain villages.',
+    attractions: ['Phander Lake', 'Khalti Lake', 'Gupis Valley', 'Shandur Pass Approach'],
+    bestSeason: 'April to November',
+    idealFor: ['Road Trippers', 'Anglers', 'Autumn Foliage Seekers'],
     imageUrl: attabadPassuImg,
     isConfirmedTourOffering: false,
+    activeTourOffering: true,
   },
 ];
 
