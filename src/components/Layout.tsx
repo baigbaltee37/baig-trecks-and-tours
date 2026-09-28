@@ -19,6 +19,7 @@ import {
 import { useApp, ADMIN_EMAIL } from '../context/AppContext';
 import { buildWhatsAppLink } from '../config/business';
 import { BrandLogo3D } from './BrandLogo3D';
+import { SEOHead } from './SEOHead';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
@@ -41,16 +42,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     setMobileMenuOpen(false);
     setUserDropdownOpen(false);
     window.scrollTo(0, 0);
-
-    const canonicalUrl = `${window.location.origin}${location.pathname}`;
-    const canonicalLink = document.querySelector('link[rel="canonical"]');
-    if (canonicalLink) {
-      canonicalLink.setAttribute('href', canonicalUrl);
-    }
-    const ogUrlMeta = document.querySelector('meta[property="og:url"]');
-    if (ogUrlMeta) {
-      ogUrlMeta.setAttribute('content', canonicalUrl);
-    }
   }, [location.pathname]);
 
   useEffect(() => {
@@ -97,6 +88,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 bg-grid-pattern text-slate-900 overflow-x-hidden pb-16 md:pb-0">
+      <SEOHead />
       {/* 2026 Ultra-Premium Sticky Navbar with Blur on Scroll */}
       <header
         className={`sticky top-0 z-40 transition-all duration-300 ${
@@ -453,7 +445,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
             {/* Explore Links */}
             <div className="lg:col-span-3 space-y-3">
-              <h3 className="text-sm font-bold text-white tracking-tight">Quick Links</h3>
+              <h3 className="text-sm font-bold text-white tracking-tight">Quick Links &amp; Tours</h3>
               <ul className="grid grid-cols-2 gap-2 text-sm text-slate-400">
                 {navItems.map((item) => (
                   <li key={item.to}>
@@ -463,13 +455,43 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   </li>
                 ))}
                 <li>
-                  <Link to="/my-bookings" className="hover:text-emerald-400 transition-colors">
-                    My Bookings
+                  <Link to="/destinations/hunza" className="hover:text-emerald-400 transition-colors">
+                    Hunza Guide
                   </Link>
                 </li>
                 <li>
-                  <Link to="/profile" className="hover:text-emerald-400 transition-colors">
-                    Profile
+                  <Link to="/destinations/skardu" className="hover:text-emerald-400 transition-colors">
+                    Skardu Guide
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/destinations/naran-kaghan" className="hover:text-emerald-400 transition-colors">
+                    Naran Kaghan
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/destinations/kashmir" className="hover:text-emerald-400 transition-colors">
+                    Kashmir Guide
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/destinations/northern-areas" className="hover:text-emerald-400 transition-colors">
+                    Northern Areas
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tours/hunza-tour-packages" className="hover:text-emerald-400 transition-colors">
+                    Hunza Packages
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tours/skardu-tour-packages" className="hover:text-emerald-400 transition-colors">
+                    Skardu Packages
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tours/hunza-skardu-tour" className="hover:text-emerald-400 transition-colors">
+                    Hunza &amp; Skardu
                   </Link>
                 </li>
               </ul>

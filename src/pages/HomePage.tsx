@@ -194,28 +194,48 @@ export const HomePage: React.FC = () => {
 
               {/* Heading: Max text-2xl on mobile, text-4xl on desktop, font-bold tracking-tight text-slate-900 */}
               <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
-                {business.heroHeadline || 'Discover the Majesty of Gilgit-Baltistan'}
+                Pakistan Tour Packages &amp; Northern Areas Tours
               </h1>
 
               <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
-                {business.heroDescription}
+                Explore Pakistan with <strong>{business.name}</strong>. Discover customizable private family, honeymoon, and group tour packages for{' '}
+                <Link to="/destinations/hunza" className="text-emerald-800 hover:underline font-semibold">
+                  Hunza Valley
+                </Link>
+                ,{' '}
+                <Link to="/destinations/skardu" className="text-emerald-800 hover:underline font-semibold">
+                  Skardu
+                </Link>
+                ,{' '}
+                <Link to="/destinations/naran-kaghan" className="text-emerald-800 hover:underline font-semibold">
+                  Naran Kaghan
+                </Link>
+                ,{' '}
+                <Link to="/destinations/kashmir" className="text-emerald-800 hover:underline font-semibold">
+                  Kashmir
+                </Link>
+                , and the wider{' '}
+                <Link to="/destinations/northern-areas" className="text-emerald-800 hover:underline font-semibold">
+                  Northern Areas of Pakistan
+                </Link>
+                .
               </p>
 
-              {/* Quick Trust Highlights with Lucide Icons */}
+              {/* Quick Trust Highlights with Lucide Icons (No fabricated ratings) */}
               <div className="grid grid-cols-3 gap-2.5 pt-1">
                 <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center">
                   <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-slate-900">
                     <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>14 Valleys</span>
+                    <span>{destinations.length} Destinations</span>
                   </div>
-                  <div className="text-xs text-slate-700 font-semibold mt-1">Guided Routes</div>
+                  <div className="text-xs text-slate-700 font-semibold mt-1">Guided Valleys</div>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center">
                   <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-slate-900">
-                    <Star className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>4.9 Rated</span>
+                    <Compass className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Custom Routes</span>
                   </div>
-                  <div className="text-xs text-slate-700 font-semibold mt-1">Local Experts</div>
+                  <div className="text-xs text-slate-700 font-semibold mt-1">Seasonal Planning</div>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center">
                   <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-slate-900">
@@ -300,11 +320,11 @@ export const HomePage: React.FC = () => {
               {/* Floating High-Contrast Badge 2 (Bottom Right) */}
               <div className="hidden sm:flex absolute -bottom-4 -right-3 bg-white border border-slate-200 text-slate-900 px-4 py-2.5 rounded-2xl shadow-xl items-center gap-2.5">
                 <span className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                  <Star className="w-4 h-4 fill-emerald-600 text-emerald-600" />
+                  <Compass className="w-4 h-4 text-emerald-700" />
                 </span>
                 <div>
-                  <div className="text-xs font-bold text-slate-900">4.9 / 5 Traveler Rating</div>
-                  <div className="text-[11px] font-semibold text-slate-700">Verified Local Guides</div>
+                  <div className="text-xs font-bold text-slate-900">Hunza · Skardu · Naran</div>
+                  <div className="text-[11px] font-semibold text-slate-700">Customized Pakistan Tours</div>
                 </div>
               </div>
             </div>
@@ -334,6 +354,8 @@ export const HomePage: React.FC = () => {
                   <option value="All">All Destinations</option>
                   <option value="Hunza">Hunza Valley</option>
                   <option value="Skardu">Skardu Valley</option>
+                  <option value="Naran Kaghan">Naran Kaghan</option>
+                  <option value="Kashmir">Kashmir</option>
                   <option value="Fairy Meadows">Fairy Meadows</option>
                   <option value="Deosai">Deosai Plains</option>
                   <option value="Khunjerab">Khunjerab Pass</option>
@@ -418,7 +440,7 @@ export const HomePage: React.FC = () => {
               <span>Curated Tour Packages</span>
             </span>
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-              Featured Gilgit-Baltistan Tours
+              Featured Pakistan &amp; Northern Areas Tour Packages
             </h2>
           </div>
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
@@ -702,6 +724,144 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* SERVICE AREAS, COMBINATION ROUTES & BOOKING PROCESS (SEO AUTHORITYHUB) */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6">
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
+          <div className="max-w-3xl space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+              <Compass className="w-4 h-4 text-emerald-600" />
+              <span>Pakistan Northern Areas Tour Operator</span>
+            </span>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              Explore Northern Pakistan by Region, Route &amp; Travel Style
+            </h2>
+            <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
+              <strong>{business.name}</strong> plans and coordinates private family trips, honeymoon getaways, and group tours across Pakistan’s northern mountain corridors. Browse our primary destination guides, standalone valley packages, and multi-valley combination tours below.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            <div className="p-4 sm:p-5 rounded-3xl bg-gray-50 border border-slate-200 space-y-3">
+              <h3 className="font-display text-base sm:text-lg font-bold text-slate-900">
+                Primary Destination Guides
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 font-medium">
+                Read detailed seasonal guides, attractions, and road access tips for our core service regions:
+              </p>
+              <ul className="space-y-2 text-xs sm:text-sm font-semibold">
+                <li>
+                  <Link to="/destinations/hunza" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Hunza Valley Tour Guide</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/destinations/skardu" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Skardu &amp; Baltistan Travel Guide</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/destinations/naran-kaghan" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Naran Kaghan &amp; Babusar Top Guide</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/destinations/kashmir" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Kashmir &amp; Neelum Valley Guide</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/destinations/northern-areas" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Northern Areas of Pakistan Overview</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div className="p-4 sm:p-5 rounded-3xl bg-gray-50 border border-slate-200 space-y-3">
+              <h3 className="font-display text-base sm:text-lg font-bold text-slate-900">
+                Standalone &amp; Combination Tour Packages
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 font-medium">
+                Choose a single-valley holiday or combine multiple northern corridors into one trip:
+              </p>
+              <ul className="space-y-2 text-xs sm:text-sm font-semibold">
+                <li>
+                  <Link to="/tours/hunza-tour-packages" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Hunza Valley Tour Packages</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tours/skardu-tour-packages" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Skardu &amp; Deosai Tour Packages</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tours/naran-kaghan-tour-packages" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Naran Kaghan Tour Packages</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tours/kashmir-tour-packages" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Kashmir &amp; Neelum Valley Tours</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tours/hunza-skardu-tour" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Hunza &amp; Skardu Combined Tour</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tours/naran-hunza-tour" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Naran &amp; Hunza Overland Tour</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tours/naran-skardu-tour" className="text-emerald-800 hover:underline flex items-center justify-between">
+                    <span>Naran, Babusar &amp; Skardu Tour</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div className="p-4 sm:p-5 rounded-3xl bg-gray-50 border border-slate-200 space-y-3">
+              <h3 className="font-display text-base sm:text-lg font-bold text-slate-900">
+                How Booking Works
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 font-medium">
+                Every tour is confirmed around your real dates, group size, and seasonal road status:
+              </p>
+              <ol className="space-y-2.5 text-xs sm:text-sm text-slate-700 font-medium">
+                <li>
+                  <strong className="text-slate-900">1. Share Trip Details:</strong> Message us on WhatsApp ({business.phone}) or use our{' '}
+                  <Link to="/contact" className="text-emerald-800 hover:underline font-semibold">
+                    online inquiry form
+                  </Link>{' '}
+                  with your dates, travelers, and preferred destinations.
+                </li>
+                <li>
+                  <strong className="text-slate-900">2. Customize Route &amp; Hotels:</strong> Receive a tailored route plan, vehicle recommendation, hotel options, and custom quote.
+                </li>
+                <li>
+                  <strong className="text-slate-900">3. Confirm Reservation:</strong> Finalize your booking directly with our team and complete advance payment via official JazzCash ({business.jazzcashNumber} — {business.jazzcashName}).
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* TRAVEL GUIDES */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -710,14 +870,14 @@ export const HomePage: React.FC = () => {
               Visual Stories &amp; Guides
             </span>
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-              Gilgit-Baltistan Travel Guides
+              Pakistan Northern Areas Travel Guides
             </h2>
           </div>
           <Link
-            to="/travel-guides"
+            to="/guides"
             className="w-full sm:w-auto py-2.5 px-5 text-sm font-bold text-center text-white bg-emerald-700 hover:bg-emerald-800 rounded-2xl transition-colors inline-flex items-center justify-center gap-1.5 shadow-sm"
           >
-            <span>Read All Guides</span>
+            <span>Read All {blogPosts.length} Guides</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -747,7 +907,7 @@ export const HomePage: React.FC = () => {
                   </div>
                   <h3 className="font-display text-lg font-bold tracking-tight text-slate-900 leading-snug">
                     <Link
-                      to={`/travel-guides/${post.slug}`}
+                      to={`/guides/${post.slug}`}
                       className="hover:text-emerald-800 transition-colors"
                     >
                       {post.title}
@@ -758,7 +918,7 @@ export const HomePage: React.FC = () => {
               </div>
               <div className="px-4 md:px-5 pb-4 md:pb-5 pt-2">
                 <Link
-                  to={`/travel-guides/${post.slug}`}
+                  to={`/guides/${post.slug}`}
                   className="w-full py-2.5 px-4 text-xs md:text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-2xl inline-flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <span>Read Full Guide</span>

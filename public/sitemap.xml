@@ -11,22 +11,42 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://baig-treks-and-tours.vercel.app/tours/hunza-valley-discovery</loc>
+    <loc>https://baig-treks-and-tours.vercel.app/tours/hunza-tour-packages</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://baig-treks-and-tours.vercel.app/tours/skardu-deosai-expedition</loc>
+    <loc>https://baig-treks-and-tours.vercel.app/tours/skardu-tour-packages</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://baig-treks-and-tours.vercel.app/tours/hunza-skardu-grand-karakoram</loc>
+    <loc>https://baig-treks-and-tours.vercel.app/tours/naran-kaghan-tour-packages</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://baig-treks-and-tours.vercel.app/tours/fairy-meadows-nanga-parbat-trek</loc>
+    <loc>https://baig-treks-and-tours.vercel.app/tours/kashmir-tour-packages</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/tours/hunza-skardu-tour</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/tours/naran-hunza-tour</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/tours/naran-skardu-tour</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/tours/fairy-meadows-trek-tour</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -38,10 +58,75 @@
   <url>
     <loc>https://baig-treks-and-tours.vercel.app/destinations/hunza</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://baig-treks-and-tours.vercel.app/destinations/skardu</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/naran-kaghan</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/kashmir</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/northern-areas</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/gilgit</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/attabad-lake</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/passu</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/khunjerab</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/karimabad</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/shigar</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/khaplu</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/deosai</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/astore</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/naltar</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -51,7 +136,7 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://baig-treks-and-tours.vercel.app/destinations/deosai</loc>
+    <loc>https://baig-treks-and-tours.vercel.app/destinations/ghizer</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -71,8 +156,43 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://baig-treks-and-tours.vercel.app/travel-guides</loc>
+    <loc>https://baig-treks-and-tours.vercel.app/guides</loc>
     <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/guides/best-time-to-visit-hunza</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/guides/best-time-to-visit-skardu</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/guides/hunza-vs-skardu</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/guides/how-to-plan-a-skardu-trip</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/guides/how-to-plan-a-hunza-trip</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/guides/what-to-pack-for-northern-pakistan</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://baig-treks-and-tours.vercel.app/guides/northern-pakistan-travel-guide</loc>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>

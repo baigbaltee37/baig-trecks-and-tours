@@ -398,7 +398,7 @@ const SCROLL_JOURNEY_STOPS = [
     description:
       'Ascend through Khunjerab National Park along paved alpine switchbacks to the snow-rimmed Pakistan-China border plateau.',
     image: VISUAL_ASSETS.attabadPassu,
-    slug: 'khunjerab-pass',
+    slug: 'khunjerab',
   },
   {
     step: '04',
@@ -416,7 +416,7 @@ const SCROLL_JOURNEY_STOPS = [
     description:
       'Cross the sweeping alpine meadows and crystal streams of Deosai before exploring the apricot orchards and royal heritage of Khaplu Valley.',
     image: VISUAL_ASSETS.deosaiPlains,
-    slug: 'deosai-plains',
+    slug: 'deosai',
   },
 ];
 
@@ -521,18 +521,29 @@ export const CinematicDestinationScroller: React.FC = () => {
 const MAP_COORDINATES: Record<string, { x: number; y: number }> = {
   hunza: { x: 48, y: 24 },
   'attabad-lake': { x: 53, y: 21 },
+  passu: { x: 55, y: 17 },
   'passu-cones': { x: 55, y: 17 },
+  khunjerab: { x: 61, y: 9 },
   'khunjerab-pass': { x: 61, y: 9 },
   gilgit: { x: 39, y: 34 },
+  karimabad: { x: 46, y: 27 },
   'nagar-valley': { x: 47, y: 29 },
+  naltar: { x: 39, y: 31 },
+  ghizer: { x: 22, y: 34 },
   'fairy-meadows': { x: 28, y: 48 },
   'nanga-parbat-base-camp': { x: 26, y: 54 },
+  astore: { x: 36, y: 52 },
   'astore-valley': { x: 36, y: 52 },
+  deosai: { x: 49, y: 56 },
   'deosai-plains': { x: 49, y: 56 },
   skardu: { x: 60, y: 46 },
+  shigar: { x: 65, y: 39 },
   'shigar-valley': { x: 65, y: 39 },
+  khaplu: { x: 76, y: 45 },
   'khaplu-valley': { x: 76, y: 45 },
   'basho-valley': { x: 54, y: 43 },
+  'naran-kaghan': { x: 28, y: 66 },
+  kashmir: { x: 42, y: 69 },
 };
 
 export const InteractiveGilgitBaltistanMap: React.FC = () => {
@@ -908,6 +919,8 @@ export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDes
               >
                 <option value="Hunza Valley">Hunza Valley</option>
                 <option value="Skardu & Baltistan">Skardu &amp; Baltistan</option>
+                <option value="Naran Kaghan">Naran Kaghan</option>
+                <option value="Kashmir & Neelum Valley">Kashmir &amp; Neelum Valley</option>
                 <option value="Hunza + Skardu Combined">Hunza + Skardu Combined</option>
                 <option value="Fairy Meadows & Nanga Parbat">Fairy Meadows &amp; Nanga Parbat</option>
                 <option value="Deosai & Astore Valley">Deosai &amp; Astore Valley</option>

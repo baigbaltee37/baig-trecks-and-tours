@@ -1317,23 +1317,43 @@ function registerRoutes(app: express.Express) {
     const routes = [
       '/',
       '/tours',
-      '/tours/hunza-valley-discovery',
-      '/tours/skardu-deosai-expedition',
-      '/tours/hunza-skardu-grand-karakoram',
-      '/tours/fairy-meadows-nanga-parbat-trek',
+      '/tours/hunza-tour-packages',
+      '/tours/skardu-tour-packages',
+      '/tours/naran-kaghan-tour-packages',
+      '/tours/kashmir-tour-packages',
+      '/tours/hunza-skardu-tour',
+      '/tours/naran-hunza-tour',
+      '/tours/naran-skardu-tour',
+      '/tours/fairy-meadows-trek-tour',
       '/destinations',
       '/destinations/hunza',
       '/destinations/skardu',
-      '/destinations/fairy-meadows',
-      '/destinations/deosai',
-      '/destinations/khunjerab-pass',
+      '/destinations/naran-kaghan',
+      '/destinations/kashmir',
+      '/destinations/northern-areas',
+      '/destinations/gilgit',
       '/destinations/attabad-lake',
+      '/destinations/passu',
+      '/destinations/khunjerab',
+      '/destinations/karimabad',
       '/destinations/shigar',
       '/destinations/khaplu',
+      '/destinations/deosai',
+      '/destinations/astore',
+      '/destinations/naltar',
+      '/destinations/fairy-meadows',
+      '/destinations/ghizer',
       '/experiences',
       '/about',
       '/gallery',
-      '/travel-guides',
+      '/guides',
+      '/guides/best-time-to-visit-hunza',
+      '/guides/best-time-to-visit-skardu',
+      '/guides/hunza-vs-skardu',
+      '/guides/how-to-plan-a-skardu-trip',
+      '/guides/how-to-plan-a-hunza-trip',
+      '/guides/what-to-pack-for-northern-pakistan',
+      '/guides/northern-pakistan-travel-guide',
       '/contact',
     ];
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -1342,7 +1362,7 @@ ${routes
   .map(
     (route) => `  <url>
     <loc>${baseUrl}${route}</loc>
-    <changefreq>${route === '/' ? 'daily' : 'weekly'}</changefreq>
+    <changefreq>${route === '/' ? 'daily' : route.startsWith('/guides/') || route === '/about' || route === '/contact' || route === '/gallery' ? 'monthly' : 'weekly'}</changefreq>
     <priority>${route === '/' ? '1.0' : route.startsWith('/tours') || route.startsWith('/destinations') ? '0.9' : '0.8'}</priority>
   </url>`
   )
@@ -1356,7 +1376,7 @@ ${routes
   app.get('/robots.txt', (_req, res) => {
     res.header('Content-Type', 'text/plain');
     res.send(
-      `User-agent: *\nAllow: /\n\nSitemap: https://baig-treks-and-tours.vercel.app/sitemap.xml\n`
+      `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\nDisallow: /baig-admin-secure-786\nDisallow: /customer\nDisallow: /my-bookings\nDisallow: /profile\nDisallow: /api/\n\nSitemap: https://baig-treks-and-tours.vercel.app/sitemap.xml\n`
     );
   });
 }

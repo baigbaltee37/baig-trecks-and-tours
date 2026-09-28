@@ -7,16 +7,19 @@ import {
   CheckCircle2,
   XCircle,
   ArrowLeft,
+  ArrowRight,
   Calendar,
-  Star,
   MapPin,
   Users,
   Mountain,
+  HelpCircle,
+  BookOpen,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { VISUAL_ASSETS } from '../data/initialData';
 import { buildTourWhatsAppMessage, buildWhatsAppLink } from '../config/business';
-import { InquiryFormSection } from '../components/InteractiveMapAndScroll';
+import { InquiryFormSection, TourCard } from '../components/InteractiveMapAndScroll';
+import { TOUR_SLUG_ALIASES } from '../components/SEOHead';
 
 export const TourDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -26,6 +29,7 @@ export const TourDetailPage: React.FC = () => {
 
   const {
     tours,
+    blogPosts,
     business,
     user,
     profile,
@@ -35,7 +39,10 @@ export const TourDetailPage: React.FC = () => {
     submitBookingRequest,
   } = useApp();
 
-  const tour = tours.find((t) => t.slug === slug || t.id === slug);
+  const resolvedSlug = slug ? TOUR_SLUG_ALIASES[slug] || slug : '';
+  const tour = tours.find(
+    (t) => t.slug === resolvedSlug || t.id === resolvedSlug || t.slug === slug || t.id === slug
+  );
 
   const [bookingName, setBookingName] = useState(user?.name || profile?.displayName || '');
   const [bookingEmail, setBookingEmail] = useState(privateInfo?.email || user?.email || '');
@@ -47,7 +54,6 @@ export const TourDetailPage: React.FC = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [highlightBookingBox, setHighlightBookingBox] = useState(false);
 
-  // Sync user fields when user logs in
   useEffect(() => {
     if (user) {
       setBookingName(user.name || user.displayName || '');
@@ -56,7 +62,6 @@ export const TourDetailPage: React.FC = () => {
     }
   }, [user]);
 
-  // If user came back from /login with ?book=true, scroll to & highlight booking form
   useEffect(() => {
     if (searchParams.get('book') === 'true') {
       if (!user && !isAdmin) {
@@ -79,7 +84,7 @@ export const TourDetailPage: React.FC = () => {
           Tour Package Not Found
         </h1>
         <p className="text-sm md:text-base text-slate-600">
-          The requested tour could not be found. Browse our active Gilgit-Baltistan tours below.
+          The requested tour could not be found. Browse our active Pakistan and Gilgit-Baltistan tours below.
         </p>
         <Link
           to="/tours"
@@ -98,7 +103,12 @@ export const TourDetailPage: React.FC = () => {
     business.whatsapp
   );
 
-  // Book Now Flow: Check login first; if not logged in, redirect to login and return here
+  const relatedGuides = (tour.relatedGuideSlugs || [])
+    .map((gSlug) => blogPosts.find((p) => p.slug === gSlug))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p));
+
+  const otherTours = tours.filter((t) => t.id !== tour.id).slice(0, 3);
+
   const handleBookNowAction = () => {
     if (!user && !isAdmin) {
       const returnUrl = `/tours/${tour.slug}?book=true`;
@@ -143,18 +153,24 @@ export const TourDetailPage: React.FC = () => {
       {/* Header & Banner Image */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 pt-6 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link
-            to="/tours"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-emerald-700 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Tours</span>
-          </Link>
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
+            <Link to="/" className="hover:text-emerald-700 transition-colors">
+              Home
+            </Link>
+            <span aria-hidden="true">/</span>
+            <Link to="/tours" className="hover:text-emerald-700 transition-colors">
+              Tours
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span className="text-slate-900 font-semibold truncate max-w-[200px] sm:max-w-xs">
+              {tour.title}
+            </span>
+          </nav>
 
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-2xl">
-              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-              <span>4.9 Verified Route</span>
+            <span className="inline-flex items-center gap-1 text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-2xl">
+              <Mountain className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Customizable Private &amp; Group Route</span>
             </span>
             {user && (
               <button
@@ -211,7 +227,7 @@ export const TourDetailPage: React.FC = () => {
         <div className="relative rounded-3xl overflow-hidden border border-slate-200 bg-slate-100 aspect-[16/9] sm:aspect-[21/9] shadow-xl">
           <img
             src={tour.imageUrl || VISUAL_ASSETS.heroKarakoram}
-            alt={tour.title}
+            alt={`${tour.title} — ${tour.destination} Tour Package by Baig Treks and Tours`}
             referrerPolicy="no-referrer"
             className="w-full h-auto min-h-full object-cover"
           />
@@ -225,39 +241,64 @@ export const TourDetailPage: React.FC = () => {
           {/* Quick Facts Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 md:p-5 rounded-3xl bg-white border border-slate-200 shadow-sm">
             <div>
-              <div className="text-xs font-semibold text-slate-700">Start / End</div>
+              <div className="text-xs font-semibold text-slate-700">Departure Location</div>
               <div className="text-sm font-bold text-slate-900 mt-0.5">
-                {tour.startingLocation}
+                {tour.startingLocation || 'Configurable per group'}
               </div>
             </div>
             <div>
               <div className="text-xs font-semibold text-slate-700">Group Size</div>
               <div className="text-sm font-bold text-slate-900 mt-0.5">
-                {tour.groupSize}
+                {tour.groupSize || 'Private or Group'}
               </div>
             </div>
             <div>
               <div className="text-xs font-semibold text-slate-700">Difficulty</div>
               <div className="text-sm font-bold text-slate-900 mt-0.5">
-                {tour.difficulty}
+                {tour.difficulty || 'Easy to Moderate'}
               </div>
             </div>
             <div>
               <div className="text-xs font-semibold text-slate-700">Best Season</div>
               <div className="text-sm font-bold text-slate-900 mt-0.5">
-                {tour.bestSeason}
+                {tour.bestSeason || 'April to October'}
               </div>
             </div>
           </div>
 
-          {/* Overview */}
-          <section className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 space-y-3 shadow-sm">
+          {/* Overview & Route Summary */}
+          <section className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 space-y-4 shadow-sm">
             <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-              Tour Overview
+              Tour Overview &amp; Route
             </h2>
             <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
               {tour.overview}
             </p>
+            {tour.routeSummary && (
+              <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200/80 space-y-1">
+                <div className="text-xs font-bold text-slate-900">Primary Route Corridor</div>
+                <p className="text-sm text-slate-700 font-semibold">{tour.routeSummary}</p>
+              </div>
+            )}
+            {tour.destinationsCovered && tour.destinationsCovered.length > 0 && (
+              <div className="pt-1 space-y-2">
+                <div className="text-xs font-bold text-slate-900">
+                  Destinations Visited (Click to Read Destination Guide)
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {tour.destinationsCovered.map((dc) => (
+                    <Link
+                      key={dc.slug}
+                      to={`/destinations/${dc.slug}`}
+                      className="px-3.5 py-1.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold text-emerald-900 inline-flex items-center gap-1.5 transition-colors"
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{dc.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Day-by-Day Itinerary */}
@@ -280,9 +321,9 @@ export const TourDetailPage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200 space-y-2">
+              <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200 space-y-2.5">
                 <p className="text-sm text-slate-700 font-medium leading-relaxed">
-                  To ensure your trip matches current seasonal road conditions, flight or road preferences, and your group’s pace, <strong>{business.name}</strong> prepares a personalized day-by-day itinerary upon booking or inquiry.
+                  To ensure your journey matches current seasonal road conditions, flight or overland departure preferences, and your group’s available days, <strong>{business.name}</strong> prepares a tailored day-by-day schedule upon inquiry or booking.
                 </p>
                 <a
                   href={waUrl}
@@ -291,10 +332,40 @@ export const TourDetailPage: React.FC = () => {
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
-                  <span>Request detailed day-by-day plan on WhatsApp ({business.phone})</span>
+                  <span>Request personalized day-by-day plan on WhatsApp ({business.phone})</span>
                 </a>
               </div>
             )}
+          </section>
+
+          {/* Transport, Accommodation & Meals */}
+          <section className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 space-y-4 shadow-sm">
+            <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Transport, Accommodation &amp; Meals
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-600 font-medium">
+              <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200/80 space-y-1">
+                <div className="text-xs font-bold text-slate-900">Transport</div>
+                <p>
+                  {tour.transportation ||
+                    'Private vehicle tailored to your group size, plus local 4x4 jeeps for off-road side valleys where applicable.'}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200/80 space-y-1">
+                <div className="text-xs font-bold text-slate-900">Accommodation</div>
+                <p>
+                  {tour.accommodation ||
+                    'Hotel and guesthouse stays selected and confirmed with you based on your preferred comfort tier.'}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200/80 space-y-1">
+                <div className="text-xs font-bold text-slate-900">Meals</div>
+                <p>
+                  {tour.mealsInfo ||
+                    'Meal inclusions (breakfast or half-board) are configurable according to your chosen package tier.'}
+                </p>
+              </div>
+            </div>
           </section>
 
           {/* Inclusions & Exclusions */}
@@ -315,7 +386,7 @@ export const TourDetailPage: React.FC = () => {
                 </ul>
               ) : (
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                  Inclusions (transport, hotel category, meals, and 4x4 jeeps) are customized according to your selected package tier.
+                  Inclusions (private transport, fuel/tolls, hotel category, meals, and 4x4 jeeps) are customized and written into your confirmed booking quote.
                 </p>
               )}
             </div>
@@ -336,17 +407,80 @@ export const TourDetailPage: React.FC = () => {
                 </ul>
               ) : (
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                  Personal expenses, optional activities, and items not specified in your written confirmation are excluded.
+                  Personal expenses, optional entry/boating tickets, and items not specified in your written confirmation are excluded.
                 </p>
               )}
             </div>
           </section>
 
+          {/* Step-by-Step Booking Process */}
+          <section className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 space-y-4 shadow-sm">
+            <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              How to Book This Tour Package
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+              <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200/80 space-y-1.5">
+                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-emerald-700 text-white text-xs font-bold">
+                  Step 1
+                </span>
+                <h3 className="font-bold text-slate-900">Share Dates &amp; Group Size</h3>
+                <p className="text-slate-600 font-medium text-xs leading-relaxed">
+                  Submit an online inquiry or message us on WhatsApp ({business.phone}) with your travel dates, number of travelers, and departure city.
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200/80 space-y-1.5">
+                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-emerald-700 text-white text-xs font-bold">
+                  Step 2
+                </span>
+                <h3 className="font-bold text-slate-900">Review Custom Itinerary &amp; Quote</h3>
+                <p className="text-slate-600 font-medium text-xs leading-relaxed">
+                  Our team confirms seasonal road conditions, hotel options, transport, and total package pricing for your group.
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-gray-50 border border-slate-200/80 space-y-1.5">
+                <span className="inline-block px-2.5 py-0.5 rounded-lg bg-emerald-700 text-white text-xs font-bold">
+                  Step 3
+                </span>
+                <h3 className="font-bold text-slate-900">Confirm Reservation</h3>
+                <p className="text-slate-600 font-medium text-xs leading-relaxed">
+                  Lock in your booking via our official JazzCash account ({business.jazzcashNumber} — {business.jazzcashName}) after date verification.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Tour FAQs */}
+          {tour.faqs && tour.faqs.length > 0 && (
+            <section className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 space-y-4 shadow-sm">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-emerald-600" />
+                <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                  Frequently Asked Questions About This Tour
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {tour.faqs.map((faq, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-2xl bg-gray-50 border border-slate-200/80 space-y-1"
+                  >
+                    <h3 className="font-display text-sm sm:text-base font-bold text-slate-900">
+                      {faq.question}
+                    </h3>
+                    <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                      {faq.answer}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Inquiry Form */}
           <InquiryFormSection defaultTourSlug={tour.slug} defaultDestination={tour.destination} />
         </div>
 
-        {/* Right 4 Columns: Pricing & Book Now Flow */}
+        {/* Right 4 Columns: Pricing & Book Now Flow + Related Guides */}
         <aside
           ref={bookingSectionRef}
           className="lg:col-span-4 space-y-6 lg:sticky lg:top-24"
@@ -523,8 +657,56 @@ export const TourDetailPage: React.FC = () => {
               </p>
             </div>
           </div>
+
+          {/* Related Travel Guides in Sidebar */}
+          {relatedGuides.length > 0 && (
+            <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-emerald-600" />
+                <h2 className="font-display text-base font-bold text-slate-900">
+                  Planning Guides for This Route
+                </h2>
+              </div>
+              <ul className="space-y-2 text-xs sm:text-sm">
+                {relatedGuides.map((g) => (
+                  <li key={g.id}>
+                    <Link
+                      to={`/guides/${g.slug}`}
+                      className="block p-3 rounded-2xl bg-gray-50 hover:bg-emerald-50 border border-slate-200/80 text-slate-800 hover:text-emerald-800 transition-colors"
+                    >
+                      <div className="font-bold leading-snug">{g.title}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{g.readTime}</div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </aside>
       </div>
+
+      {/* Other Tour Packages Section */}
+      {otherTours.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 md:px-6 pt-4 space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              More Pakistan &amp; Northern Areas Tour Packages
+            </h2>
+            <Link
+              to="/tours"
+              className="text-xs sm:text-sm font-bold text-emerald-800 hover:underline inline-flex items-center gap-1"
+            >
+              <span>All Tours</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {otherTours.map((t) => (
+              <TourCard key={t.id} tour={t} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

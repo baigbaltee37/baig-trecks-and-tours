@@ -57,7 +57,7 @@ export const ToursPage: React.FC = () => {
             Tours &amp; Travel Packages
           </h1>
           <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
-            Explore curated private and group itineraries across Hunza, Skardu, Fairy Meadows, Deosai, and Khunjerab Pass.
+            Explore curated private and group itineraries across Hunza, Skardu, Naran Kaghan, Kashmir, Fairy Meadows, Deosai, and Khunjerab Pass.
           </p>
         </div>
 
@@ -87,7 +87,7 @@ export const ToursPage: React.FC = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Hunza, Skardu, Trek..."
+                placeholder="Hunza, Skardu, Naran, Kashmir..."
                 className="w-full pl-9 pr-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
               />
             </div>
@@ -105,6 +105,8 @@ export const ToursPage: React.FC = () => {
               <option value="All">All Destinations</option>
               <option value="Hunza">Hunza Valley</option>
               <option value="Skardu">Skardu Valley</option>
+              <option value="Naran Kaghan">Naran Kaghan</option>
+              <option value="Kashmir">Kashmir</option>
               <option value="Fairy Meadows">Fairy Meadows</option>
               <option value="Deosai">Deosai Plains</option>
               <option value="Khunjerab">Khunjerab Pass</option>

@@ -21,6 +21,7 @@ import { useApp } from '../context/AppContext';
 import { INITIAL_EXPERIENCES, VISUAL_ASSETS } from '../data/initialData';
 import { buildWhatsAppLink } from '../config/business';
 import { InquiryFormSection } from '../components/InteractiveMapAndScroll';
+import { GUIDE_SLUG_ALIASES } from '../components/SEOHead';
 
 export const ExperiencesPage: React.FC = () => {
   const { business } = useApp();
@@ -28,15 +29,22 @@ export const ExperiencesPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-10 overflow-x-hidden">
       <div className="max-w-3xl space-y-2 border-b border-slate-200 pb-6">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 mb-1">
+          <Link to="/" className="hover:text-emerald-700 transition-colors">
+            Home
+          </Link>
+          <span aria-hidden="true">/</span>
+          <span className="text-slate-900 font-bold">Experiences</span>
+        </nav>
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
           <Mountain className="w-3.5 h-3.5 text-emerald-600" />
           <span>Travel Styles &amp; Expeditions</span>
         </span>
         <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-          Gilgit-Baltistan Experiences
+          Family, Honeymoon, Private &amp; Group Tours in Northern Pakistan
         </h1>
         <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
-          From multi-day mountain trekking and high-altitude jeep safaris to family holidays, honeymoon escapes, and cultural exploration.
+          From comfortable family tour packages and private honeymoon escapes to group road trips and alpine trekking across Hunza, Skardu, Naran Kaghan, and Kashmir.
         </p>
       </div>
 
@@ -96,18 +104,45 @@ export const AboutPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-12 overflow-x-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         <div className="lg:col-span-7 space-y-5">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+            <Link to="/" className="hover:text-emerald-700 transition-colors">
+              Home
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span className="text-slate-900 font-bold">About</span>
+          </nav>
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
             <Mountain className="w-3.5 h-3.5 text-emerald-600" />
             <span>About Baig Treks &amp; Tours</span>
           </span>
           <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
-            Authentic Mountain Travel Across Gilgit-Baltistan
+            About Baig Treks and Tours — Northern Pakistan Tour Operator
           </h1>
           <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
-            <strong>Baig Treks &amp; Tours</strong> is dedicated to connecting travelers with the valleys, mountain passes, alpine plateaus, and living cultures of Gilgit-Baltistan, Northern Pakistan.
+            <strong>Baig Treks and Tours</strong> is a Pakistan tour operator dedicated to connecting travelers with the valleys, mountain passes, alpine plateaus, and living heritage of{' '}
+            <Link to="/destinations/hunza" className="text-emerald-800 hover:underline font-semibold">
+              Hunza Valley
+            </Link>
+            ,{' '}
+            <Link to="/destinations/skardu" className="text-emerald-800 hover:underline font-semibold">
+              Skardu
+            </Link>
+            ,{' '}
+            <Link to="/destinations/naran-kaghan" className="text-emerald-800 hover:underline font-semibold">
+              Naran Kaghan
+            </Link>
+            ,{' '}
+            <Link to="/destinations/kashmir" className="text-emerald-800 hover:underline font-semibold">
+              Kashmir
+            </Link>
+            , and the wider{' '}
+            <Link to="/destinations/northern-areas" className="text-emerald-800 hover:underline font-semibold">
+              Northern Areas of Pakistan
+            </Link>
+            .
           </p>
           <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
-            Whether you are planning a family holiday in Hunza, a scenic expedition through Skardu and Deosai, or a trek toward Fairy Meadows and Nanga Parbat Base Camp, our focus is on honest seasonal guidance, reliable mountain logistics, and tailored itineraries.
+            Whether you are planning a family holiday in Hunza, a scenic expedition through Skardu and Deosai, a summer trip through Naran Kaghan and Kashmir, or a trek toward Fairy Meadows, our focus is on honest seasonal guidance, reliable mountain logistics, and tailored itineraries.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Link
@@ -312,14 +347,21 @@ export const TravelGuidesPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-8 overflow-x-hidden">
       <div className="max-w-3xl space-y-2 border-b border-slate-200 pb-6">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 mb-1">
+          <Link to="/" className="hover:text-emerald-700 transition-colors">
+            Home
+          </Link>
+          <span aria-hidden="true">/</span>
+          <span className="text-slate-900 font-bold">Travel Guides</span>
+        </nav>
         <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
-          Gilgit-Baltistan Travel Resource
+          Northern Pakistan Travel Resource
         </span>
         <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-          Travel Guides &amp; Seasonal Advice
+          Pakistan Northern Areas Travel Guides &amp; Seasonal Advice
         </h1>
         <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
-          Practical planning guides for Hunza, Skardu, Fairy Meadows, Deosai, packing checklists, and road trip routes.
+          Practical planning guides for Hunza Valley, Skardu, Naran Kaghan, Kashmir, Fairy Meadows, Deosai Plains, packing checklists, and route comparisons.
         </p>
       </div>
 
@@ -348,7 +390,7 @@ export const TravelGuidesPage: React.FC = () => {
                 </div>
                 <h2 className="font-display text-xl font-bold tracking-tight text-slate-900 leading-snug">
                   <Link
-                    to={`/travel-guides/${post.slug}`}
+                    to={`/guides/${post.slug}`}
                     className="hover:text-slate-700 transition-colors"
                   >
                     {post.title}
@@ -359,7 +401,7 @@ export const TravelGuidesPage: React.FC = () => {
             </div>
             <div className="px-4 md:px-5 pb-4 md:pb-5 pt-2">
               <Link
-                to={`/travel-guides/${post.slug}`}
+                to={`/guides/${post.slug}`}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors"
               >
                 <span>Read Full Article</span>
@@ -375,9 +417,12 @@ export const TravelGuidesPage: React.FC = () => {
 
 export const TravelGuideDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { blogPosts, business } = useApp();
+  const { blogPosts, tours, destinations, business } = useApp();
 
-  const post = blogPosts.find((p) => p.slug === slug || p.id === slug);
+  const resolvedSlug = slug ? GUIDE_SLUG_ALIASES[slug] || slug : '';
+  const post = blogPosts.find(
+    (p) => p.slug === resolvedSlug || p.id === resolvedSlug || p.slug === slug || p.id === slug
+  );
 
   if (!post) {
     return (
@@ -386,7 +431,7 @@ export const TravelGuideDetailPage: React.FC = () => {
           Guide Not Found
         </h1>
         <Link
-          to="/travel-guides"
+          to="/guides"
           className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold bg-emerald-700 text-white rounded-2xl"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -396,15 +441,27 @@ export const TravelGuideDetailPage: React.FC = () => {
     );
   }
 
+  const relatedTours = (post.relatedTourSlugs || [])
+    .map((tSlug) => tours.find((t) => t.slug === tSlug))
+    .filter((t): t is NonNullable<typeof t> => Boolean(t));
+
+  const relatedDestinations = (post.relatedDestinationSlugs || [])
+    .map((dSlug) => destinations.find((d) => d.slug === dSlug))
+    .filter((d): d is NonNullable<typeof d> => Boolean(d));
+
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-8 overflow-x-hidden">
-      <Link
-        to="/travel-guides"
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-slate-900"
-      >
-        <ArrowLeft className="w-4 h-4 text-emerald-600" />
-        <span>Back to Travel Guides</span>
-      </Link>
+      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-700">
+        <Link to="/" className="hover:text-emerald-700 transition-colors">
+          Home
+        </Link>
+        <span aria-hidden="true">/</span>
+        <Link to="/guides" className="hover:text-emerald-700 transition-colors">
+          Travel Guides
+        </Link>
+        <span aria-hidden="true">/</span>
+        <span className="text-slate-900 font-bold truncate max-w-xs">{post.title}</span>
+      </nav>
 
       <div className="space-y-3">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-xs sm:text-sm font-bold text-emerald-800">
@@ -428,13 +485,60 @@ export const TravelGuideDetailPage: React.FC = () => {
         {post.content}
       </div>
 
+      {/* Internal Links to Related Tour Packages & Destinations */}
+      {(relatedTours.length > 0 || relatedDestinations.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {relatedTours.length > 0 && (
+            <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+              <h2 className="font-display text-base sm:text-lg font-bold text-slate-900">
+                Related Tour Packages
+              </h2>
+              <ul className="space-y-2 text-xs sm:text-sm font-semibold">
+                {relatedTours.map((t) => (
+                  <li key={t.id}>
+                    <Link
+                      to={`/tours/${t.slug}`}
+                      className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 hover:bg-emerald-50 border border-slate-200/80 text-slate-800 hover:text-emerald-800 transition-colors"
+                    >
+                      <span>{t.title}</span>
+                      <ArrowRight className="w-4 h-4 text-emerald-600 shrink-0" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {relatedDestinations.length > 0 && (
+            <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+              <h2 className="font-display text-base sm:text-lg font-bold text-slate-900">
+                Destinations Covered in This Guide
+              </h2>
+              <ul className="space-y-2 text-xs sm:text-sm font-semibold">
+                {relatedDestinations.map((d) => (
+                  <li key={d.id}>
+                    <Link
+                      to={`/destinations/${d.slug}`}
+                      className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 hover:bg-emerald-50 border border-slate-200/80 text-slate-800 hover:text-emerald-800 transition-colors"
+                    >
+                      <span>{d.name} Travel Guide</span>
+                      <ArrowRight className="w-4 h-4 text-emerald-600 shrink-0" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="font-display text-lg font-bold text-slate-900">
             Ready to Plan This Journey With Baig Treks &amp; Tours?
           </div>
           <p className="text-sm text-slate-600 font-medium">
-            Message our team on WhatsApp for seasonal road updates and custom packages.
+            Message our team on WhatsApp ({business.phone}) for seasonal road updates and custom packages.
           </p>
         </div>
         <a

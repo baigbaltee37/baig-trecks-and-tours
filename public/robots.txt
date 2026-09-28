@@ -1,4 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /baig-admin-secure-786
+Disallow: /customer
+Disallow: /my-bookings
+Disallow: /profile
+Disallow: /api/
 
 Sitemap: https://baig-treks-and-tours.vercel.app/sitemap.xml

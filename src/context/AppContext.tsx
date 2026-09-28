@@ -672,21 +672,28 @@ function normalizeDestinations(list: unknown): DestinationItem[] {
   if (!Array.isArray(list) || list.length === 0) {
     return INITIAL_DESTINATIONS.map((d) => ({ ...d, published: d.published ?? true }));
   }
-  return list
+  const normalized = list
     .filter((item): item is Partial<DestinationItem> => Boolean(item && typeof item === 'object'))
     .map((d) => {
       const fallback = INITIAL_DESTINATIONS.find(
         (init) => init.id === d.id || init.slug === d.slug || init.name === d.name
       );
       return {
+        ...fallback,
+        ...d,
         id: d.id || fallback?.id || 'dest',
         slug: d.slug || fallback?.slug || d.id || 'dest',
         name: d.name || fallback?.name || 'Destination',
+        h1Title: d.h1Title || fallback?.h1Title || `${d.name || fallback?.name || 'Destination'} Tour Packages & Travel Guide`,
         region: d.region || fallback?.region || 'Gilgit-Baltistan',
         elevation: d.elevation || fallback?.elevation || '2,400 m',
         coordinates: d.coordinates || fallback?.coordinates || { x: 50, y: 35 },
         shortDescription: d.shortDescription || fallback?.shortDescription || '',
         description: d.description || fallback?.description || '',
+        whyVisit:
+          Array.isArray(d.whyVisit) && d.whyVisit.length > 0
+            ? d.whyVisit
+            : fallback?.whyVisit || [],
         attractions:
           Array.isArray(d.attractions) && d.attractions.length > 0
             ? d.attractions
@@ -696,24 +703,50 @@ function normalizeDestinations(list: unknown): DestinationItem[] {
           Array.isArray(d.idealFor) && d.idealFor.length > 0
             ? d.idealFor
             : fallback?.idealFor || ['Families', 'Couples', 'Adventure Travelers'],
+        durationOptions: d.durationOptions || fallback?.durationOptions || '',
+        transportInfo: d.transportInfo || fallback?.transportInfo || '',
+        accommodationInfo: d.accommodationInfo || fallback?.accommodationInfo || '',
+        travelTips:
+          Array.isArray(d.travelTips) && d.travelTips.length > 0
+            ? d.travelTips
+            : fallback?.travelTips || [],
+        faqs:
+          Array.isArray(d.faqs) && d.faqs.length > 0
+            ? d.faqs
+            : fallback?.faqs || [],
+        relatedDestinationSlugs:
+          Array.isArray(d.relatedDestinationSlugs) && d.relatedDestinationSlugs.length > 0
+            ? d.relatedDestinationSlugs
+            : fallback?.relatedDestinationSlugs || [],
+        relatedGuideSlugs:
+          Array.isArray(d.relatedGuideSlugs) && d.relatedGuideSlugs.length > 0
+            ? d.relatedGuideSlugs
+            : fallback?.relatedGuideSlugs || [],
         imageUrl: d.imageUrl || fallback?.imageUrl || INITIAL_DESTINATIONS[0].imageUrl,
         galleryImages: Array.isArray(d.galleryImages) ? d.galleryImages : [],
         relatedTourIds: Array.isArray(d.relatedTourIds) ? d.relatedTourIds : [],
-        seoTitle: d.seoTitle || '',
-        seoDescription: d.seoDescription || '',
+        seoTitle: d.seoTitle || fallback?.seoTitle || '',
+        seoDescription: d.seoDescription || fallback?.seoDescription || '',
         published: d.published ?? true,
         isConfirmedTourOffering:
           d.isConfirmedTourOffering ?? fallback?.isConfirmedTourOffering ?? true,
         activeTourOffering: d.activeTourOffering ?? fallback?.activeTourOffering ?? true,
       };
     });
+
+  for (const initDest of INITIAL_DESTINATIONS) {
+    if (!normalized.some((d) => d.id === initDest.id || d.slug === initDest.slug)) {
+      normalized.push({ ...initDest, published: initDest.published ?? true });
+    }
+  }
+  return normalized;
 }
 
 function normalizeTours(list: unknown): TourItem[] {
   if (!Array.isArray(list) || list.length === 0) {
     return INITIAL_TOURS.map((t) => ({ ...t, published: t.published ?? true }));
   }
-  return list
+  const normalized = list
     .filter((item): item is Partial<TourItem> => Boolean(item && typeof item === 'object'))
     .map((t) => {
       const fallback = INITIAL_TOURS.find(
@@ -724,29 +757,94 @@ function normalizeTours(list: unknown): TourItem[] {
         ...fallback,
         ...t,
         id: t.id || fallback?.id || `tour_${Date.now()}`,
-        slug: t.slug || fallback?.slug || t.id || `tour_${Date.now()}`,
+        slug: fallback?.slug || t.slug || t.id || `tour_${Date.now()}`,
         title: t.title || fallback?.title || 'Gilgit-Baltistan Tour',
         destination: t.destination || fallback?.destination || 'Hunza',
-        duration: t.duration || fallback?.duration || '5 Days / 4 Nights',
+        duration: t.duration || fallback?.duration || 'Flexible Duration (Configurable)',
         durationCategory: t.durationCategory || fallback?.durationCategory || '4-6 Days',
         tourType: t.tourType || fallback?.tourType || 'Family Holidays',
+        routeSummary: t.routeSummary || fallback?.routeSummary || '',
+        destinationsCovered:
+          Array.isArray(t.destinationsCovered) && t.destinationsCovered.length > 0
+            ? t.destinationsCovered
+            : fallback?.destinationsCovered || [],
+        mealsInfo: t.mealsInfo || fallback?.mealsInfo || '',
         shortDescription: t.shortDescription || fallback?.shortDescription || '',
         overview: t.overview || fallback?.overview || '',
         published: t.published ?? true,
-        featured: Boolean(t.featured),
+        featured: Boolean(t.featured ?? fallback?.featured),
         pricePerPerson: Number(t.pricePerPerson) || 0,
         couplePrice: Number(t.couplePrice) || 0,
         childPrice: Number(t.childPrice) || 0,
         itinerary: Array.isArray(t.itinerary) ? t.itinerary : fallback?.itinerary || [],
         inclusions: Array.isArray(t.inclusions) ? t.inclusions : fallback?.inclusions || [],
         exclusions: Array.isArray(t.exclusions) ? t.exclusions : fallback?.exclusions || [],
-        faqs: Array.isArray(t.faqs) ? t.faqs : [],
+        faqs:
+          Array.isArray(t.faqs) && t.faqs.length > 0
+            ? t.faqs
+            : fallback?.faqs || [],
+        relatedGuideSlugs:
+          Array.isArray(t.relatedGuideSlugs) && t.relatedGuideSlugs.length > 0
+            ? t.relatedGuideSlugs
+            : fallback?.relatedGuideSlugs || [],
         galleryImages: Array.isArray(t.galleryImages) ? t.galleryImages : [],
-        seoTitle: t.seoTitle || '',
-        seoDescription: t.seoDescription || '',
-        seoKeywords: t.seoKeywords || '',
+        seoTitle: t.seoTitle || fallback?.seoTitle || '',
+        seoDescription: t.seoDescription || fallback?.seoDescription || '',
+        seoKeywords: t.seoKeywords || fallback?.seoKeywords || '',
       };
     });
+
+  for (const initTour of INITIAL_TOURS) {
+    if (!normalized.some((t) => t.id === initTour.id || t.slug === initTour.slug)) {
+      normalized.push({ ...initTour, published: initTour.published ?? true });
+    }
+  }
+  return normalized;
+}
+
+function normalizeBlogPosts(list: unknown): BlogPostItem[] {
+  if (!Array.isArray(list) || list.length === 0) {
+    return INITIAL_BLOG_POSTS.map((p) => ({ ...p, published: p.published ?? true }));
+  }
+  const normalized = list
+    .filter((item): item is Partial<BlogPostItem> => Boolean(item && typeof item === 'object'))
+    .map((p) => {
+      const fallback = INITIAL_BLOG_POSTS.find(
+        (init) => init.id === p.id || init.slug === p.slug
+      );
+      return {
+        ...INITIAL_BLOG_POSTS[0],
+        ...fallback,
+        ...p,
+        id: p.id || fallback?.id || `guide_${Date.now()}`,
+        slug: fallback?.slug || p.slug || p.id || `guide_${Date.now()}`,
+        title: p.title || fallback?.title || 'Northern Pakistan Travel Guide',
+        category: p.category || fallback?.category || 'Travel Guide',
+        excerpt: p.excerpt || fallback?.excerpt || '',
+        content: p.content || fallback?.content || '',
+        imageUrl: p.imageUrl || fallback?.imageUrl || INITIAL_BLOG_POSTS[0].imageUrl,
+        published: p.published ?? true,
+        publishedDate: p.publishedDate || fallback?.publishedDate || '2026',
+        readTime: p.readTime || fallback?.readTime || '5 min read',
+        relatedTourSlugs:
+          Array.isArray(p.relatedTourSlugs) && p.relatedTourSlugs.length > 0
+            ? p.relatedTourSlugs
+            : fallback?.relatedTourSlugs || [],
+        relatedDestinationSlugs:
+          Array.isArray(p.relatedDestinationSlugs) && p.relatedDestinationSlugs.length > 0
+            ? p.relatedDestinationSlugs
+            : fallback?.relatedDestinationSlugs || [],
+        seoTitle: p.seoTitle || fallback?.seoTitle || '',
+        seoDescription: p.seoDescription || fallback?.seoDescription || '',
+      };
+    });
+
+  for (const initPost of INITIAL_BLOG_POSTS) {
+    if (!normalized.some((p) => p.id === initPost.id || p.slug === initPost.slug)) {
+      normalized.push({ ...initPost, published: initPost.published ?? true });
+    }
+  }
+  return normalized;
 }
 
 const DEFAULT_ADMIN_USERS: AdminUserRecord[] = [
@@ -778,10 +876,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     normalizeDestinations(readStorage<DestinationItem[]>(LS_KEYS.DESTINATIONS, INITIAL_DESTINATIONS))
   );
   const [allBlogPosts, setBlogPosts] = useState<BlogPostItem[]>(() =>
-    readStorage<BlogPostItem[]>(LS_KEYS.BLOG, INITIAL_BLOG_POSTS).map((p) => ({
-      ...p,
-      published: p.published ?? true,
-    }))
+    normalizeBlogPosts(readStorage<BlogPostItem[]>(LS_KEYS.BLOG, INITIAL_BLOG_POSTS))
   );
   const [allGallery, setAllGallery] = useState<GalleryImageItem[]>(() =>
     readStorage<GalleryImageItem[]>(LS_KEYS.GALLERY, INITIAL_GALLERY).map((g) => ({
@@ -923,8 +1018,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setAllDestinations(normalizedDests);
           }
           if (Array.isArray(remote.blogPosts) && remote.blogPosts.length > 0) {
-            writeStorage(LS_KEYS.BLOG, remote.blogPosts, false);
-            setBlogPosts(remote.blogPosts);
+            const normalizedGuides = normalizeBlogPosts(remote.blogPosts);
+            writeStorage(LS_KEYS.BLOG, normalizedGuides, false);
+            setBlogPosts(normalizedGuides);
           }
           if (Array.isArray(remote.gallery) && remote.gallery.length > 0) {
             writeStorage(LS_KEYS.GALLERY, remote.gallery, false);
@@ -998,7 +1094,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           readStorage<DestinationItem[]>(LS_KEYS.DESTINATIONS, INITIAL_DESTINATIONS)
         )
       );
-      setBlogPosts(readStorage<BlogPostItem[]>(LS_KEYS.BLOG, INITIAL_BLOG_POSTS));
+      setBlogPosts(
+        normalizeBlogPosts(readStorage<BlogPostItem[]>(LS_KEYS.BLOG, INITIAL_BLOG_POSTS))
+      );
       setAllGallery(
         readStorage<GalleryImageItem[]>(LS_KEYS.GALLERY, INITIAL_GALLERY).map((g) => ({
           ...g,

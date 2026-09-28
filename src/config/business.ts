@@ -48,12 +48,12 @@ export const defaultBusinessConfig: BusinessConfig = {
       url: 'https://www.instagram.com/baig_treks_and_tours/',
     },
   ],
-  locationLabel: 'Gilgit-Baltistan, Pakistan',
+  locationLabel: 'Gilgit-Baltistan & Northern Pakistan',
   tagline:
-    'Explore Gilgit-Baltistan with Authentic Local Expertise, Adventure & Comfort',
-  heroHeadline: 'Discover the Majesty of Gilgit-Baltistan',
+    'Explore Pakistan with Baig Treks and Tours — Customizable Tour Packages for Hunza, Skardu, Naran Kaghan, Kashmir & Northern Areas',
+  heroHeadline: 'Pakistan Tour Packages & Northern Areas Tours',
   heroDescription:
-    'Experience breathtaking valleys, legendary Karakoram peaks, crystal-clear alpine lakes, and curated private & group journeys through Northern Pakistan with Baig Treks & Tours.',
+    'Explore Hunza Valley, Skardu, Naran Kaghan, Kashmir (Neelum Valley), Fairy Meadows, and Deosai with Baig Treks and Tours. Customized private family holidays, honeymoon trips, and group tours across Northern Pakistan.',
   address: '',
   businessHours: '',
   cancellationPolicy:
@@ -68,9 +68,9 @@ export const defaultBusinessConfig: BusinessConfig = {
   footerInfo:
     'Authentic local tour operator specializing in Hunza, Skardu, Fairy Meadows, Deosai, and Karakoram expeditions.',
   seoTitle:
-    'Baig Treks and Tours - Best Tour Packages in Pakistan | Hunza, Skardu, Naran',
+    'Baig Treks and Tours | Pakistan Tour Packages & Northern Areas',
   seoDescription:
-    'Baig Treks and Tours offers affordable tour packages for Hunza, Skardu, Naran Kaghan, Kashmir. Book your northern areas tour now.',
+    'Explore Pakistan with Baig Treks and Tours. Discover tour packages for Hunza, Skardu, Naran Kaghan, Kashmir and other northern areas of Pakistan.',
 };
 
 export function buildWhatsAppLink(message: string, whatsappNumber = defaultBusinessConfig.whatsapp): string {
