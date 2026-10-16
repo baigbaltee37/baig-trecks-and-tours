@@ -46,6 +46,7 @@ export interface TourItem {
   groupSize?: string;
   difficulty?: string;
   bestSeason?: string;
+  highlights?: string[];
   shortDescription: string;
   overview: string;
   badge: string; // Empty unless explicitly assigned by admin
@@ -200,10 +201,73 @@ export const INITIAL_TOURS: TourItem[] = [
     couplePrice: 0,
     childPrice: 0,
     groupPriceNote: 'Contact for group pricing',
+    highlights: [
+      'Panoramic view of snow-capped Mount Rakaposhi (7,788 m) along the KKH',
+      'Centuries-old royal heritage at Baltit Fort and Altit Fort in Karimabad',
+      'Duikar / Eagle’s Nest sunrise viewpoint over Hunza and Nagar valleys',
+      'Turquoise glacial boating and mountain tunnel views at Attabad Lake',
+      'Cathedral granite spires of Passu Cones (Tupopdan)',
+      'Hussaini Suspension Bridge crossing and Upper Hunza scenic drive',
+      'Excursion to Khunjerab Pass (4,693 m) in Khunjerab National Park',
+    ],
     imageUrl: heroKarakoramImg,
-    itinerary: [],
-    inclusions: [],
-    exclusions: [],
+    itinerary: [
+      {
+        dayNumber: 'Day 1',
+        dayTitle: 'Arrival & Scenic Karakoram Highway to Hunza',
+        route: 'Gilgit / Islamabad Departure → Rakaposhi Viewpoint → Karimabad',
+        description:
+          'Depart along the paved Karakoram Highway with scenic stops along the Gilgit and Hunza rivers. Pause at Rakaposhi Viewpoint in Ghulmet (Nagar) for tea facing the towering north face of Mount Rakaposhi before arriving in Karimabad for hotel check-in and evening bazaar walk.',
+        placesVisited: 'Rakaposhi Viewpoint, Karimabad Bazaar',
+      },
+      {
+        dayNumber: 'Day 2',
+        dayTitle: 'Karimabad Heritage & Duikar Viewpoint',
+        route: 'Karimabad Central Hunza Circuit',
+        description:
+          'Explore the 700-year-old Baltit Fort perched on the hillside, followed by Altit Fort and its ancient royal garden. In late afternoon, drive up to Duikar (Eagle’s Nest) to watch the golden sunset illuminating Rakaposhi, Diran, and Ultar Sar.',
+        placesVisited: 'Baltit Fort, Altit Fort, Duikar (Eagle’s Nest)',
+      },
+      {
+        dayNumber: 'Day 3',
+        dayTitle: 'Upper Hunza, Attabad Lake & Passu Cones',
+        route: 'Karimabad → Attabad Lake → Gulmit → Passu',
+        description:
+          'Drive north through the Karakoram Highway tunnels to the vivid turquoise waters of Attabad Lake. Enjoy an optional boat cruise before continuing past Gulmit toward the jagged spires of Passu Cones and the historic Hussaini Suspension Bridge.',
+        placesVisited: 'Attabad Lake, Gulmit, Passu Cones, Hussaini Suspension Bridge',
+      },
+      {
+        dayNumber: 'Day 4',
+        dayTitle: 'Khunjerab Pass Border Excursion',
+        route: 'Passu → Sost → Khunjerab National Park → Karimabad',
+        description:
+          'Early departure through Sost border town into high-altitude Khunjerab National Park. Ascend alpine switchbacks to the 4,693 m Pakistan-China border monument surrounded by snow peaks and wildlife habitats, returning to Central Hunza for evening rest.',
+        placesVisited: 'Sost, Khunjerab National Park, Khunjerab Pass (4,693 m)',
+      },
+      {
+        dayNumber: 'Day 5',
+        dayTitle: 'Farewell Hunza & Return Journey',
+        route: 'Karimabad → Gilgit Airport / Return Overland Highway',
+        description:
+          'Morning breakfast with terraced valley views. Transfer to Gilgit Airport for onward domestic flight or continue your scenic overland road trip with Baig Treks & Tours.',
+        placesVisited: 'Hunza Valley Viewpoints, Gilgit Transfer',
+      },
+    ],
+    inclusions: [
+      'Dedicated private vehicle (AC car / 4x4 Prado / Grand Cabin van per group size) with fuel & tolls',
+      'Professional, licensed local mountain driver familiar with Karakoram Highway roads',
+      'Hotel stays in Karimabad / Upper Hunza with daily breakfast',
+      'Sightseeing excursions to Rakaposhi Viewpoint, Baltit Fort, Altit Fort, Attabad Lake & Passu',
+      'Khunjerab National Park day excursion (subject to seasonal pass opening)',
+      '24/7 on-call trip coordination by Baig Treks & Tours local team',
+    ],
+    exclusions: [
+      'Domestic flights to/from Gilgit or Skardu (available upon request)',
+      'Monument & heritage fort entry fees (Baltit & Altit forts)',
+      'Optional motorboat rental or jet-ski charges at Attabad Lake',
+      'Lunch, dinners, and personal snacks/beverages',
+      'Driver tips and personal gear/expenses',
+    ],
     transportation: 'Private road transport along the Karakoram Highway tailored to your group size.',
     accommodation: 'Accommodation category is selected and confirmed with you prior to booking based on your budget and valley stops.',
     faqs: [
@@ -265,10 +329,81 @@ export const INITIAL_TOURS: TourItem[] = [
     couplePrice: 0,
     childPrice: 0,
     groupPriceNote: 'Contact for group pricing',
+    highlights: [
+      'Shangrila Resort & scenic Lower Kachura Lake',
+      'Upper Kachura Lake with trout streams & tranquil boat rides',
+      'Katpana & Sarfaranga Cold Deserts with high-altitude sand dunes',
+      'Historical 400-year-old Shigar Fort (Fong-Khar) & apricot orchards',
+      'Khaplu Palace (Yabgo Khar) & 700-year-old wooden Chaqchan Mosque',
+      'Day excursion across Deosai National Park & crystalline Sheosar Lake (seasonal)',
+      'Manthoka Waterfall & panoramic Kharpocho Fort over Skardu city',
+    ],
     imageUrl: skarduValleyImg,
-    itinerary: [],
-    inclusions: [],
-    exclusions: [],
+    itinerary: [
+      {
+        dayNumber: 'Day 1',
+        dayTitle: 'Arrival in Skardu & Lower/Upper Kachura Lakes',
+        route: 'Skardu Airport / Overland Arrival → Shangrila → Upper Kachura',
+        description:
+          'Arrive at Skardu (via flight or scenic Jaglot-Skardu road). Check in to hotel, then visit Shangrila Resort (Lower Kachura Lake) followed by a short walk to tranquil Upper Kachura Lake. Evening sunset at Katpana Cold Desert.',
+        placesVisited: 'Shangrila Lake, Upper Kachura Lake, Katpana Desert',
+      },
+      {
+        dayNumber: 'Day 2',
+        dayTitle: 'Shigar Valley & Sarfaranga Cold Desert',
+        route: 'Skardu → Sarfaranga Desert → Shigar Valley & Fort',
+        description:
+          'Drive along the Indus and Shigar riverbed across the vast Sarfaranga Cold Desert. Explore the restored 17th-century Raja Palace at Shigar Fort, the wooden Amburiq Mosque, and scenic village orchards.',
+        placesVisited: 'Sarfaranga Cold Desert, Shigar Fort, Amburiq Mosque, Blind Lake',
+      },
+      {
+        dayNumber: 'Day 3',
+        dayTitle: 'Khaplu Valley & Historic Palaces',
+        route: 'Skardu / Shigar → Shyok River → Khaplu Valley',
+        description:
+          'Scenic journey following the Shyok River to eastern Baltistan. Tour the royal Khaplu Palace (Yabgo Khar), ancient Chaqchan Mosque dating back to 1370, and picturesque village terraces facing Masherbrum peak.',
+        placesVisited: 'Khaplu Palace, Chaqchan Mosque, Shyok River, Machulo Viewpoint',
+      },
+      {
+        dayNumber: 'Day 4',
+        dayTitle: 'Deosai National Park 4x4 Safari (Seasonal)',
+        route: 'Skardu → Ali Malik Top → Bara Pani → Sheosar Lake',
+        description:
+          'Ascend in dedicated 4x4 mountain jeeps to the boundless alpine plateau of Deosai National Park (4,114 m). Cross crystal trout streams at Bara Pani and reach turquoise Sheosar Lake reflecting the distant peaks of Nanga Parbat.',
+        placesVisited: 'Ali Malik Pass, Bara Pani, Sheosar Lake, Kala Pani',
+      },
+      {
+        dayNumber: 'Day 5',
+        dayTitle: 'Manthoka Waterfall & Kharpocho Fort',
+        route: 'Skardu City Circuit',
+        description:
+          'Morning excursion to the 180-foot natural Manthoka Waterfall. In the afternoon, explore historic Kharpocho Fort commanding panoramic vistas over the Indus River, Skardu town, and surrounding mountain ranges.',
+        placesVisited: 'Manthoka Waterfall, Kharpocho Fort, Skardu Organic Village',
+      },
+      {
+        dayNumber: 'Day 6',
+        dayTitle: 'Departure from Baltistan',
+        route: 'Skardu Departure',
+        description:
+          'Transfer to Skardu Airport for return flight or begin coordinated overland departure with Baig Treks & Tours.',
+        placesVisited: 'Skardu Valley Viewpoints',
+      },
+    ],
+    inclusions: [
+      'Private vehicle for Skardu, Shigar, and Khaplu valley routes with fuel & driver allowance',
+      'Dedicated 4x4 jeep for Deosai National Park excursion with national park entry guidance',
+      'Hotel & heritage guesthouse accommodations with daily breakfast',
+      'Experienced local Balti driver and trip coordinator',
+      'Airport pick-up and drop-off in Skardu',
+      '24/7 route support and weather coordination by Baig Treks & Tours',
+    ],
+    exclusions: [
+      'Commercial flights to/from Skardu',
+      'Fort entry tickets (Shigar Fort, Khaplu Palace, Kharpocho Fort)',
+      'Boat rental fees at Upper Kachura Lake',
+      'Lunches, dinners, and personal beverages',
+      'Driver tips and personal laundry/shopping',
+    ],
     transportation: 'Private valley transport plus 4x4 jeep arrangements for Deosai Plains or high-altitude side valleys when included.',
     accommodation: 'Customizable hotel stays in Skardu, Shigar, or Khaplu confirmed according to your group preference.',
     faqs: [
@@ -332,10 +467,97 @@ export const INITIAL_TOURS: TourItem[] = [
     couplePrice: 0,
     childPrice: 0,
     groupPriceNote: 'Contact for group pricing',
+    highlights: [
+      'The complete Gilgit-Baltistan circuit: Central Hunza, Upper Gojal & Baltistan',
+      'Baltit Fort, Altit Fort & Duikar Eagle’s Nest sunset over Rakaposhi',
+      'Attabad Lake boat ride & Passu Cones cathedral granite views',
+      'Jaglot junction of the Karakoram, Himalaya, and Hindu Kush mountain ranges',
+      'Shangrila Lake, Upper Kachura Lake & Katpana Cold Desert in Skardu',
+      'Shigar Fort & Khaplu Palace royal Balti architectural heritage',
+      'Deosai National Park & Sheosar Lake 4x4 wilderness crossing (seasonal)',
+    ],
     imageUrl: attabadPassuImg,
-    itinerary: [],
-    inclusions: [],
-    exclusions: [],
+    itinerary: [
+      {
+        dayNumber: 'Day 1',
+        dayTitle: 'Arrival & Welcome to Hunza Valley',
+        route: 'Gilgit Arrival → Rakaposhi Viewpoint → Karimabad',
+        description:
+          'Arrive in Gilgit, meet your Baig Treks & Tours coordinator and driver, and travel along the scenic KKH past Rakaposhi Viewpoint to Karimabad for hotel check-in and leisure.',
+        placesVisited: 'Rakaposhi Viewpoint, Karimabad',
+      },
+      {
+        dayNumber: 'Day 2',
+        dayTitle: 'Karimabad Heritage & Eagle’s Nest Sunset',
+        route: 'Karimabad Forts & Duikar Ridge',
+        description:
+          'Explore Baltit and Altit Forts, walk through cobblestone mountain bazaars, and take in sunset views of Golden Peak, Ultar Sar, and Ladyfinger Peak from Duikar.',
+        placesVisited: 'Baltit Fort, Altit Fort, Duikar Viewpoint',
+      },
+      {
+        dayNumber: 'Day 3',
+        dayTitle: 'Upper Hunza: Attabad Lake & Passu Cones',
+        route: 'Karimabad → Attabad Lake → Gulmit → Passu',
+        description:
+          'Cruise across Attabad Lake, cross the thrilling Hussaini Bridge, and admire the majestic jagged needles of Passu Cones. Continue toward Borith Lake and Passu Glacier.',
+        placesVisited: 'Attabad Lake, Passu Cones, Hussaini Bridge, Borith Lake',
+      },
+      {
+        dayNumber: 'Day 4',
+        dayTitle: 'Scenic Transit: Hunza to Skardu Valley',
+        route: 'Karimabad → Gilgit → Jaglot 3 Ranges Junction → Jaglot-Skardu Road',
+        description:
+          'Follow the Indus River gorge along the smooth Jaglot-Skardu Highway. Stop at the point where the world’s three greatest mountain ranges meet. Arrive in Skardu for evening rest.',
+        placesVisited: 'Three Mountain Ranges Junction, Indus Gorge, Skardu Valley',
+      },
+      {
+        dayNumber: 'Day 5',
+        dayTitle: 'Kachura Lakes & Katpana Cold Desert',
+        route: 'Lower Kachura (Shangrila) & Upper Kachura Lake Circuit',
+        description:
+          'Visit iconic Shangrila Resort, walk along apple orchards to tranquil Upper Kachura Lake for boat rides, and marvel at the cold desert dunes of Katpana.',
+        placesVisited: 'Shangrila Resort, Upper Kachura Lake, Katpana Cold Desert',
+      },
+      {
+        dayNumber: 'Day 6',
+        dayTitle: 'Shigar Valley & Sarfaranga Cold Desert',
+        route: 'Skardu → Sarfaranga Dunes → Shigar Fort',
+        description:
+          'Experience the serene orchard-filled valley of Shigar, visit the Raja’s palace at Shigar Fort, the 14th-century wooden Amburiq Mosque, and Blind Lake.',
+        placesVisited: 'Sarfaranga Desert, Shigar Fort, Amburiq Mosque, Jarba Zhou Lake',
+      },
+      {
+        dayNumber: 'Day 7',
+        dayTitle: 'Deosai National Park & Sheosar Lake',
+        route: 'Skardu → Ali Malik Pass → Deosai Plains → Sheosar Lake',
+        description:
+          'Full-day 4x4 expedition across the alpine wilderness of Deosai Plains (4,114 m), visiting Bara Pani and crystal Sheosar Lake overlooking Nanga Parbat.',
+        placesVisited: 'Deosai National Park, Bara Pani, Sheosar Lake',
+      },
+      {
+        dayNumber: 'Day 8',
+        dayTitle: 'Departure from Gilgit-Baltistan',
+        route: 'Skardu Airport / Return Highway Transfer',
+        description:
+          'Transfer to Skardu Airport for onward flight with unforgettable mountain memories, or begin coordinated overland return journey with Baig Treks & Tours.',
+        placesVisited: 'Skardu Valley Viewpoints',
+      },
+    ],
+    inclusions: [
+      'Complete private transport across Hunza, Gilgit, and Skardu with experienced mountain driver',
+      'All fuel, road tolls, and driver allowances throughout the circuit',
+      'Dedicated 4x4 mountain jeep for Deosai National Park safari',
+      'Comfortable hotel and valley resort stays with daily breakfast',
+      'Local coordinators in both Hunza Valley and Skardu Baltistan',
+      '24/7 route updates and flight/weather monitoring',
+    ],
+    exclusions: [
+      'Domestic flights to Gilgit or from Skardu',
+      'Fort and monument entry tickets',
+      'Lunches, dinners, and personal snacks/beverages',
+      'Optional boat rides at Attabad Lake and Upper Kachura',
+      'Tips for driver and local guides',
+    ],
     transportation: 'Dedicated private transport along the Karakoram Highway and Jaglot-Skardu Road.',
     accommodation: 'Stays arranged in both Hunza Valley and Skardu/Baltistan based on your preferred hotel tier.',
     faqs: [
@@ -617,10 +839,53 @@ export const INITIAL_TOURS: TourItem[] = [
     couplePrice: 0,
     childPrice: 0,
     groupPriceNote: 'Contact for group pricing',
+    highlights: [
+      'Dramatic Raikot cliff-edge mountain jeep track to Tato Village',
+      'Scenic pine forest alpine hike to Fairy Meadows with pack-mule support',
+      'Panoramic sunrise views directly facing the Raikot Face of Nanga Parbat (8,126 m)',
+      'Hike to Beyal Camp and the edge of Raikot Glacier',
+      'Cozy wooden log cabins and stargazing beneath towering mountain walls',
+    ],
     imageUrl: fairyMeadowsImg,
-    itinerary: [],
-    inclusions: [],
-    exclusions: [],
+    itinerary: [
+      {
+        dayNumber: 'Day 1',
+        dayTitle: 'Raikot Bridge to Fairy Meadows Alpine Pasture',
+        route: 'Karakoram Highway (Raikot Bridge) → Tato Village → Fairy Meadows',
+        description:
+          'Meet at Raikot Bridge on the KKH. Board local 4x4 mountain jeeps for the thrilling 1.5-hour ascent to Tato Village. Begin the 3 to 4-hour scenic hike through pine forests to the emerald pastures of Fairy Meadows facing Nanga Parbat. Check in to wooden cabins.',
+        placesVisited: 'Raikot Bridge, Tato Village, Fairy Meadows Alpine Pasture',
+      },
+      {
+        dayNumber: 'Day 2',
+        dayTitle: 'Beyal Camp & Nanga Parbat Viewpoint',
+        route: 'Fairy Meadows → Beyal Camp → German Viewpoint',
+        description:
+          'Morning walk through birch and juniper woods to Beyal Camp (3,500 m). Continue to the high viewpoint overlooking the massive Raikot Glacier and the sheer 8,126 m wall of Nanga Parbat before returning to Fairy Meadows.',
+        placesVisited: 'Beyal Camp, Raikot Glacier, Nanga Parbat Base Camp Viewpoint',
+      },
+      {
+        dayNumber: 'Day 3',
+        dayTitle: 'Alpine Sunrise & Descent to Karakoram Highway',
+        route: 'Fairy Meadows → Tato Village → Raikot Bridge',
+        description:
+          'Watch the golden sunrise peak of Nanga Parbat. Enjoy alpine breakfast, hike down to Tato Village, and return via 4x4 jeep to Raikot Bridge to connect with onward travel to Hunza, Skardu, or Gilgit.',
+        placesVisited: 'Fairy Meadows, Raikot Bridge',
+      },
+    ],
+    inclusions: [
+      'Roundtrip local 4x4 mountain jeep transfers between Raikot Bridge and Tato Village',
+      'Experienced local mountain guide and trek leader',
+      'Wooden log cabin accommodation at Fairy Meadows',
+      'Luggage transfer assistance (porter / pack animal) per booking tier',
+      '24/7 coordination and weather monitoring by Baig Treks & Tours',
+    ],
+    exclusions: [
+      'Transport to/from Raikot Bridge on the Karakoram Highway (available upon request)',
+      'Meals, snacks, and extra hot drinks at Fairy Meadows',
+      'Personal trekking gear and walking poles',
+      'Tips for local jeep drivers and porters',
+    ],
     transportation: 'Road transport to Raikot Bridge plus local 4x4 mountain jeep transfer to Tato trailhead.',
     accommodation: 'Wooden alpine cabins or camping cottages at Fairy Meadows arranged per group preference.',
     faqs: [
@@ -642,6 +907,509 @@ export const INITIAL_TOURS: TourItem[] = [
     seoTitle: 'Fairy Meadows & Nanga Parbat Tour Package | Baig Treks and Tours',
     seoDescription:
       'Plan your Fairy Meadows and Nanga Parbat viewpoint trek with Baig Treks and Tours. Guided alpine treks and jeep safaris in Northern Pakistan.',
+  },
+  {
+    id: 'gilgit-naltar-tour',
+    slug: 'gilgit-naltar-tour',
+    title: 'Gilgit, Naltar Valley & Satrangi Lake 4x4 Tour Package',
+    destination: 'Gilgit & Naltar',
+    duration: '4-5 Days',
+    durationCategory: '4-6 Days',
+    tourType: 'Adventure Tours',
+    startingLocation: 'Gilgit Airport or Islamabad Overland',
+    endingLocation: 'Gilgit or onward to Hunza',
+    routeSummary: 'Gilgit City → Kargah Buddha → Nomal → Naltar Valley → Satrangi & Blue Lakes',
+    destinationsCovered: [
+      { name: 'Gilgit', slug: 'gilgit' },
+      { name: 'Naltar Valley', slug: 'naltar' },
+      { name: 'Northern Areas of Pakistan', slug: 'northern-areas' },
+    ],
+    mealsInfo: 'Customizable breakfast or half-board meals included.',
+    groupSize: 'Private Family, Couple, or Small Group',
+    difficulty: 'Easy to Moderate 4x4 Scenic Jeep Excursion',
+    bestSeason: 'June to October (Autumn foliage in October · Winter snow season in Jan–Feb)',
+    shortDescription:
+      'Explore the ancient Silk Route hub of Gilgit, 7th-century Kargah Buddha, and take a 4x4 jeep safari into the forested alpine paradise of Naltar Valley and its multi-colored glacial lakes.',
+    overview:
+      'Discover Gilgit-Baltistan’s regional capital and its hidden alpine gem. From historic Kargah Buddha and local bazaars in Gilgit, journey along the rugged mountain gorge to Naltar Valley—famed for dense pine and spruce forests, vibrant turquoise Satrangi (Seven-Color) Lake, and crystalline Blue Lake.',
+    badge: 'Popular Excursion',
+    featured: true,
+    bookingStatus: 'Inquiry Only',
+    pricePerPerson: 0,
+    couplePrice: 0,
+    childPrice: 0,
+    groupPriceNote: 'Contact for group pricing',
+    highlights: [
+      'Historical 7th-century rock-carved Kargah Buddha near Gilgit',
+      'Gilgit River suspension bridge and traditional mountain bazaars',
+      'Thrilling 4x4 jeep drive along the Naltar river gorge',
+      'Emerald pine forests and multi-colored alpine waters of Satrangi Lake',
+      'Pari (Blue) Lake nestled beneath dramatic glaciated ridges',
+    ],
+    imageUrl: fairyMeadowsImg,
+    itinerary: [
+      {
+        dayNumber: 'Day 1',
+        dayTitle: 'Arrival in Gilgit & City Heritage',
+        route: 'Gilgit Airport Arrival → City Highlights',
+        description:
+          'Arrive at Gilgit Airport. Check in to your hotel, then visit the 7th-century rock relief of Kargah Buddha, the old wooden suspension bridge over Gilgit River, and local dry fruit bazaars.',
+        placesVisited: 'Gilgit City, Kargah Buddha, Gilgit River Bridge',
+      },
+      {
+        dayNumber: 'Day 2',
+        dayTitle: '4x4 Jeep Safari to Naltar Valley & Satrangi Lake',
+        route: 'Gilgit → Nomal → Naltar Bala → Satrangi & Blue Lakes',
+        description:
+          'Board rugged 4x4 mountain jeeps and travel via Nomal up into Naltar Valley. Pass dense spruce and pine forests to reach Satrangi Lake (Seven-Color Lake) and scenic Blue Lake. Overnight in Naltar or return to Gilgit.',
+        placesVisited: 'Naltar Valley, Satrangi Lake, Blue Lake (Pari Lake)',
+      },
+      {
+        dayNumber: 'Day 3',
+        dayTitle: 'Alpine Exploration & Three Mountain Ranges Junction',
+        route: 'Naltar / Gilgit → Jaglot Confluence',
+        description:
+          'Morning village walk among Naltar pine groves. Descend to the Karakoram Highway and visit the historic confluence of the Karakoram, Himalaya, and Hindu Kush mountain ranges at Jaglot.',
+        placesVisited: 'Naltar Alpine Forests, Jaglot Junction',
+      },
+      {
+        dayNumber: 'Day 4',
+        dayTitle: 'Departure or Onward Journey to Hunza',
+        route: 'Gilgit Departure',
+        description:
+          'Transfer to Gilgit Airport for return flight, or smoothly transition onward to our Hunza Valley Tour Package.',
+        placesVisited: 'Gilgit Valley',
+      },
+    ],
+    inclusions: [
+      'Private road vehicle for Gilgit transfers and excursions',
+      'Dedicated 4x4 jeep for Naltar Valley and lakes safari',
+      'Hotel accommodation with daily breakfast in Gilgit / Naltar',
+      'Experienced local mountain driver and Baig Treks & Tours guide',
+      'Airport pick-up and drop-off in Gilgit',
+    ],
+    exclusions: [
+      'Domestic flights to/from Gilgit',
+      'Lunches, dinners, and personal snacks/beverages',
+      'Driver tips and personal gear',
+    ],
+    transportation: 'Private car/van for highway segments plus 4x4 mountain jeep for Naltar Valley track.',
+    accommodation: 'Quality valley hotels in Gilgit or alpine guesthouses in Naltar.',
+    faqs: [
+      {
+        question: 'Can Naltar Valley be reached by normal car?',
+        answer:
+          'No. The road from Nomal into Naltar Valley and up to Satrangi Lake is an unpaved mountain track requiring a high-clearance 4x4 jeep.',
+      },
+      {
+        question: 'Can this tour be combined with Hunza?',
+        answer:
+          'Yes. Gilgit and Naltar sit right at the gateway to Central Hunza, making it a very popular 1-to-2 day addition before heading to Karimabad.',
+      },
+    ],
+    relatedGuideSlugs: ['northern-pakistan-travel-guide', 'what-to-pack-for-northern-pakistan'],
+    seoTitle: 'Gilgit & Naltar Valley 4x4 Tour Package | Baig Treks and Tours',
+    seoDescription:
+      'Book a Gilgit and Naltar Valley tour package with Baig Treks and Tours. Visit Kargah Buddha, Satrangi Lake, Blue Lake, and forested alpine valleys.',
+  },
+  {
+    id: 'shigar-khaplu-heritage-tour',
+    slug: 'shigar-khaplu-heritage-tour',
+    title: 'Shigar Fort, Khaplu Palace & Baltistan Heritage Tour',
+    destination: 'Shigar & Khaplu',
+    duration: '5-6 Days',
+    durationCategory: '4-6 Days',
+    tourType: 'Cultural & Heritage',
+    startingLocation: 'Skardu Airport or Overland',
+    endingLocation: 'Skardu',
+    routeSummary: 'Skardu → Sarfaranga Desert → Shigar Valley → Shyok River → Khaplu Valley → Machulo',
+    destinationsCovered: [
+      { name: 'Skardu', slug: 'skardu' },
+      { name: 'Shigar Valley', slug: 'shigar' },
+      { name: 'Khaplu Valley', slug: 'khaplu' },
+    ],
+    mealsInfo: 'Daily breakfast included; authentic Balti cuisine tastings arranged upon request.',
+    groupSize: 'Families, Honeymooners, Heritage Travelers',
+    difficulty: 'Easy Scenic Cultural Valley Road Trip',
+    bestSeason: 'May to October (Apricot and cherry blossom in April · Golden foliage in October)',
+    shortDescription:
+      'Immerse yourself in Balti royal architecture, peaceful orchard villages, centuries-old wooden mosques, and dramatic granite valley landscapes in Shigar and Khaplu.',
+    overview:
+      'For travelers seeking cultural depth and tranquil mountain luxury, this dedicated Baltistan heritage tour connects the royal palaces of Shigar and Khaplu along the Indus and Shyok rivers. Explore the 400-year-old Raja’s palace at Shigar Fort, the wooden carving masterpiece of Chaqchan Mosque, and panoramic vistas of Masherbrum.',
+    badge: 'Heritage & Culture',
+    featured: true,
+    bookingStatus: 'Inquiry Only',
+    pricePerPerson: 0,
+    couplePrice: 0,
+    childPrice: 0,
+    groupPriceNote: 'Contact for group pricing',
+    highlights: [
+      'Restored 17th-century Shigar Fort (Fong-Khar) set amidst apricot orchards',
+      'Ancient 14th-century wooden Amburiq Mosque (UNESCO award-winning heritage)',
+      'Sarfaranga Cold Desert sand dunes framing snow-crested mountain ridges',
+      'Historic Khaplu Palace (Yabgo Khar) with Tibetan-Kashmiri woodcarvings',
+      'Chaqchan Mosque dating back over 650 years',
+      'Machulo viewpoint offering clear views of Masherbrum (K1 - 7,821 m)',
+    ],
+    imageUrl: skarduValleyImg,
+    itinerary: [
+      {
+        dayNumber: 'Day 1',
+        dayTitle: 'Arrival in Skardu & Katpana Desert',
+        route: 'Skardu Arrival → Katpana Cold Desert',
+        description:
+          'Arrive at Skardu Airport. Check in and visit the dramatic sand dunes of Katpana Cold Desert where white dunes meet towering gray mountains.',
+        placesVisited: 'Skardu, Katpana Cold Desert',
+      },
+      {
+        dayNumber: 'Day 2',
+        dayTitle: 'Shigar Valley & Sarfaranga Cold Desert',
+        route: 'Skardu → Sarfaranga Desert → Shigar Fort',
+        description:
+          'Drive across the Sarfaranga sand desert into Shigar Valley. Tour the royal residence at Shigar Fort, visit Amburiq Mosque, and walk through traditional stone villages.',
+        placesVisited: 'Sarfaranga Desert, Shigar Fort, Amburiq Mosque, Blind Lake',
+      },
+      {
+        dayNumber: 'Day 3',
+        dayTitle: 'Journey along Shyok River to Khaplu Valley',
+        route: 'Shigar → Shyok River Gorge → Khaplu',
+        description:
+          'Follow the sparkling Shyok River east toward the Ladakh border. Check in to Khaplu, visit the magnificent Khaplu Palace museum and lush terrace gardens.',
+        placesVisited: 'Shyok River, Khaplu Valley, Khaplu Palace',
+      },
+      {
+        dayNumber: 'Day 4',
+        dayTitle: 'Chaqchan Mosque & Machulo Viewpoint',
+        route: 'Khaplu → Machulo Valley → Skardu',
+        description:
+          'Visit the 700-year-old Chaqchan Mosque, one of the oldest in the region. Drive up to Machulo viewpoint for views of Mount Masherbrum before returning to Skardu.',
+        placesVisited: 'Chaqchan Mosque, Machulo Viewpoint, Skardu Return',
+      },
+      {
+        dayNumber: 'Day 5',
+        dayTitle: 'Skardu Organic Village & Departure',
+        route: 'Skardu Departure',
+        description:
+          'Morning walk through Nansoq Organic Village under the shadow of Kharpocho Fort. Transfer to airport for return flight.',
+        placesVisited: 'Nansoq Organic Village, Skardu Airport',
+      },
+    ],
+    inclusions: [
+      'Private vehicle throughout Skardu, Shigar, and Khaplu with driver & fuel',
+      'Heritage hotel & palace stay arrangements with daily breakfast',
+      'Experienced local Balti driver and guide assistance',
+      'Airport pick-up and drop-off in Skardu',
+    ],
+    exclusions: [
+      'Domestic flights to/from Skardu',
+      'Palace and fort museum entrance tickets',
+      'Lunches, dinners, and personal snacks/beverages',
+      'Driver tips and personal laundry/shopping',
+    ],
+    transportation: 'Paved road private car, Prado, or HiAce van.',
+    accommodation: 'Heritage hotels, palace guesthouses, or premium valley resorts in Shigar and Khaplu.',
+    faqs: [
+      {
+        question: 'How far is Khaplu from Skardu?',
+        answer:
+          'Khaplu is approximately 100 kilometers east of Skardu, taking roughly 2.5 to 3 hours along a paved scenic road following the Shyok River.',
+      },
+      {
+        question: 'Is this tour suitable for seniors and families with children?',
+        answer:
+          'Yes. Shigar and Khaplu feature paved roads and relaxed valley altitudes (2,200–2,600 m), making them exceptionally comfortable for families and seniors.',
+      },
+    ],
+    relatedGuideSlugs: ['how-to-plan-a-skardu-trip', 'best-time-to-visit-skardu'],
+    seoTitle: 'Shigar & Khaplu Heritage Tour Package (Baltistan) | Baig Treks and Tours',
+    seoDescription:
+      'Explore Shigar Fort, Khaplu Palace, Sarfaranga Desert, and Chaqchan Mosque with customized Baltistan cultural tours by Baig Treks and Tours.',
+  },
+  {
+    id: 'deosai-sheosar-lake-safari',
+    slug: 'deosai-sheosar-lake-safari',
+    title: 'Deosai National Park & Sheosar Lake 4x4 Safari Tour',
+    destination: 'Deosai & Skardu',
+    duration: '3-4 Days',
+    durationCategory: '1-3 Days',
+    tourType: 'Jeep Safari & Wildlife',
+    startingLocation: 'Skardu',
+    endingLocation: 'Skardu or Astore Valley',
+    routeSummary: 'Skardu → Sadpara Lake → Ali Malik Pass → Deosai Plains → Bara Pani → Sheosar Lake',
+    destinationsCovered: [
+      { name: 'Deosai Plains', slug: 'deosai' },
+      { name: 'Skardu', slug: 'skardu' },
+      { name: 'Astore Valley', slug: 'astore' },
+    ],
+    mealsInfo: 'Picnic lunches on the plateau and breakfast at valley hotels included.',
+    groupSize: 'Adventure Travelers, Photographers, Small Groups',
+    difficulty: 'High-Altitude 4x4 Plateau Safari (4,114 m)',
+    bestSeason: 'Mid-June to September (Wildflower bloom peaks July to August)',
+    shortDescription:
+      'Traverse the boundless high-altitude wilderness of Deosai National Park—the "Land of Giants"—featuring crystal trout streams at Bara Pani and turquoise Sheosar Lake reflecting Nanga Parbat.',
+    overview:
+      'Deosai National Park is one of the world’s highest alpine plateaus, situated at an average elevation of over 4,100 meters between Baltistan and Astore. Carpeted with summer wildflowers and crisscrossed by glacial streams, this thrilling 4x4 safari takes you deep into the heart of the plateau to explore Bara Pani and breathtaking Sheosar Lake.',
+    badge: 'Wilderness Adventure',
+    featured: true,
+    bookingStatus: 'Inquiry Only',
+    pricePerPerson: 0,
+    couplePrice: 0,
+    childPrice: 0,
+    groupPriceNote: 'Contact for group pricing',
+    highlights: [
+      'Ascent past turquoise Sadpara Lake and Ali Malik Top into Deosai',
+      'Wildflower blooms and boundless alpine horizons at 4,114 meters',
+      'Crystal trout streams and suspension bridges at Bara Pani and Kala Pani',
+      'Heart-shaped Sheosar Lake with views of Nanga Parbat in clear weather',
+      'Opportunity to spot Himalayan brown bears, golden marmots, and birds of prey',
+    ],
+    imageUrl: deosaiPlainsImg,
+    itinerary: [
+      {
+        dayNumber: 'Day 1',
+        dayTitle: 'Skardu to Sadpara Lake & Deosai Plateau Ascent',
+        route: 'Skardu → Sadpara Lake → Ali Malik Pass → Bara Pani',
+        description:
+          'Depart Skardu in rugged 4x4 jeeps, passing Sadpara Lake. Ascend the hairpin switchbacks of Ali Malik Pass onto the vast rolling plateau of Deosai National Park. Explore Bara Pani and enjoy a high-altitude picnic lunch.',
+        placesVisited: 'Sadpara Lake, Ali Malik Pass, Bara Pani, Deosai Plains',
+      },
+      {
+        dayNumber: 'Day 2',
+        dayTitle: 'Breathtaking Sheosar Lake Excursion',
+        route: 'Bara Pani → Kala Pani → Sheosar Lake → Skardu Return',
+        description:
+          'Drive deeper across the plateau toward the Astore boundary to reach spectacular Sheosar Lake (4,142 m). Walk along the tranquil lakeshore framed by snow peaks before returning via Ali Malik to Skardu for a warm evening.',
+        placesVisited: 'Sheosar Lake, Kala Pani, Skardu Return',
+      },
+      {
+        dayNumber: 'Day 3',
+        dayTitle: 'Skardu Cold Desert & Departure',
+        route: 'Skardu City',
+        description:
+          'Relax after your plateau adventure with visits to Katpana Cold Desert and Upper Kachura Lake before departing Baltistan.',
+        placesVisited: 'Katpana Cold Desert, Upper Kachura Lake',
+      },
+    ],
+    inclusions: [
+      'Dedicated high-clearance 4x4 mountain jeep with experienced Deosai driver',
+      'Deosai National Park entry permits and park guidance',
+      'Valley hotel stays in Skardu with daily breakfast',
+      'Picnic equipment assistance for plateau lunch',
+      '24/7 coordination and weather monitoring by Baig Treks & Tours',
+    ],
+    exclusions: [
+      'Domestic airfare to/from Skardu',
+      'Personal warm windbreaker gear and sleeping bags if camping',
+      'Lunches, dinners, and extra beverages',
+      'Tips for driver and local guides',
+    ],
+    transportation: 'Dedicated 4x4 Toyota Land Cruiser / Prado or mountain jeep.',
+    accommodation: 'Skardu valley hotels or organized summer camping at Deosai.',
+    faqs: [
+      {
+        question: 'When is Deosai National Park accessible?',
+        answer:
+          'Deosai is covered in heavy snow for most of the year and is typically open only from mid-June to September when snow clears from the passes.',
+      },
+      {
+        question: 'Does one need warm clothing in Deosai during summer?',
+        answer:
+          'Yes. Even in July and August, temperatures on the plateau at 4,100 m can drop close to freezing when winds pick up or clouds roll in. Always carry thermal layers and a windproof jacket.',
+      },
+    ],
+    relatedGuideSlugs: ['how-to-plan-a-skardu-trip', 'what-to-pack-for-northern-pakistan'],
+    seoTitle: 'Deosai National Park & Sheosar Lake 4x4 Safari | Baig Treks and Tours',
+    seoDescription:
+      'Plan a 4x4 safari across Deosai Plains and Sheosar Lake with Baig Treks and Tours. Discover high-altitude alpine wildflowers, Bara Pani, and wildlife.',
+  },
+  {
+    id: 'ghizer-phander-valley-tour',
+    slug: 'ghizer-phander-valley-tour',
+    title: 'Ghizer, Phander Valley & Khalti Lake Discovery Tour',
+    destination: 'Ghizer & Phander',
+    duration: '4-5 Days',
+    durationCategory: '4-6 Days',
+    tourType: 'Road Trips & Nature',
+    startingLocation: 'Gilgit or Islamabad',
+    endingLocation: 'Gilgit or onward to Shandur / Chitral',
+    routeSummary: 'Gilgit → Gupis → Khalti Lake → Phander Valley & Lake → Shandur Approach',
+    destinationsCovered: [
+      { name: 'Ghizer Valley', slug: 'ghizer' },
+      { name: 'Gilgit', slug: 'gilgit' },
+      { name: 'Northern Areas of Pakistan', slug: 'northern-areas' },
+    ],
+    mealsInfo: 'Fresh mountain trout meals and daily breakfast arranged.',
+    groupSize: 'Families, Nature Lovers, Photographers',
+    difficulty: 'Easy Paved Scenic River Highway Drive',
+    bestSeason: 'April to November (Peak autumn golden foliage in October)',
+    shortDescription:
+      'Known as the "Valley of Lakes and Trout", Ghizer offers crystal-clear turquoise waters at Phander Lake, serene Khalti Lake, and peaceful willow-lined mountain villages west of Gilgit.',
+    overview:
+      'Travel west of Gilgit into the tranquil and picturesque Ghizer District along the sparkling Gilgit River. Unwind beside the turquoise waters of Phander Lake, admire frozen-in-time Khalti Lake, and experience the warm hospitality and colorful orchards of Gupis and Phander.',
+    badge: 'Scenic Hidden Gem',
+    featured: false,
+    bookingStatus: 'Inquiry Only',
+    pricePerPerson: 0,
+    couplePrice: 0,
+    childPrice: 0,
+    groupPriceNote: 'Contact for group pricing',
+    highlights: [
+      'Turquoise waters and lush green river bends of Phander Lake',
+      'Frozen-in-winter crystal waters of Khalti Lake famous for freshwater trout',
+      'Historic Gupis Fort and suspension bridges along the Gilgit River',
+      'Stunning golden autumn poplar tree foliage throughout October',
+      'Approach to world-famous Shandur Pass (Highest Polo Ground)',
+    ],
+    imageUrl: attabadPassuImg,
+    itinerary: [
+      {
+        dayNumber: 'Day 1',
+        dayTitle: 'Gilgit to Gupis & Khalti Lake',
+        route: 'Gilgit → Punial → Gupis → Khalti Lake',
+        description:
+          'Drive west from Gilgit along the scenic river highway past Sher Qilla and Gupis. Arrive at Khalti Lake, formed naturally by a landslide in 1980, and check in to lakeside guesthouses.',
+        placesVisited: 'Punial Valley, Gupis Fort, Khalti Lake',
+      },
+      {
+        dayNumber: 'Day 2',
+        dayTitle: 'Phander Valley: The Emerald Paradise',
+        route: 'Khalti Lake → Phander Valley & Phander Lake',
+        description:
+          'Continue upward to Phander Valley. Gaze across the panoramic viewpoint where the river meanders through lush green pastures into Phander Lake. Walk through quiet willow groves and enjoy fresh trout.',
+        placesVisited: 'Phander Viewpoint, Phander Lake, Shamaran Village',
+      },
+      {
+        dayNumber: 'Day 3',
+        dayTitle: 'Upper Ghizer & Shandur Pass Excursion',
+        route: 'Phander → Teru → Shandur Pass Approach',
+        description:
+          'Drive toward Teru and the approaches to Shandur Pass (3,738 m). Enjoy peaceful alpine meadows surrounded by the Hindu Raj and Karakoram foothills.',
+        placesVisited: 'Teru Valley, Shandur Foothills',
+      },
+      {
+        dayNumber: 'Day 4',
+        dayTitle: 'Return to Gilgit',
+        route: 'Phander → Gilgit',
+        description:
+          'Scenic return drive along the Ghizer riverbank to Gilgit for onward travel or flight departures.',
+        placesVisited: 'Ghizer River Highway, Gilgit City',
+      },
+    ],
+    inclusions: [
+      'Private vehicle with driver, fuel, and tolls for the entire Ghizer journey',
+      'Valley hotel or riverside guesthouse accommodation with daily breakfast',
+      'Experienced local mountain driver familiar with western Gilgit-Baltistan',
+      'Assistance with fresh trout fishing and boat arrangements where available',
+    ],
+    exclusions: [
+      'Domestic flights to/from Gilgit',
+      'Lunches, dinners, and personal beverages',
+      'Driver tips and personal gear',
+    ],
+    transportation: 'Private car, Prado, or HiAce van.',
+    accommodation: 'PTDC and comfortable riverside guesthouses in Phander and Gupis.',
+    faqs: [
+      {
+        question: 'How far is Phander from Gilgit?',
+        answer:
+          'Phander is approximately 175 kilometers west of Gilgit, taking about 4.5 to 5 hours of scenic driving along the paved highway.',
+      },
+    ],
+    relatedGuideSlugs: ['northern-pakistan-travel-guide', 'what-to-pack-for-northern-pakistan'],
+    seoTitle: 'Ghizer & Phander Valley Tour Package | Baig Treks and Tours',
+    seoDescription:
+      'Discover Ghizer and Phander Valley with Baig Treks and Tours. Visit Phander Lake, Khalti Lake, and tranquil trout streams in western Gilgit-Baltistan.',
+  },
+  {
+    id: 'passu-attabad-upper-hunza-tour',
+    slug: 'passu-attabad-upper-hunza-tour',
+    title: 'Passu Cones, Attabad Lake & Upper Gojal Discovery Tour',
+    destination: 'Upper Hunza (Gojal)',
+    duration: '3-4 Days',
+    durationCategory: '1-3 Days',
+    tourType: 'Family Holidays',
+    startingLocation: 'Karimabad or Gilgit',
+    endingLocation: 'Karimabad or Gilgit',
+    routeSummary: 'Karimabad → Attabad Lake → Gulmit → Passu Cones → Hussaini Bridge → Khunjerab',
+    destinationsCovered: [
+      { name: 'Attabad Lake', slug: 'attabad-lake' },
+      { name: 'Passu', slug: 'passu' },
+      { name: 'Khunjerab Pass', slug: 'khunjerab' },
+      { name: 'Hunza Valley', slug: 'hunza' },
+    ],
+    mealsInfo: 'Daily breakfast with optional local Pamiri food experiences.',
+    groupSize: 'Families, Honeymoon Couples, Photographers',
+    difficulty: 'Easy Paved Karakoram Highway Road Journey',
+    bestSeason: 'April to November',
+    shortDescription:
+      'Focus exclusively on Upper Hunza’s most dramatic landmarks: turquoise Attabad Lake boat cruises, the jagged needles of Passu Cones, suspension bridges, and high-altitude Khunjerab Pass.',
+    overview:
+      'Upper Hunza (Gojal) contains some of the most dramatic mountain scenery on the entire planet. This dedicated discovery tour takes you past the five mountain tunnels of the KKH to Attabad Lake, the historic village of Gulmit, Borith Lake, the world-famous jagged Passu Cones (Tupopdan), and up to the 4,693 m Pakistan-China frontier at Khunjerab Pass.',
+    badge: 'Iconic Upper Hunza',
+    featured: true,
+    bookingStatus: 'Inquiry Only',
+    pricePerPerson: 0,
+    couplePrice: 0,
+    childPrice: 0,
+    groupPriceNote: 'Contact for group pricing',
+    highlights: [
+      'Turquoise glacial motorboat cruise across Attabad Lake',
+      'Passu Cathedral Cones (Tupopdan) glowing gold at sunrise',
+      'Hussaini Suspension Bridge high above the Hunza River',
+      'Saline high-altitude Borith Lake and Passu Glacier views',
+      'Khunjerab National Park wildlife and 4,693 m border monument',
+    ],
+    imageUrl: attabadPassuImg,
+    itinerary: [
+      {
+        dayNumber: 'Day 1',
+        dayTitle: 'Attabad Lake & Gulmit Cultural Village',
+        route: 'Karimabad / Gilgit → Attabad Lake → Gulmit',
+        description:
+          'Pass through the spectacular KKH tunnels to arrive at Attabad Lake. Enjoy an optional motorboat ride on the brilliant turquoise waters before visiting the historic Wakhi village of Gulmit and Ondra Poygah fort ruins.',
+        placesVisited: 'Attabad Lake, Gulmit, Ondra Poygah',
+      },
+      {
+        dayNumber: 'Day 2',
+        dayTitle: 'Passu Cones, Suspension Bridge & Borith Lake',
+        route: 'Gulmit → Passu → Hussaini Bridge → Borith Lake',
+        description:
+          'Drive beneath the jagged cathedral spires of Passu Cones (Tupopdan). Cross the famous wooden-plank Hussaini Suspension Bridge and take a short scenic drive up to serene Borith Lake for views of Passu Glacier.',
+        placesVisited: 'Passu Cones, Hussaini Suspension Bridge, Borith Lake, Passu Glacier',
+      },
+      {
+        dayNumber: 'Day 3',
+        dayTitle: 'Khunjerab Pass High-Altitude Border Excursion',
+        route: 'Passu → Sost → Khunjerab Pass (4,693 m) → Karimabad',
+        description:
+          'Early departure through Sost dry port into Khunjerab National Park. Ascend to the Pakistan-China border crest at 4,693 meters before returning to Central Hunza.',
+        placesVisited: 'Khunjerab Pass, Khunjerab National Park, Sost',
+      },
+    ],
+    inclusions: [
+      'Private vehicle along the paved Karakoram Highway with fuel and driver',
+      'Hotel stays in Upper Hunza (Attabad Lake / Gulmit / Passu) with daily breakfast',
+      'Experienced local Wakhi driver and tour coordinator',
+      'Sightseeing excursions to Attabad Lake, Passu Cones, Hussaini Bridge, and Khunjerab Pass',
+    ],
+    exclusions: [
+      'Optional boat and water sport fees at Attabad Lake',
+      'Lunches, dinners, and personal beverages',
+      'Driver tips and personal expenses',
+    ],
+    transportation: 'Private car, Prado, or HiAce van along paved KKH.',
+    accommodation: 'Lakeside resorts at Attabad Lake or charming boutique lodges in Passu / Gulmit.',
+    faqs: [
+      {
+        question: 'Is Upper Hunza accessible throughout the year?',
+        answer:
+          'Yes. The Karakoram Highway is paved and maintained year-round through Attabad Lake and Passu, though Khunjerab Pass at 4,693 m closes during deep winter snow months (typically December to March).',
+      },
+    ],
+    relatedGuideSlugs: ['how-to-plan-a-hunza-trip', 'best-time-to-visit-hunza'],
+    seoTitle: 'Passu Cones & Attabad Lake Upper Hunza Tour | Baig Treks and Tours',
+    seoDescription:
+      'Experience Upper Hunza, Passu Cones, Attabad Lake, and Khunjerab Pass with customizable tour packages by Baig Treks and Tours.',
   },
 ];
 

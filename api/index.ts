@@ -1184,19 +1184,35 @@ function registerRoutes(app: express.Express) {
         const existingInqMap = new Map(
           (current.inquiries || []).map((i) => [String(i.id), i])
         );
-        merged.inquiries = incoming.inquiries.map((inq: Record<string, unknown>) => {
-          const prev = existingInqMap.get(String(inq.id));
-          if (prev) return prev; // Customers cannot overwrite existing inquiries or internalNotes
-          return {
-            ...inq,
-            status: 'NEW',
-            internalNotes: '',
-          };
-        });
+        const existingTokens = new Set(
+          (current.inquiries || []).map((i) => String(i.idempotencyToken || '')).filter(Boolean)
+        );
+
+        const sanitizedInquiries = [];
+        for (const inq of incoming.inquiries as Record<string, unknown>[]) {
+          const inqId = String(inq.id || '');
+          const inqToken = String(inq.idempotencyToken || '');
+          const prev = existingInqMap.get(inqId);
+          if (prev) {
+            sanitizedInquiries.push(prev); // Keep existing
+          } else {
+            // Deduplicate if already present by idempotencyToken
+            if (inqToken && existingTokens.has(inqToken)) {
+              continue;
+            }
+            if (inqToken) existingTokens.add(inqToken);
+            sanitizedInquiries.push({
+              ...inq,
+              status: inq.status || 'New',
+              internalNotes: '',
+            });
+          }
+        }
+        merged.inquiries = sanitizedInquiries;
       }
     }
 
-    // Bookings: customers can only create bookings with PENDING / PAYMENT PENDING; only Admin can mark CONFIRMED / PAID
+    // Bookings: customers can only create bookings with Pending status; only Admin can mark Confirmed / Cancelled
     if (Array.isArray(incoming.bookings)) {
       if (verifiedAdmin) {
         merged.bookings = incoming.bookings;
@@ -1204,15 +1220,39 @@ function registerRoutes(app: express.Express) {
         const existingBkMap = new Map(
           (current.bookings || []).map((b) => [String(b.id), b])
         );
-        merged.bookings = incoming.bookings.map((bk: Record<string, unknown>) => {
-          const prev = existingBkMap.get(String(bk.id));
-          if (prev) return prev;
-          return {
-            ...bk,
-            bookingStatus: 'PENDING',
-            paymentStatus: 'PAYMENT PENDING',
-          };
-        });
+        const existingBkRefs = new Set(
+          (current.bookings || []).map((b) => String(b.bookingReference || b.id || '').toUpperCase())
+        );
+        const existingTokens = new Set(
+          (current.bookings || []).map((b) => String(b.idempotencyToken || '')).filter(Boolean)
+        );
+
+        const sanitizedBookings = [];
+        for (const bk of incoming.bookings as Record<string, unknown>[]) {
+          const bkId = String(bk.id || '');
+          const bkRef = String(bk.bookingReference || bkId).toUpperCase();
+          const bkToken = String(bk.idempotencyToken || '');
+          const prev = existingBkMap.get(bkId);
+          if (prev) {
+            sanitizedBookings.push(prev); // Prevent customer from modifying existing booking statuses
+          } else {
+            // Check idempotency token or identical reference to prevent duplicate submissions
+            if (bkToken && existingTokens.has(bkToken)) {
+              continue;
+            }
+            if (existingBkRefs.has(bkRef)) {
+              continue;
+            }
+            if (bkToken) existingTokens.add(bkToken);
+            existingBkRefs.add(bkRef);
+            sanitizedBookings.push({
+              ...bk,
+              bookingStatus: 'Pending',
+              paymentStatus: 'Payment Pending',
+            });
+          }
+        }
+        merged.bookings = sanitizedBookings;
       }
     }
 
@@ -1308,6 +1348,236 @@ function registerRoutes(app: express.Express) {
       note: result.sent
         ? 'Notification email dispatched to administration.'
         : 'Account registered.',
+    });
+  });
+
+  // 4. Server-side Tour Booking Notification
+  app.post('/api/notify-booking', async (req, res) => {
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    if (!checkRateLimit(`notify_bk_${ip}`, 12, 60_000)) {
+      res.status(429).json({ error: 'Too many requests. Please try again shortly.' });
+      return;
+    }
+
+    const {
+      bookingReference,
+      customerName,
+      email,
+      whatsapp,
+      tourTitle,
+      departureDate,
+      returnDate,
+      adults,
+      children,
+      travelers,
+      notes,
+    } = req.body || {};
+
+    const cleanRef = String(bookingReference || 'BTT-PENDING').slice(0, 50);
+    const cleanCustomer = String(customerName || 'Traveler').slice(0, 100);
+    const cleanEmail = String(email || 'Not provided').slice(0, 160);
+    const cleanWhatsapp = String(whatsapp || '').slice(0, 40);
+    const cleanTour = String(tourTitle || 'Gilgit-Baltistan Tour').slice(0, 160);
+    const cleanDates = `${departureDate || ''} ${returnDate ? `to ${returnDate}` : ''}`.trim() || 'Flexible';
+    const totalCount = Number(travelers) || (Number(adults || 1) + Number(children || 0));
+
+    const targetEmail = process.env.BOOKING_NOTIFICATION_EMAIL || 'baigbaltee37@gmail.com';
+    const subject = `[New Tour Booking Request ${cleanRef}] ${cleanCustomer} — ${cleanTour}`;
+
+    const text = [
+      `New Tour Booking Request: ${cleanRef}`,
+      '------------------------------------------------',
+      `Customer Name: ${cleanCustomer}`,
+      `WhatsApp / Phone: ${cleanWhatsapp}`,
+      `Email: ${cleanEmail}`,
+      `Tour Package: ${cleanTour}`,
+      `Dates: ${cleanDates}`,
+      `Adults: ${adults || 1}, Children: ${children || 0} (Total Travelers: ${totalCount})`,
+      `Special Requests: ${notes || 'None'}`,
+      `Status: Pending Admin Confirmation`,
+      `Submitted: ${new Date().toISOString()}`,
+    ].join('\n');
+
+    const html = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0F172A; max-width: 620px; padding: 24px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF;">
+        <div style="background: #064E3B; padding: 16px 20px; border-radius: 8px; color: #FFFFFF; margin-bottom: 20px;">
+          <h2 style="margin: 0; font-size: 20px;">New Booking Request — Baig Treks &amp; Tours</h2>
+          <div style="font-size: 13px; opacity: 0.9; margin-top: 4px;">Reference: <strong>${cleanRef}</strong></div>
+        </div>
+        <p style="font-size: 14px; line-height: 1.5; color: #334155;">
+          A new booking request has been submitted on the website. This booking is currently <strong>Pending Admin Confirmation</strong>.
+        </p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px;">
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; width: 150px; color: #64748B;">Tour:</td><td style="color: #0F172A; font-weight: bold;">${cleanTour}</td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Customer:</td><td style="color: #0F172A;">${cleanCustomer}</td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">WhatsApp / Phone:</td><td style="color: #059669; font-weight: bold;"><a href="https://wa.me/${cleanWhatsapp.replace(/[^0-9]/g, '')}">${cleanWhatsapp}</a></td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Email:</td><td style="color: #0F172A;">${cleanEmail}</td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Travel Dates:</td><td style="color: #0F172A;">${cleanDates}</td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Travelers:</td><td style="color: #0F172A;">${adults || 1} Adult(s), ${children || 0} Child(ren) (${totalCount} Total)</td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Special Requests:</td><td style="color: #0F172A;">${notes || 'None specified'}</td></tr>
+        </table>
+        <div style="margin-top: 24px; padding: 12px; background: #F8FAFC; border-radius: 8px; font-size: 12px; color: #64748B;">
+          Open the <a href="https://baig-treks-and-tours.vercel.app/admin/bookings" style="color: #059669; font-weight: bold;">Admin Portal</a> to review availability, contact the traveler on WhatsApp, and confirm the reservation.
+        </div>
+      </div>
+    `;
+
+    const result = await sendNotificationEmail({
+      to: targetEmail,
+      subject,
+      text,
+      html,
+    });
+
+    res.json({
+      recorded: true,
+      emailNotificationSent: result.sent,
+      reason: result.reason || undefined,
+      recipient: targetEmail,
+      instructions: result.sent
+        ? undefined
+        : 'Automated email alerts require SMTP_HOST, SMTP_USER, and SMTP_PASS in hosting environment variables.',
+    });
+  });
+
+  // 5. Server-side Customer Inquiry Notification
+  app.post('/api/notify-inquiry', async (req, res) => {
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    if (!checkRateLimit(`notify_inq_${ip}`, 15, 60_000)) {
+      res.status(429).json({ error: 'Too many requests. Please try again shortly.' });
+      return;
+    }
+
+    const {
+      inquiryReference,
+      customerName,
+      email,
+      whatsapp,
+      destination,
+      tourType,
+      travelers,
+      preferredDates,
+      message,
+    } = req.body || {};
+
+    const cleanRef = String(inquiryReference || 'INQ-PENDING').slice(0, 50);
+    const cleanCustomer = String(customerName || 'Traveler').slice(0, 100);
+    const cleanEmail = String(email || 'Not provided').slice(0, 160);
+    const cleanWhatsapp = String(whatsapp || '').slice(0, 40);
+    const cleanDestination = String(destination || 'Gilgit-Baltistan').slice(0, 120);
+
+    const targetEmail = process.env.INQUIRY_NOTIFICATION_EMAIL || 'baigbaltee37@gmail.com';
+    const subject = `[New Inquiry ${cleanRef}] ${cleanCustomer} — ${cleanDestination}`;
+
+    const text = [
+      `New Customer Inquiry: ${cleanRef}`,
+      '------------------------------------------------',
+      `Customer Name: ${cleanCustomer}`,
+      `WhatsApp / Phone: ${cleanWhatsapp}`,
+      `Email: ${cleanEmail}`,
+      `Destination: ${cleanDestination}`,
+      `Tour Type: ${tourType || 'Custom Tour'}`,
+      `Travelers: ${travelers || 1}`,
+      `Preferred Dates: ${preferredDates || 'Flexible'}`,
+      `Message: ${message || 'No additional note'}`,
+      `Submitted: ${new Date().toISOString()}`,
+    ].join('\n');
+
+    const html = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0F172A; max-width: 620px; padding: 24px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF;">
+        <div style="background: #064E3B; padding: 16px 20px; border-radius: 8px; color: #FFFFFF; margin-bottom: 20px;">
+          <h2 style="margin: 0; font-size: 20px;">New Customer Inquiry — Baig Treks &amp; Tours</h2>
+          <div style="font-size: 13px; opacity: 0.9; margin-top: 4px;">Reference: <strong>${cleanRef}</strong></div>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px;">
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; width: 140px; color: #64748B;">Customer:</td><td style="color: #0F172A; font-weight: bold;">${cleanCustomer}</td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">WhatsApp / Phone:</td><td style="color: #059669; font-weight: bold;"><a href="https://wa.me/${cleanWhatsapp.replace(/[^0-9]/g, '')}">${cleanWhatsapp}</a></td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Email:</td><td style="color: #0F172A;">${cleanEmail}</td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Destination:</td><td style="color: #0F172A;">${cleanDestination}</td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Tour Type:</td><td style="color: #0F172A;">${tourType || 'Custom Tour'}</td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Travelers:</td><td style="color: #0F172A;">${travelers || 1}</td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Dates:</td><td style="color: #0F172A;">${preferredDates || 'Flexible'}</td></tr>
+          <tr style="border-bottom: 1px solid #F1F5F9;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Customer Message:</td><td style="color: #0F172A; white-space: pre-wrap;">${message || 'N/A'}</td></tr>
+        </table>
+      </div>
+    `;
+
+    const result = await sendNotificationEmail({
+      to: targetEmail,
+      subject,
+      text,
+      html,
+    });
+
+    res.json({
+      recorded: true,
+      emailNotificationSent: result.sent,
+      reason: result.reason || undefined,
+      recipient: targetEmail,
+      instructions: result.sent
+        ? undefined
+        : 'Automated email alerts require SMTP_HOST, SMTP_USER, and SMTP_PASS in hosting environment variables.',
+    });
+  });
+
+  // 6. Public Booking Reference Status Lookup Endpoint (Zero Authentication Required for Traveler with Valid Reference + Phone/Email)
+  app.post('/api/bookings/lookup', (req, res) => {
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    if (!checkRateLimit(`bk_lookup_${ip}`, 20, 60_000)) {
+      res.status(429).json({ error: 'Too many status check attempts. Please wait a minute.' });
+      return;
+    }
+
+    const { reference, contact } = req.body || {};
+    const cleanRef = String(reference || '').trim().toUpperCase();
+    const cleanContact = String(contact || '').trim().toLowerCase();
+
+    if (!cleanRef || !cleanContact) {
+      res.status(400).json({ error: 'Please enter both your Booking Reference and Phone or Email.' });
+      return;
+    }
+
+    const state = readSharedStateFromDisk();
+    const bookings = Array.isArray(state.bookings) ? state.bookings : [];
+
+    const matched = bookings.find((b) => {
+      const bRef = String(b?.bookingReference || b?.id || '').trim().toUpperCase();
+      const bEmail = String(b?.email || b?.userEmail || '').trim().toLowerCase();
+      const bPhone = String(b?.whatsapp || '').replace(/[^0-9]/g, '');
+      const inputPhone = cleanContact.replace(/[^0-9]/g, '');
+
+      const refMatches = bRef === cleanRef;
+      const contactMatches =
+        (cleanContact.includes('@') && bEmail === cleanContact) ||
+        (inputPhone.length >= 7 && bPhone.endsWith(inputPhone.slice(-7)));
+
+      return refMatches && contactMatches;
+    });
+
+    if (!matched) {
+      res.status(404).json({
+        error: 'No matching booking found for this reference and contact detail. Please check the reference code on your confirmation.',
+      });
+      return;
+    }
+
+    // Return sanitized status info without exposing administrative private notes
+    res.json({
+      found: true,
+      booking: {
+        bookingReference: matched.bookingReference || matched.id,
+        tourTitle: matched.tourTitle,
+        customerName: matched.customerName,
+        travelDates: matched.travelDates,
+        departureDate: matched.departureDate,
+        returnDate: matched.returnDate,
+        adults: matched.adults,
+        children: matched.children,
+        travelers: matched.travelers,
+        bookingStatus: matched.bookingStatus || 'Pending',
+        paymentStatus: matched.paymentStatus || 'Payment Pending',
+        createdAt: matched.createdAt,
+      },
     });
   });
 

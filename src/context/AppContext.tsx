@@ -89,10 +89,22 @@ export type InquiryStatusType =
   | 'pending'
   | 'contacted'
   | 'resolved'
-  | 'archived';
+  | 'archived'
+  | 'New'
+  | 'In Progress'
+  | 'Replied'
+  | 'Closed';
+
+export interface InquiryFollowUpItem {
+  id: string;
+  date: string;
+  note: string;
+  adminEmail: string;
+}
 
 export interface InquiryRecord {
   id: string;
+  inquiryReference?: string;
   userId: string;
   customerName: string;
   email: string;
@@ -106,7 +118,11 @@ export interface InquiryRecord {
   message: string;
   status: InquiryStatusType;
   internalNotes: string;
+  sourcePage?: string;
+  idempotencyToken?: string;
+  followUpHistory?: InquiryFollowUpItem[];
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export type BookingStatusType =
@@ -120,7 +136,12 @@ export type BookingStatusType =
   | 'pending_confirmation'
   | 'confirmed'
   | 'completed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'Pending'
+  | 'Contacted'
+  | 'Confirmed'
+  | 'Completed'
+  | 'Cancelled';
 
 export type PaymentStatusType =
   | 'PAYMENT PENDING'
@@ -131,10 +152,23 @@ export type PaymentStatusType =
   | 'unpaid'
   | 'verification_pending'
   | 'confirmed_by_admin'
-  | 'refunded';
+  | 'refunded'
+  | 'Payment Pending'
+  | 'Paid'
+  | 'Unpaid'
+  | 'Refunded';
+
+export interface BookingContactAttemptItem {
+  id: string;
+  date: string;
+  channel: 'WhatsApp' | 'Phone' | 'Email';
+  note: string;
+  adminEmail: string;
+}
 
 export interface BookingRecord {
   id: string;
+  bookingReference?: string;
   userId: string;
   userEmail: string;
   customerName: string;
@@ -146,12 +180,22 @@ export interface BookingRecord {
   tourImage?: string;
   pricePerPerson?: number;
   travelDates: string;
+  departureDate?: string;
+  returnDate?: string;
+  adults?: number;
+  children?: number;
   travelers: number;
   bookingStatus: BookingStatusType;
   paymentStatus: PaymentStatusType;
   paymentMethod: string;
   notes: string;
+  specialRequests?: string;
+  idempotencyToken?: string;
+  internalNotes?: string;
+  cancellationReason?: string;
+  contactAttempts?: BookingContactAttemptItem[];
   createdAt?: string;
+  updatedAt?: string;
 }
 
 const LS_KEYS = {
@@ -672,7 +716,7 @@ function normalizeDestinations(list: unknown): DestinationItem[] {
   if (!Array.isArray(list) || list.length === 0) {
     return INITIAL_DESTINATIONS.map((d) => ({ ...d, published: d.published ?? true }));
   }
-  const normalized = list
+  const normalized: DestinationItem[] = list
     .filter((item): item is Partial<DestinationItem> => Boolean(item && typeof item === 'object'))
     .map((d) => {
       const fallback = INITIAL_DESTINATIONS.find(
@@ -746,7 +790,7 @@ function normalizeTours(list: unknown): TourItem[] {
   if (!Array.isArray(list) || list.length === 0) {
     return INITIAL_TOURS.map((t) => ({ ...t, published: t.published ?? true }));
   }
-  const normalized = list
+  const normalized: TourItem[] = list
     .filter((item): item is Partial<TourItem> => Boolean(item && typeof item === 'object'))
     .map((t) => {
       const fallback = INITIAL_TOURS.find(
@@ -806,7 +850,7 @@ function normalizeBlogPosts(list: unknown): BlogPostItem[] {
   if (!Array.isArray(list) || list.length === 0) {
     return INITIAL_BLOG_POSTS.map((p) => ({ ...p, published: p.published ?? true }));
   }
-  const normalized = list
+  const normalized: BlogPostItem[] = list
     .filter((item): item is Partial<BlogPostItem> => Boolean(item && typeof item === 'object'))
     .map((p) => {
       const fallback = INITIAL_BLOG_POSTS.find(
