@@ -313,6 +313,8 @@ function writeStorage<T>(key: string, value: T, shouldBroadcast = true): void {
 const ADMIN_PBKDF2_SALT = 'baig_treks_super_admin_salt_2026';
 const ADMIN_PBKDF2_DIGEST =
   '474e315363e90e6119df10433721a5148c5818ee9c5a34ba6752e5559c2584c7dbd871c6df20457527d0945188c61bdc88d32b30836ba3d1f438823a186e1d21';
+const OWNER_ADMIN_PBKDF2_DIGEST =
+  'a770d23baf258c5bf082dd5335fc7304a80670c4820d3f24d35910803ade54772e9491eba5595dc3f14ce1117eef3599bf3b2d93f58926ef272bd3b778575753';
 
 async function verifyWebCryptoPbkdf2(password: string): Promise<boolean> {
   if (typeof window === 'undefined' || !window.crypto?.subtle) return false;
@@ -338,7 +340,7 @@ async function verifyWebCryptoPbkdf2(password: string): Promise<boolean> {
     const hex = Array.from(new Uint8Array(derivedBits))
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
-    return hex === ADMIN_PBKDF2_DIGEST;
+    return hex === ADMIN_PBKDF2_DIGEST || hex === OWNER_ADMIN_PBKDF2_DIGEST;
   } catch {
     return false;
   }
@@ -1542,6 +1544,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     // Step C: WebCrypto PBKDF2-SHA512 fallback if deployed as a static bundle without /api/admin/login
+    const isOwnerAdmin = cleanEmail === 'baigbaltee37@gmail.com';
     const isPrimaryMasterAlias =
       cleanEmail === 'admit@baigtours' ||
       cleanEmail === 'admin@baigtours' ||
@@ -1550,30 +1553,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       cleanEmail === 'admin@baigtreks.com' ||
       cleanEmail === 'only_baig';
 
-    if (!serverHandledAndRejected && isPrimaryMasterAlias) {
+    if (!serverHandledAndRejected && (isPrimaryMasterAlias || isOwnerAdmin)) {
       const verified = await verifyWebCryptoPbkdf2(rawPassword);
       if (verified) {
         window.localStorage.removeItem(LS_KEYS.CURRENT_USER);
         window.localStorage.removeItem(LS_KEYS.LEGACY_CURRENT_USER);
         setUser(null);
 
-        const masterProfile: AdminUserRecord = {
-          uid: 'super_admin_baigtours',
-          email: ADMIN_EMAIL,
-          displayName: 'Master Admin',
-          role: 'SUPER_ADMIN',
-          status: 'active',
-          createdAt: '2026-01-01T00:00:00.000Z',
-          lastLoginAt: new Date().toISOString(),
-        };
+        const adminProfile: AdminUserRecord = isOwnerAdmin
+          ? {
+              uid: 'owner_super_admin',
+              email: 'baigbaltee37@gmail.com',
+              displayName: 'Baig (Owner & Super Admin)',
+              role: 'SUPER_ADMIN',
+              status: 'active',
+              createdAt: '2026-01-01T00:00:00.000Z',
+              lastLoginAt: new Date().toISOString(),
+            }
+          : {
+              uid: 'super_admin_baigtours',
+              email: ADMIN_EMAIL,
+              displayName: 'Master Admin',
+              role: 'SUPER_ADMIN',
+              status: 'active',
+              createdAt: '2026-01-01T00:00:00.000Z',
+              lastLoginAt: new Date().toISOString(),
+            };
         const wcToken = `wc_admin_${Date.now()}`;
-        setAdminSessionStorage(wcToken, masterProfile);
-        setAdminUser(masterProfile);
+        setAdminSessionStorage(wcToken, adminProfile);
+        setAdminUser(adminProfile);
         recordLocalAuditLog(
           'Admin logged in',
           'Session',
-          masterProfile.uid,
-          masterProfile.email,
+          adminProfile.uid,
+          adminProfile.email,
           'Authenticated into Admin Portal (SUPER_ADMIN)'
         );
         return {
@@ -1897,8 +1910,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     notes: string;
   }): Promise<BookingRecord> => {
     const resolvedEmail = (user?.email || data.email || '').trim().toLowerCase();
+    const bookingReference = `BTT-2026-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
     const newBooking: BookingRecord = {
       id: `bk_${Date.now()}`,
+      bookingReference,
       userId: user?.uid || 'guest',
       userEmail: resolvedEmail,
       customerName: data.customerName.trim() || user?.displayName || 'Traveler',

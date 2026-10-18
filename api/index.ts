@@ -14,11 +14,15 @@ const SERVER_TOKEN_SECRET =
   process.env.ADMIN_SESSION_SECRET ||
   crypto.createHash('sha256').update('baig-treks-super-admin-hmac-secret-2026').digest('hex');
 
-// Deterministic PBKDF2-SHA512 seed for initial Super Admin (admin@baigtours)
-// Plaintext password is never stored in source code or sent to client.
+// Deterministic PBKDF2-SHA512 seed for initial Super Admin accounts
+// Plaintext passwords are never stored in source code or sent to client.
 const INITIAL_SUPER_ADMIN_SALT = 'baig_treks_super_admin_salt_2026';
 const INITIAL_SUPER_ADMIN_HASH =
   '474e315363e90e6119df10433721a5148c5818ee9c5a34ba6752e5559c2584c7dbd871c6df20457527d0945188c61bdc88d32b30836ba3d1f438823a186e1d21';
+
+const OWNER_SUPER_ADMIN_EMAIL = 'baigbaltee37@gmail.com';
+const OWNER_SUPER_ADMIN_HASH =
+  'a770d23baf258c5bf082dd5335fc7304a80670c4820d3f24d35910803ade54772e9491eba5595dc3f14ce1117eef3599bf3b2d93f58926ef272bd3b778575753';
 
 export interface ServerAdminAccount {
   uid: string;
@@ -79,40 +83,66 @@ function verifyPasswordTimingSafe(password: string, salt: string, expectedHashHe
 
 function ensureInitialSuperAdmin(adminUsers?: ServerAdminAccount[]): ServerAdminAccount[] {
   const list = Array.isArray(adminUsers) ? [...adminUsers] : [];
-  const existingIdx = list.findIndex(
+  
+  // Ensure Owner Super Admin (baigbaltee37@gmail.com)
+  const ownerIdx = list.findIndex(
+    (a) => a.email.toLowerCase() === OWNER_SUPER_ADMIN_EMAIL.toLowerCase() || a.uid === 'owner_super_admin'
+  );
+  if (ownerIdx >= 0) {
+    list[ownerIdx] = {
+      ...list[ownerIdx],
+      uid: 'owner_super_admin',
+      email: OWNER_SUPER_ADMIN_EMAIL,
+      displayName: list[ownerIdx].displayName || 'Baig (Owner & Super Admin)',
+      role: 'SUPER_ADMIN',
+      salt: INITIAL_SUPER_ADMIN_SALT,
+      passwordHash: OWNER_SUPER_ADMIN_HASH,
+      status: 'active',
+    };
+  } else {
+    list.unshift({
+      uid: 'owner_super_admin',
+      email: OWNER_SUPER_ADMIN_EMAIL,
+      displayName: 'Baig (Owner & Super Admin)',
+      role: 'SUPER_ADMIN',
+      salt: INITIAL_SUPER_ADMIN_SALT,
+      passwordHash: OWNER_SUPER_ADMIN_HASH,
+      status: 'active',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+  }
+
+  // Ensure Legacy / System Super Admin (admit@baigtours)
+  const masterIdx = list.findIndex(
     (a) =>
       a.uid === 'super_admin_baigtours' ||
       a.email.toLowerCase() === 'admit@baigtours' ||
       a.email.toLowerCase() === 'admin@baigtours'
   );
-  if (existingIdx >= 0) {
-    list[existingIdx] = {
-      ...list[existingIdx],
+  if (masterIdx >= 0) {
+    list[masterIdx] = {
+      ...list[masterIdx],
       uid: 'super_admin_baigtours',
       email: 'admit@baigtours',
-      displayName: list[existingIdx].displayName || 'Master Admin',
+      displayName: list[masterIdx].displayName || 'Master Admin',
       role: 'SUPER_ADMIN',
+      salt: INITIAL_SUPER_ADMIN_SALT,
+      passwordHash: INITIAL_SUPER_ADMIN_HASH,
       status: 'active',
     };
-    // Deduplicate if both admit@baigtours and admin@baigtours existed
-    return list.filter(
-      (a, idx) =>
-        idx === existingIdx ||
-        (a.email.toLowerCase() !== 'admit@baigtours' &&
-          a.email.toLowerCase() !== 'admin@baigtours' &&
-          a.uid !== 'super_admin_baigtours')
-    );
+  } else {
+    list.push({
+      uid: 'super_admin_baigtours',
+      email: 'admit@baigtours',
+      displayName: 'Master Admin',
+      role: 'SUPER_ADMIN',
+      salt: INITIAL_SUPER_ADMIN_SALT,
+      passwordHash: INITIAL_SUPER_ADMIN_HASH,
+      status: 'active',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
   }
-  list.unshift({
-    uid: 'super_admin_baigtours',
-    email: 'admit@baigtours',
-    displayName: 'Master Admin',
-    role: 'SUPER_ADMIN',
-    salt: INITIAL_SUPER_ADMIN_SALT,
-    passwordHash: INITIAL_SUPER_ADMIN_HASH,
-    status: 'active',
-    createdAt: '2026-01-01T00:00:00.000Z',
-  });
+
   return list;
 }
 

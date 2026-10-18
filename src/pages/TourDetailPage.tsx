@@ -51,6 +51,7 @@ export const TourDetailPage: React.FC = () => {
   const [bookingTravelers, setBookingTravelers] = useState(2);
   const [bookingNotes, setBookingNotes] = useState('');
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
+  const [confirmedReference, setConfirmedReference] = useState<string | null>(null);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [highlightBookingBox, setHighlightBookingBox] = useState(false);
 
@@ -129,7 +130,7 @@ export const TourDetailPage: React.FC = () => {
     if (!bookingName.trim() || !bookingWhatsapp.trim()) return;
     setBookingLoading(true);
     try {
-      await submitBookingRequest({
+      const res = await submitBookingRequest({
         customerName: bookingName,
         email: user?.email || bookingEmail || 'admin@baigtreks.com',
         whatsapp: bookingWhatsapp,
@@ -142,6 +143,9 @@ export const TourDetailPage: React.FC = () => {
         travelers: Number(bookingTravelers) || 1,
         notes: bookingNotes,
       });
+      if (res?.bookingReference) {
+        setConfirmedReference(res.bookingReference);
+      }
       setBookingSubmitted(true);
     } finally {
       setBookingLoading(false);
@@ -544,20 +548,48 @@ export const TourDetailPage: React.FC = () => {
                 </motion.button>
               </div>
             ) : bookingSubmitted ? (
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-slate-900 space-y-3">
-                <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Booking Saved to Your Account!</span>
+              <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#B99A58]/35 text-xs text-[#242824] space-y-3 shadow-md">
+                <div className="flex items-center gap-2 font-bold text-sm text-[#183C30]">
+                  <CheckCircle2 className="w-5 h-5 text-[#B99A58]" />
+                  <span className="font-serif">Booking Request Submitted!</span>
                 </div>
-                <p className="leading-relaxed text-slate-700 font-medium">
-                  Your reservation for <strong>{tour.title}</strong> has been saved. You can view it anytime in <strong>My Bookings</strong>.
+
+                {confirmedReference && (
+                  <div className="p-3 rounded-xl bg-white border border-[#B99A58]/25 text-center space-y-1">
+                    <div className="text-[10px] uppercase font-bold tracking-wider text-[#B99A58]">
+                      Your Unique Booking Reference
+                    </div>
+                    <div className="font-mono-num text-base font-bold text-[#183C30] tracking-wider select-all">
+                      {confirmedReference}
+                    </div>
+                  </div>
+                )}
+
+                <p className="leading-relaxed text-[#242824]/85 font-medium">
+                  Your reservation request for <strong>{tour.title}</strong> has been saved. Please share your booking reference with us on WhatsApp to verify dates and confirm your advance.
                 </p>
-                <Link
-                  to="/my-bookings"
-                  className="w-full py-2.5 px-4 text-xs font-bold bg-emerald-700 text-white rounded-xl block text-center"
-                >
-                  Go to My Bookings
-                </Link>
+
+                <div className="space-y-2 pt-1">
+                  <a
+                    href={buildWhatsAppLink(
+                      `Hello Baig Treks & Tours, I have submitted booking reference ${confirmedReference || 'for tour'} for "${tour.title}". Please verify availability and payment details.`,
+                      business.whatsapp
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-4 text-xs font-bold bg-[#183C30] hover:bg-[#0F261F] text-[#F4EFDF] border border-[#B99A58]/40 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4 text-[#B99A58]" />
+                    <span>Confirm on WhatsApp ({business.phone})</span>
+                  </a>
+
+                  <Link
+                    to="/my-bookings"
+                    className="w-full py-2.5 px-4 text-xs font-bold bg-[#FAF9F6] hover:bg-slate-100 text-[#183C30] border border-slate-300 rounded-xl block text-center transition-colors"
+                  >
+                    View in My Bookings
+                  </Link>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleBookingSubmit} className="space-y-3">

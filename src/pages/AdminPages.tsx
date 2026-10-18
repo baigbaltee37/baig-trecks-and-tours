@@ -92,18 +92,18 @@ export const AdminLoginPage: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto px-4 py-12 md:py-16">
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+      <div className="bg-white border border-[#B99A58]/30 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
         <div className="space-y-1.5 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto mb-2">
-            <Shield className="w-6 h-6 text-emerald-700" />
+          <div className="w-12 h-12 rounded-2xl bg-[#183C30] text-[#B99A58] flex items-center justify-center mx-auto mb-2 border border-[#B99A58]/40 shadow-sm">
+            <Shield className="w-6 h-6 text-[#B99A58]" />
           </div>
-          <div className="text-xs font-bold tracking-wider text-emerald-800">
-            BAIG TRECKS &amp; TOURS
+          <div className="text-xs font-bold tracking-widest text-[#B99A58] uppercase">
+            BAIG TREKS &amp; TOURS
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-            ADMIN PORTAL
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#183C30]">
+            Admin Portal
           </h1>
-          <p className="text-xs text-slate-600 font-medium">
+          <p className="text-xs text-[#242824]/75 font-medium">
             Authorized Super Admin &amp; Administrator Sign In
           </p>
         </div>
@@ -159,7 +159,7 @@ export const AdminLoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-60"
+            className="w-full py-3 px-4 text-sm font-bold bg-[#183C30] hover:bg-[#0F261F] text-[#F4EFDF] border border-[#B99A58]/40 rounded-2xl shadow-md transition-all cursor-pointer disabled:opacity-60 uppercase tracking-wider"
           >
             {loading ? 'VERIFYING...' : 'SIGN IN'}
           </button>
@@ -599,15 +599,15 @@ export const AdminDashboardPage: React.FC = () => {
       />
 
       {/* Mobile Top Bar */}
-      <div className="lg:hidden bg-slate-900 text-white px-4 py-3 flex items-center justify-between">
+      <div className="lg:hidden bg-[#183C30] text-[#F4EFDF] border-b border-[#B99A58]/30 px-4 py-3 flex items-center justify-between">
         <div>
-          <div className="text-[10px] font-bold text-emerald-400">BAIG TRECKS &amp; TOURS</div>
-          <div className="text-sm font-bold">ADMIN DASHBOARD</div>
+          <div className="text-[10px] font-bold text-[#B99A58] uppercase tracking-wider">BAIG TREKS &amp; TOURS</div>
+          <div className="text-sm font-serif font-bold text-white">ADMIN DASHBOARD</div>
         </div>
         <button
           type="button"
           onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
-          className="p-2 rounded-xl bg-slate-800 text-white"
+          className="p-2 rounded-xl bg-[#24342D] text-[#F4EFDF] border border-[#B99A58]/30"
           aria-label="Toggle Admin Sidebar"
         >
           {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -618,16 +618,16 @@ export const AdminDashboardPage: React.FC = () => {
       <aside
         className={`${
           mobileDrawerOpen ? 'block' : 'hidden'
-        } lg:block w-full lg:w-64 bg-slate-900 text-slate-100 shrink-0 lg:min-h-screen p-4 space-y-6`}
+        } lg:block w-full lg:w-64 bg-[#183C30] text-[#F4EFDF] border-r border-[#B99A58]/25 shrink-0 lg:min-h-screen p-4 space-y-6`}
       >
-        <div className="border-b border-slate-800 pb-4">
-          <div className="text-[11px] font-bold tracking-wider text-emerald-400">
-            BAIG TRECKS &amp; TOURS
+        <div className="border-b border-[#24342D] pb-4">
+          <div className="text-[10px] font-bold tracking-widest text-[#B99A58] uppercase">
+            BAIG TREKS &amp; TOURS
           </div>
-          <div className="font-display text-lg font-bold text-white mt-0.5">
-            ADMIN DASHBOARD
+          <div className="font-serif text-lg font-bold text-white mt-0.5">
+            Admin Portal
           </div>
-          <div className="text-[11px] text-slate-400 font-mono-num mt-1 truncate">
+          <div className="text-[11px] text-[#F4EFDF]/75 font-mono-num mt-1 truncate">
             {adminUser?.email || ADMIN_EMAIL} ({adminUser?.role || 'SUPER_ADMIN'})
           </div>
         </div>
@@ -642,8 +642,8 @@ export const AdminDashboardPage: React.FC = () => {
                 onClick={() => setMobileDrawerOpen(false)}
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                   isActive
-                    ? 'bg-emerald-600 text-white'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-[#B99A58] text-[#183C30] font-bold shadow-sm'
+                    : 'text-[#F4EFDF]/85 hover:bg-[#24342D] hover:text-white'
                 }`}
               >
                 {item.icon}
@@ -658,7 +658,7 @@ export const AdminDashboardPage: React.FC = () => {
               await signOut();
               navigate('/admin/login', { replace: true });
             }}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-red-300 hover:bg-red-950/60 hover:text-red-200 transition-colors mt-4"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 transition-colors mt-4"
           >
             <LogOut className="w-4 h-4" />
             <span>Logout</span>
@@ -667,28 +667,28 @@ export const AdminDashboardPage: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-x-hidden">
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-x-hidden bg-[#FAF9F6]">
+        <div className="bg-white border border-[#B99A58]/25 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
           <div>
-            <div className="text-xs font-bold text-emerald-800">
-              BAIG TRECKS &amp; TOURS
+            <div className="text-xs font-bold text-[#B99A58] uppercase tracking-wider">
+              BAIG TREKS &amp; TOURS
             </div>
-            <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900">
-              ADMIN DASHBOARD
+            <h1 className="font-serif text-xl sm:text-2xl font-bold text-[#183C30]">
+              Admin Dashboard
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={exportToursAsJson}
-              className="px-3.5 py-2 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl flex items-center gap-1.5"
+              className="px-3.5 py-2 text-xs font-bold bg-[#183C30] hover:bg-[#0F261F] text-[#F4EFDF] border border-[#B99A58]/40 rounded-xl flex items-center gap-1.5 shadow-xs"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 text-[#B99A58]" />
               <span>Export JSON</span>
             </button>
             <Link
               to="/"
-              className="px-3.5 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl"
+              className="px-3.5 py-2 text-xs font-bold bg-[#FAF9F6] hover:bg-slate-100 text-[#183C30] border border-slate-300 rounded-xl"
             >
               Public Website
             </Link>

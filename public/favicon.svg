@@ -1,7 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="16" fill="#064E3B"/>
-  <path d="M8 50L24 22L35 39L43 27L56 50H8Z" fill="#10B981" fill-opacity="0.25"/>
-  <path d="M12 50L26 24L38 44L46 31L54 50H12Z" fill="#34D399"/>
-  <path d="M26 24L31 33L26 31L21 33L26 24Z" fill="#ECFDF5"/>
-  <circle cx="48" cy="18" r="4" fill="#FBBF24"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <rect x="2" y="2" width="96" height="96" rx="22" fill="#183C30" stroke="#B99A58" stroke-width="3"/>
+  <!-- Main Peak Left Shadow -->
+  <path d="M50 18L18 72H50V18Z" fill="#0F261F"/>
+  <!-- Main Peak Right Sunlit Facet (Mountain Gold) -->
+  <path d="M50 18L82 72H50V18Z" fill="#B99A58"/>
+  <!-- Ridge Line -->
+  <path d="M50 18V72" stroke="#F4EFDF" stroke-width="2" stroke-linecap="round"/>
+  <!-- Snow Cap Crest -->
+  <path d="M50 18L38 38L44 36L50 42L56 36L62 38L50 18Z" fill="#FFFFFF"/>
+  <!-- Foreground Spur -->
+  <path d="M32 44L14 74H36L32 44Z" fill="#183C30"/>
+  <path d="M32 44L46 74H36L32 44Z" fill="#D4AF37"/>
+  <!-- Eastern Spur -->
+  <path d="M68 44L56 74H74L68 44Z" fill="#24342D"/>
+  <path d="M68 44L84 74H74L68 44Z" fill="#A38443"/>
+  <!-- Base Horizon Line -->
+  <path d="M16 76H84" stroke="#B99A58" stroke-width="3" stroke-linecap="round"/>
 </svg>

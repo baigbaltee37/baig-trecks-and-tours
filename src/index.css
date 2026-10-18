@@ -2,40 +2,52 @@
 
 @layer base {
   :root {
-    --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    /* Brand Design Tokens — Baig Treks & Tours */
+    --color-forest: #183c30;
+    --color-pine: #24342d;
+    --color-ivory: #f4efdf;
+    --color-gold: #b99a58;
+    --color-gold-hover: #a38443;
+    --color-charcoal: #242824;
+    --color-white: #ffffff;
+
+    --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
   }
 
   html {
     scroll-behavior: smooth;
     font-family: var(--font-sans);
-    font-weight: 500;
-    color: #0f172a;
+    color: var(--color-charcoal);
+    background-color: #faf9f6;
   }
 
   body {
     font-family: var(--font-sans);
-    font-weight: 500;
-    background-color: #f9fafb;
-    color: #0f172a;
+    color: var(--color-charcoal);
+    background-color: #faf9f6;
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
-  }
-
-  p {
-    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1,
   h2,
   h3,
+  .font-serif,
+  .editorial-heading {
+    font-family: var(--font-serif);
+    letter-spacing: -0.015em;
+  }
+
   h4,
-  .font-display {
-    font-family: var(--font-display);
-    font-weight: 700;
-    letter-spacing: -0.025em;
+  h5,
+  h6 {
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
   }
 
   .font-mono-num {
@@ -44,25 +56,95 @@
   }
 }
 
-/* Subtle 2026 Modern Grid Background Pattern */
-.bg-grid-pattern {
-  background-image: linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
-  background-size: 32px 32px;
+/* Brand Utility Classes */
+.bg-forest {
+  background-color: #183c30;
+}
+.bg-pine {
+  background-color: #24342d;
+}
+.bg-ivory {
+  background-color: #f4efdf;
+}
+.bg-ivory-light {
+  background-color: #faf7f0;
+}
+.bg-gold {
+  background-color: #b99a58;
+}
+.bg-gold-hover:hover {
+  background-color: #a38443;
+}
+.bg-charcoal {
+  background-color: #242824;
 }
 
-/* Custom subtle scrollbar */
+.text-forest {
+  color: #183c30;
+}
+.text-pine {
+  color: #24342d;
+}
+.text-ivory {
+  color: #f4efdf;
+}
+.text-gold {
+  color: #b99a58;
+}
+.text-gold-dark {
+  color: #927536;
+}
+.text-charcoal {
+  color: #242824;
+}
+
+.border-forest {
+  border-color: #183c30;
+}
+.border-pine {
+  border-color: #24342d;
+}
+.border-ivory {
+  border-color: #f4efdf;
+}
+.border-gold {
+  border-color: #b99a58;
+}
+.border-gold-light {
+  border-color: rgba(185, 154, 88, 0.35);
+}
+
+.font-editorial {
+  font-family: var(--font-serif);
+}
+
+.shadow-gold-subtle {
+  box-shadow: 0 4px 20px -2px rgba(185, 154, 88, 0.2);
+}
+
+.shadow-mountain {
+  box-shadow: 0 10px 30px -5px rgba(24, 60, 48, 0.12), 0 4px 10px -2px rgba(36, 40, 36, 0.06);
+}
+
+/* Subtle Mountain Mist Grid Pattern */
+.bg-grid-pattern {
+  background-image: linear-gradient(to right, rgba(24, 60, 48, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(24, 60, 48, 0.035) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* Custom Mountain Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f4efdf;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #b99a58;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #183c30;
 }

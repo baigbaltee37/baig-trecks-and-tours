@@ -371,52 +371,133 @@ export const TourCard: React.FC<{ tour: TourItem }> = ({ tour }) => {
   );
 };
 
-// Journey through Gilgit-Baltistan
+// 14-Stop Illustrative Journey Through Gilgit-Baltistan
 const SCROLL_JOURNEY_STOPS = [
   {
     step: '01',
-    name: 'Hunza Valley',
-    subtitle: 'Terraced Valleys & Karakoram Giants',
+    name: 'Gilgit',
+    subtitle: 'Gateway City & Ancient Karakoram Silk Route Junction',
     description:
-      'Begin in Karimabad surrounded by Rakaposhi and Ultar Sar, ancient heritage forts, and panoramic viewpoints across the Hunza River.',
+      'The administrative capital and historic meeting point of the Karakoram, Hindu Kush, and Himalaya mountain ranges, connected by the legendary Karakoram Highway.',
+    image: VISUAL_ASSETS.heroKarakoram,
+    slug: 'gilgit',
+  },
+  {
+    step: '02',
+    name: 'Hunza Valley',
+    subtitle: 'Terraced Orchards & Soaring Karakoram Giants',
+    description:
+      'Famed for towering peaks like Rakaposhi and Ultar Sar, historic villages, and the timeless mountain hospitality of the Hunza people.',
     image: VISUAL_ASSETS.heroKarakoram,
     slug: 'hunza',
   },
   {
-    step: '02',
-    name: 'Attabad Lake & Passu Cones',
-    subtitle: 'Turquoise Glacial Waters & Cathedral Peaks',
+    step: '03',
+    name: 'Karimabad',
+    subtitle: 'Royal Forts of Baltit & Altit & Eagle’s Nest',
     description:
-      'Cruise across the vivid turquoise waters of Attabad Lake before following the Karakoram Highway to the dramatic jagged spires of Passu and Hussaini Suspension Bridge.',
+      'The historic seat of the Mirs of Hunza featuring 700-year-old Baltit Fort, cobble-stoned bazaar streets, and panoramic sunset viewpoints over the valley.',
+    image: VISUAL_ASSETS.heroKarakoram,
+    slug: 'karimabad',
+  },
+  {
+    step: '04',
+    name: 'Passu & Passu Cones',
+    subtitle: 'Cathedral Peaks & Hussaini Suspension Bridge',
+    description:
+      'Iconic serrated granite needles rising like cathedral spires above the Batura Glacier and the hanging planks of Hussaini Bridge.',
+    image: VISUAL_ASSETS.attabadPassu,
+    slug: 'passu',
+  },
+  {
+    step: '05',
+    name: 'Attabad Lake',
+    subtitle: 'Vivid Turquoise Waters in a Mountain Canyon',
+    description:
+      'Formed amidst dramatic rock faces, offering scenic boat rides, jet skiing, and breathtaking reflections along the KHH.',
     image: VISUAL_ASSETS.attabadPassu,
     slug: 'attabad-lake',
   },
   {
-    step: '03',
+    step: '06',
     name: 'Khunjerab Pass',
-    subtitle: 'High-Altitude Border Corridor',
+    subtitle: 'Highest Paved Border Crossing in the World (4,693m)',
     description:
-      'Ascend through Khunjerab National Park along paved alpine switchbacks to the snow-rimmed Pakistan-China border plateau.',
+      'A dramatic high-altitude alpine border plateau connecting Pakistan with China through Khunjerab National Park, habitat of snow leopards and Marco Polo sheep.',
     image: VISUAL_ASSETS.attabadPassu,
     slug: 'khunjerab',
   },
   {
-    step: '04',
-    name: 'Skardu & Cold Desert',
-    subtitle: 'Confluence of the Indus & Shigar Rivers',
+    step: '07',
+    name: 'Skardu',
+    subtitle: 'Capital of Baltistan & Historic Gateway to K2',
     description:
-      'Enter Baltistan’s gateway valley where high-altitude cold desert dunes meet tranquil mountain lakes and centuries-old rock forts.',
+      'Where the mighty Indus River broadens into high-altitude sandy deserts, alpine lakes like Shangrila and Upper Kachura, and ancient Kharpocho Fort.',
     image: VISUAL_ASSETS.skarduValley,
     slug: 'skardu',
   },
   {
-    step: '05',
-    name: 'Deosai Plains & Khaplu',
-    subtitle: 'High-Altitude Plateau & Heritage Palaces',
+    step: '08',
+    name: 'Shigar Valley',
+    subtitle: 'Cold Desert Dunes & 400-Year-Old Palace Fort',
     description:
-      'Cross the sweeping alpine meadows and crystal streams of Deosai before exploring the apricot orchards and royal heritage of Khaplu Valley.',
+      'Gentle apricot and walnut orchards bordering the white dunes of Sarfaranga Cold Desert and the restored heritage marvel of Fong-Khar (Shigar Fort).',
+    image: VISUAL_ASSETS.skarduValley,
+    slug: 'shigar',
+  },
+  {
+    step: '09',
+    name: 'Khaplu Valley',
+    subtitle: 'Tibetan-Balti Architecture & The Yabgo Royal Palace',
+    description:
+      'A serene valley along the Shyok River boasting the 1840s royal Khaplu Palace and the timber-carved Chaqchan Mosque, one of the oldest in Baltistan.',
+    image: VISUAL_ASSETS.skarduValley,
+    slug: 'khaplu',
+  },
+  {
+    step: '10',
+    name: 'Deosai Plains',
+    subtitle: '“Land of the Giants” — Second Highest Plateau on Earth',
+    description:
+      'An undulating alpine wilderness spanning 3,000 sq km at 4,114 meters altitude, dotted with wildflowers, Himalayan brown bears, and mirror-still Sheosar Lake.',
     image: VISUAL_ASSETS.deosaiPlains,
     slug: 'deosai',
+  },
+  {
+    step: '11',
+    name: 'Astore Valley',
+    subtitle: 'Pine Forests, Rama Lake & Southern Nanga Parbat Access',
+    description:
+      'A lush valley of cascading glacial streams, cedar forests, Rama Meadows, and historic trading trails leading toward Chilam and Deosai.',
+    image: VISUAL_ASSETS.deosaiPlains,
+    slug: 'astore',
+  },
+  {
+    step: '12',
+    name: 'Naltar Valley',
+    subtitle: 'Emerald Alpine Lakes & Pine-Cloaked Valleys',
+    description:
+      'Famed for its intensely colored Satrangi and Pari lakes, dense pine woodlands, and dramatic 4x4 mountain tracks near Gilgit.',
+    image: VISUAL_ASSETS.fairyMeadows,
+    slug: 'naltar',
+  },
+  {
+    step: '13',
+    name: 'Fairy Meadows',
+    subtitle: 'The Killer Mountain: Nanga Parbat (8,126m) Reflections',
+    description:
+      'One of the world’s most spectacular mountain vistas, reached via a thrilling Jeep ride from Raikhot Bridge and an alpine pine trek to the foot of Raikhot Glacier.',
+    image: VISUAL_ASSETS.fairyMeadows,
+    slug: 'fairy-meadows',
+  },
+  {
+    step: '14',
+    name: 'Ghizer & Phander Valley',
+    subtitle: 'Turquoise River Valleys & Trout Fishing Paradise',
+    description:
+      'A serene western district where crystal-clear waters of the Ghizer River meander through willow groves, leading to the high Shandur Pass.',
+    image: VISUAL_ASSETS.heroKarakoram,
+    slug: 'ghizer',
   },
 ];
 

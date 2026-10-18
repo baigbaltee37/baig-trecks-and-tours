@@ -48,29 +48,29 @@ export const defaultBusinessConfig: BusinessConfig = {
       url: 'https://www.instagram.com/baig_treks_and_tours/',
     },
   ],
-  locationLabel: 'Gilgit-Baltistan & Northern Pakistan',
+  locationLabel: 'Gilgit-Baltistan, Pakistan',
   tagline:
-    'Explore Pakistan with Baig Treks and Tours — Customizable Tour Packages for Hunza, Skardu, Naran Kaghan, Kashmir & Northern Areas',
-  heroHeadline: 'Pakistan Tour Packages & Northern Areas Tours',
+    'Beyond the Mountains. Discover Gilgit-Baltistan — Authentic journeys, extraordinary landscapes, and local expertise.',
+  heroHeadline: 'EXPERIENCE THE MAJESTIC BEAUTY OF GILGIT-BALTISTAN',
   heroDescription:
-    'Explore Hunza Valley, Skardu, Naran Kaghan, Kashmir (Neelum Valley), Fairy Meadows, and Deosai with Baig Treks and Tours. Customized private family holidays, honeymoon trips, and group tours across Northern Pakistan.',
-  address: '',
-  businessHours: '',
+    'Discover breathtaking landscapes, authentic local culture, and unforgettable mountain adventures with Baig Treks & Tours.',
+  address: 'Skardu & Gilgit, Gilgit-Baltistan, Pakistan',
+  businessHours: 'Monday – Sunday: 24/7 Traveler & Expedition Support',
   cancellationPolicy:
-    'Cancellation terms depend on the season, hotel reservation policies, and transport arrangements confirmed for your itinerary. Please contact Baig Treks & Tours directly via WhatsApp or email prior to making changes.',
+    'Cancellation terms depend on the season, hotel reservation policies, and transport arrangements confirmed for your itinerary. Please contact Baig Treks & Tours directly via WhatsApp (03155449778) or email prior to making changes.',
   refundPolicy:
     'Refund eligibility is determined according to the advance commitments made for your specific tour dates and group size. Contact our team directly to review your booking.',
   bookingPolicy:
     'All tour bookings and custom itineraries are confirmed directly with Baig Treks & Tours after verifying travel dates, group size, and seasonal road/weather conditions.',
   paymentInstructions:
     'Confirm your tour dates and availability with Baig Treks & Tours via WhatsApp (03155449778) or email before sending your JazzCash transfer to 03155449778 (Account Name: ESSA ALI). Share your payment confirmation screenshot on WhatsApp for verification.',
-  ctaText: 'Plan Your Custom Gilgit-Baltistan Expedition Today',
+  ctaText: 'Plan Your Custom Gilgit-Baltistan Journey',
   footerInfo:
-    'Authentic local tour operator specializing in Hunza, Skardu, Fairy Meadows, Deosai, and Karakoram expeditions.',
+    'A premium local travel company specializing in authentic journeys through Gilgit-Baltistan, Pakistan. Beyond the Mountains.',
   seoTitle:
-    'Baig Treks and Tours | Pakistan Tour Packages & Northern Areas',
+    'Baig Treks & Tours | Gilgit-Baltistan & Pakistan Tour Packages',
   seoDescription:
-    'Explore Pakistan with Baig Treks and Tours. Discover tour packages for Hunza, Skardu, Naran Kaghan, Kashmir and other northern areas of Pakistan.',
+    'Discover breathtaking landscapes, authentic local culture, and unforgettable mountain adventures across Gilgit-Baltistan with Baig Treks & Tours.',
 };
 
 export function buildWhatsAppLink(message: string, whatsappNumber = defaultBusinessConfig.whatsapp): string {

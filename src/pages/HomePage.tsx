@@ -8,7 +8,6 @@ import {
   ArrowRight,
   Search,
   Compass,
-  ShieldCheck,
   ChevronDown,
   Shield,
   Plus,
@@ -187,67 +186,49 @@ export const HomePage: React.FC = () => {
               transition={{ duration: 0.55, ease: 'easeOut' }}
               className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-xl space-y-5"
             >
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
-                <Mountain className="w-4 h-4 text-emerald-600" />
-                <span>{business.locationLabel} · 2026 Expeditions</span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#183C30]/10 border border-[#B99A58]/35 text-[#183C30] text-xs font-bold uppercase tracking-wider">
+                <Mountain className="w-4 h-4 text-[#B99A58]" />
+                <span>Gilgit-Baltistan Expeditions · Beyond The Mountains</span>
               </div>
 
-              {/* Heading: Max text-2xl on mobile, text-4xl on desktop, font-bold tracking-tight text-slate-900 */}
-              <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 leading-tight">
-                Pakistan Tour Packages &amp; Northern Areas Tours
+              {/* Exact Requested Headline in Editorial Serif Typography */}
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-[2.65rem] font-bold tracking-tight text-[#183C30] leading-[1.18] uppercase">
+                EXPERIENCE THE MAJESTIC BEAUTY OF GILGIT-BALTISTAN
               </h1>
 
-              <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
-                Explore Pakistan with <strong>{business.name}</strong>. Discover customizable private family, honeymoon, and group tour packages for{' '}
-                <Link to="/destinations/hunza" className="text-emerald-800 hover:underline font-semibold">
-                  Hunza Valley
-                </Link>
-                ,{' '}
-                <Link to="/destinations/skardu" className="text-emerald-800 hover:underline font-semibold">
-                  Skardu
-                </Link>
-                ,{' '}
-                <Link to="/destinations/naran-kaghan" className="text-emerald-800 hover:underline font-semibold">
-                  Naran Kaghan
-                </Link>
-                ,{' '}
-                <Link to="/destinations/kashmir" className="text-emerald-800 hover:underline font-semibold">
-                  Kashmir
-                </Link>
-                , and the wider{' '}
-                <Link to="/destinations/northern-areas" className="text-emerald-800 hover:underline font-semibold">
-                  Northern Areas of Pakistan
-                </Link>
-                .
+              {/* Exact Requested Supporting Text */}
+              <p className="text-sm md:text-base text-[#242824]/85 font-medium leading-relaxed">
+                Discover breathtaking landscapes, authentic local culture, and unforgettable mountain adventures with <strong>{business.name}</strong>.
               </p>
 
-              {/* Quick Trust Highlights with Lucide Icons (No fabricated ratings) */}
+              {/* Quick Trust Highlights with Truthful Local Benefits */}
               <div className="grid grid-cols-3 gap-2.5 pt-1">
-                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-                  <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-slate-900">
-                    <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>{destinations.length} Destinations</span>
+                <div className="p-3 rounded-2xl bg-[#FAF9F6] border border-[#B99A58]/20 text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-[#183C30]">
+                    <MapPin className="w-4 h-4 text-[#B99A58] shrink-0" />
+                    <span>{destinations.length} Valleys</span>
                   </div>
-                  <div className="text-xs text-slate-700 font-semibold mt-1">Guided Valleys</div>
+                  <div className="text-[11px] text-[#242824]/80 font-medium mt-1">Hunza · Skardu · Passu</div>
                 </div>
-                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-                  <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-slate-900">
-                    <Compass className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Custom Routes</span>
+                <div className="p-3 rounded-2xl bg-[#FAF9F6] border border-[#B99A58]/20 text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-[#183C30]">
+                    <Compass className="w-4 h-4 text-[#B99A58] shrink-0" />
+                    <span>Tailored Routes</span>
                   </div>
-                  <div className="text-xs text-slate-700 font-semibold mt-1">Seasonal Planning</div>
+                  <div className="text-[11px] text-[#242824]/80 font-medium mt-1">Customized Itineraries</div>
                 </div>
-                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-                  <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-slate-900">
-                    <Users className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Private &amp; Group</span>
+                <div className="p-3 rounded-2xl bg-[#FAF9F6] border border-[#B99A58]/20 text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-[#183C30]">
+                    <Users className="w-4 h-4 text-[#B99A58] shrink-0" />
+                    <span>Local Guides</span>
                   </div>
-                  <div className="text-xs text-slate-700 font-semibold mt-1">Custom Plans</div>
+                  <div className="text-[11px] text-[#242824]/80 font-medium mt-1">Native GB Expertise</div>
                 </div>
               </div>
 
-              {/* 2 Hero Buttons — Emerald Background with White Text, Scale on Hover */}
+              {/* Primary, Secondary, and WhatsApp CTAs */}
               <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                {/* Primary CTA: Explore Tours */}
                 <motion.div
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
@@ -255,23 +236,38 @@ export const HomePage: React.FC = () => {
                 >
                   <Link
                     to="/tours"
-                    className="w-full sm:w-auto px-6 py-3.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-colors"
+                    className="w-full sm:w-auto px-6 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider bg-[#183C30] hover:bg-[#0F261F] text-[#F4EFDF] border border-[#B99A58]/40 rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-all"
                   >
                     <span>Explore Tours</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 text-[#B99A58]" />
                   </Link>
                 </motion.div>
 
+                {/* Secondary CTA: Plan Your Trip */}
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="w-full sm:w-auto"
+                >
+                  <a
+                    href="#inquiry"
+                    className="w-full sm:w-auto px-6 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider bg-[#B99A58] hover:bg-[#A38443] text-[#183C30] rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all"
+                  >
+                    <span>Plan Your Trip</span>
+                  </a>
+                </motion.div>
+
+                {/* Additional CTA: Chat on WhatsApp */}
                 <motion.a
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   href={heroWaLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto px-6 py-3.5 text-sm font-bold bg-emerald-800 hover:bg-emerald-900 text-white rounded-2xl shadow-md flex items-center justify-center gap-2 transition-colors"
+                  className="w-full sm:w-auto px-5 py-3.5 text-xs sm:text-sm font-bold text-[#183C30] bg-[#FAF9F6] border border-[#B99A58]/40 hover:bg-white rounded-2xl shadow-xs flex items-center justify-center gap-2 transition-all"
                 >
-                  <MessageCircle className="w-4 h-4 text-white" />
-                  <span>Plan on WhatsApp</span>
+                  <MessageCircle className="w-4 h-4 text-[#B99A58]" />
+                  <span>Chat on WhatsApp</span>
                 </motion.a>
               </div>
             </motion.div>
@@ -931,12 +927,12 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* FAQ ACCORDION SECTION */}
-      <section className="max-w-4xl mx-auto px-4 md:px-6 space-y-6">
+      <section id="faqs" className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 scroll-mt-24">
         <div className="text-center space-y-1.5">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#183C30]/10 border border-[#B99A58]/30 text-[#183C30] text-xs font-bold uppercase tracking-wider">
             Helpful Information
           </span>
-          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-[#183C30]">
             Frequently Asked Questions
           </h2>
         </div>
@@ -948,24 +944,24 @@ export const HomePage: React.FC = () => {
             return (
               <div
                 key={faqKey}
-                className="rounded-3xl bg-white border border-slate-200 overflow-hidden shadow-xs"
+                className="rounded-3xl bg-white border border-[#B99A58]/25 overflow-hidden shadow-sm"
               >
                 <button
                   type="button"
                   onClick={() => setOpenFaqId(isOpen ? null : faqKey)}
-                  className="w-full px-4 md:px-6 py-4 text-left flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
+                  className="w-full px-4 md:px-6 py-4 text-left flex items-center justify-between gap-4 hover:bg-[#FAF9F6] transition-colors"
                 >
-                  <span className="font-display text-sm sm:text-base font-bold text-slate-900">
+                  <span className="font-serif text-sm sm:text-base font-bold text-[#183C30]">
                     {faq.question}
                   </span>
                   <ChevronDown
-                    className={`w-4 h-4 text-emerald-600 shrink-0 transition-transform duration-200 ${
+                    className={`w-4 h-4 text-[#B99A58] shrink-0 transition-transform duration-200 ${
                       isOpen ? 'rotate-180' : ''
                     }`}
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-4 md:px-6 pb-4 text-sm md:text-base text-slate-600 font-medium leading-relaxed border-t border-slate-100 pt-3">
+                  <div className="px-4 md:px-6 pb-5 text-sm md:text-base text-[#242824]/80 font-normal leading-relaxed border-t border-[#FAF9F6] pt-3">
                     {faq.answer}
                   </div>
                 )}
@@ -976,17 +972,17 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* CUSTOM TOUR INQUIRY & JAZZCASH SECTION */}
-      <section className="max-w-7xl mx-auto px-4 md:px-6">
+      <section id="inquiry" className="max-w-7xl mx-auto px-4 md:px-6 scroll-mt-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
-          <div className="lg:col-span-5 space-y-5 bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl shadow-slate-900/5">
+          <div className="lg:col-span-5 space-y-5 bg-white border border-[#B99A58]/25 rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl shadow-slate-900/5">
             <div className="space-y-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#183C30]/10 border border-[#B99A58]/30 text-[#183C30] text-xs font-bold uppercase tracking-wider">
                 Direct Booking Support
               </span>
-              <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#183C30]">
                 Start Planning With Baig Treks &amp; Tours
               </h2>
-              <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
+              <p className="text-sm md:text-base text-[#242824]/80 font-normal leading-relaxed">
                 Reach out on WhatsApp, phone, or email, or submit the trip inquiry form for a customized itinerary.
               </p>
             </div>
@@ -1026,26 +1022,6 @@ export const HomePage: React.FC = () => {
                   <div className="font-bold text-slate-900">{business.email}</div>
                 </div>
               </a>
-            </div>
-
-            {/* Official JazzCash Box */}
-            <div className="p-4 rounded-3xl bg-amber-50 border border-amber-200 space-y-1.5">
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
-                <ShieldCheck className="w-4 h-4 text-amber-700" />
-                <span>JazzCash Payment Details</span>
-              </div>
-              <div className="text-sm font-medium text-slate-800">
-                Account / Number:{' '}
-                <span className="font-mono-num font-bold text-slate-900">
-                  {business.jazzcashNumber}
-                </span>
-              </div>
-              <div className="text-sm font-medium text-slate-800">
-                Account Name: <span className="font-bold text-slate-900">{business.jazzcashName}</span>
-              </div>
-              <p className="text-xs text-slate-700 font-medium pt-1">
-                {business.paymentInstructions}
-              </p>
             </div>
           </div>
 
