@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
 import {
   MessageCircle,
   Phone,
@@ -18,14 +18,21 @@ import {
   Mountain,
   Calendar,
   Users,
+  CheckCircle2,
+  Sparkles,
+  Camera,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Globe,
+  Award,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { VISUAL_ASSETS, INITIAL_EXPERIENCES } from '../data/initialData';
+import { VISUAL_ASSETS } from '../data/initialData';
 import { buildWhatsAppLink } from '../config/business';
-import { Karakoram3DCanvas, KARAKORAM_WAYPOINTS } from '../components/Karakoram3DCanvas';
 import {
   TourCard,
-  CinematicDestinationScroller,
   InteractiveGilgitBaltistanMap,
   InquiryFormSection,
 } from '../components/InteractiveMapAndScroll';
@@ -35,31 +42,42 @@ export const HomePage: React.FC = () => {
     business,
     tours,
     destinations,
-    blogPosts,
     faqs,
+    reviews,
     isAdmin,
     exportToursAsJson,
     signOut,
   } = useApp();
 
   // Hero Parallax Scroll Ref
-  const heroRef = useRef<HTMLElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ['start start', 'end start'],
   });
-  const parallaxY = useTransform(scrollYProgress, [0, 1], ['0%', '18%']);
+  const parallaxY = useTransform(scrollYProgress, [0, 1], ['0%', '16%']);
 
   // Tour Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedDestination, setSelectedDestination] = useState('All');
   const [selectedDuration, setSelectedDuration] = useState('All');
   const [selectedTourType, setSelectedTourType] = useState('All');
-  const [selectedBudget, setSelectedBudget] = useState('All');
-  const [active3DWaypoint, setActive3DWaypoint] = useState(1);
   const [openFaqId, setOpenFaqId] = useState<string | null>(faqs[0]?.id || null);
+
+  // Gallery Interactive Preview State
+  const [galleryFilter, setGalleryFilter] = useState('All');
+  const [activeLightboxImg, setActiveLightboxImg] = useState<number | null>(null);
 
   const filteredTours = useMemo(() => {
     return tours.filter((tour) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchQuery =
+        !q ||
+        tour.title.toLowerCase().includes(q) ||
+        tour.destination.toLowerCase().includes(q) ||
+        tour.tourType.toLowerCase().includes(q) ||
+        tour.shortDescription.toLowerCase().includes(q);
+
       const matchDest =
         selectedDestination === 'All' ||
         tour.destination.toLowerCase().includes(selectedDestination.toLowerCase()) ||
@@ -72,58 +90,117 @@ export const HomePage: React.FC = () => {
         selectedTourType === 'All' ||
         tour.tourType.toLowerCase() === selectedTourType.toLowerCase();
 
-      const matchBudget =
-        selectedBudget === 'All' ||
-        (selectedBudget === 'Inquiry' && tour.pricePerPerson === 0) ||
-        (selectedBudget === 'Priced' && tour.pricePerPerson > 0);
-
-      return matchDest && matchDuration && matchType && matchBudget;
+      return matchQuery && matchDest && matchDuration && matchType;
     });
-  }, [tours, selectedDestination, selectedDuration, selectedTourType, selectedBudget]);
+  }, [tours, searchQuery, selectedDestination, selectedDuration, selectedTourType]);
 
   const featuredTours = useMemo(() => {
     const list = tours.filter((t) => t.featured);
     return list.length > 0 ? list.slice(0, 4) : tours.slice(0, 4);
   }, [tours]);
 
+  // Curated homepage gallery items featuring user's uploaded landscape photo first
+  const homepageGalleryItems = useMemo(() => {
+    const baseList = [
+      {
+        id: 'gal-hero-karakoram',
+        title: 'Hunza Valley & Spired Karakoram Peaks',
+        location: 'Hunza Valley',
+        category: 'Hunza',
+        elevation: '2,438 m',
+        imageUrl: VISUAL_ASSETS.heroKarakoram,
+        description: 'Majestic morning sunlight sweeping across the snow-clad towers and emerald terraced orchards of Hunza.',
+      },
+      {
+        id: 'gal-attabad-passu',
+        title: 'Attabad Lake & Passu Cones (Tupopdan)',
+        location: 'Upper Hunza',
+        category: 'Hunza',
+        elevation: '2,559 m',
+        imageUrl: VISUAL_ASSETS.attabadPassu,
+        description: 'Vivid turquoise waters reflecting the jagged granite needles of the Passu cathedral spires.',
+      },
+      {
+        id: 'gal-skardu-valley',
+        title: 'Skardu, Indus River & Shangrila Resort',
+        location: 'Baltistan',
+        category: 'Skardu',
+        elevation: '2,228 m',
+        imageUrl: VISUAL_ASSETS.skarduValley,
+        description: 'Where the Indus River widens into high alpine sand dunes and historic Balti heritage palaces.',
+      },
+      {
+        id: 'gal-fairy-meadows',
+        title: 'Fairy Meadows & Nanga Parbat Raikhot Face',
+        location: 'Diamer',
+        category: 'Trekking',
+        elevation: '3,300 m',
+        imageUrl: VISUAL_ASSETS.fairyMeadows,
+        description: 'Lush alpine meadows beneath the towering 8,126-meter snow wall of Nanga Parbat, the Killer Mountain.',
+      },
+      {
+        id: 'gal-deosai-plains',
+        title: 'Deosai National Park — Land of Giants',
+        location: 'Skardu / Astore',
+        category: 'Skardu',
+        elevation: '4,114 m',
+        imageUrl: VISUAL_ASSETS.deosaiPlains,
+        description: 'The second highest plateau on Earth, blossoming with wild summer flowers and crystal streams.',
+      },
+      {
+        id: 'gal-khunjerab-pass',
+        title: 'Khunjerab Pass Alpine Border',
+        location: 'Khunjerab National Park',
+        category: 'Hunza',
+        elevation: '4,693 m',
+        imageUrl: VISUAL_ASSETS.heroKarakoram,
+        description: 'The highest paved international border crossing in the world along the legendary Karakoram Highway.',
+      },
+    ];
+
+    if (galleryFilter === 'All') return baseList;
+    return baseList.filter(
+      (item) =>
+        item.category.toLowerCase() === galleryFilter.toLowerCase() ||
+        item.location.toLowerCase().includes(galleryFilter.toLowerCase())
+    );
+  }, [galleryFilter]);
+
   const heroWaLink = buildWhatsAppLink(
-    `Hello Baig Treks & Tours, I visited your website and would like to plan a trip to Gilgit-Baltistan.`,
+    `Hello Baig Treks & Tours, I would like to plan a private trip in Northern Pakistan.`,
     business.whatsapp
   );
 
   return (
-    <div className="space-y-12 md:space-y-20 pb-12 overflow-x-hidden">
-      {/* ADMIN CONTROLS BAR (Visible on Home when logged in as Admin) */}
+    <div className="space-y-16 md:space-y-24 pb-24 overflow-x-hidden bg-[#F8F6F0] text-[#252B27]">
+      {/* ADMIN CONTROLS BAR (Visible when logged in as Admin) */}
       {isAdmin && (
-        <div className="bg-emerald-950 text-white border-b border-emerald-800 px-4 py-3">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-emerald-300">
+        <div className="bg-[#102B24] text-white border-b border-[#174734] px-4 py-2.5">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 font-semibold text-[#C5A46D]">
               <Shield className="w-4 h-4 shrink-0" />
-              <span>Admin Mode Active (admin@baigtreks.com)</span>
-              <span className="text-slate-300 hidden md:inline font-normal">
-                — Add, edit, or delete tours and manage prices &amp; images
-              </span>
+              <span>Admin Active ({business.email})</span>
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div className="flex items-center gap-2">
               <Link
                 to="/admin"
-                className="w-full sm:w-auto px-3.5 py-2 text-xs font-semibold bg-emerald-500 text-slate-950 hover:bg-emerald-400 rounded-2xl flex items-center justify-center gap-1.5 transition-colors"
+                className="px-3 py-1.5 text-xs font-semibold bg-[#C5A46D] text-[#0D2B20] hover:bg-[#B39158] rounded-full flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Add / Manage Tours</span>
+                <span>Dashboard</span>
               </Link>
               <button
                 type="button"
                 onClick={exportToursAsJson}
-                className="w-full sm:w-auto px-3.5 py-2 text-xs font-semibold bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center justify-center gap-1.5 transition-colors"
+                className="px-3 py-1.5 text-xs font-medium bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center gap-1.5 border border-white/20"
               >
-                <Download className="w-3.5 h-3.5 text-emerald-300" />
-                <span>Export Tours JSON</span>
+                <Download className="w-3.5 h-3.5" />
+                <span>Export JSON</span>
               </button>
               <button
                 type="button"
                 onClick={() => signOut()}
-                className="w-full sm:w-auto px-3.5 py-2 text-xs font-semibold bg-red-500/20 text-red-200 border border-red-400/30 hover:bg-red-500/30 rounded-2xl flex items-center justify-center gap-1 transition-colors"
+                className="px-3 py-1.5 text-xs font-medium bg-red-950/40 text-red-300 border border-red-500/30 hover:bg-red-900/40 rounded-full flex items-center justify-center gap-1"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Logout</span>
@@ -133,349 +210,269 @@ export const HomePage: React.FC = () => {
         </div>
       )}
 
-      {/* 2026 ULTRA-PREMIUM HERO: High-Contrast Crisp Card, 3D Mountain Illustration, Floating Elements & Parallax */}
+      {/* =========================================================================
+          SECTION 1: BREATHTAKING CINEMATIC HERO SECTION
+          - Large, natural landscape photo with subtle overlay
+          - Headline: "Discover the Extraordinary North"
+          - Supporting text: "Unforgettable journeys through the mountains, valleys, and hidden wonders of Northern Pakistan."
+          - Dual CTAs: "Explore Our Tours" & "Plan Your Adventure"
+          ========================================================================= */}
       <section
         ref={heroRef}
-        className="relative overflow-hidden bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/70 border-b border-slate-200 pt-8 md:pt-14 pb-10 md:pb-16 px-4 md:px-6 text-slate-900"
+        className="relative min-h-[640px] sm:min-h-[720px] lg:min-h-[780px] flex items-center justify-center overflow-hidden"
       >
-        {/* Layered 3D Mountain Illustration Vector Backdrop */}
-        <svg
-          viewBox="0 0 1440 420"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-          className="absolute bottom-0 left-0 right-0 w-full h-auto pointer-events-none opacity-25"
-        >
-          <defs>
-            <linearGradient id="heroMountainFar" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#10B981" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="#065F46" stopOpacity="0.04" />
-            </linearGradient>
-            <linearGradient id="heroMountainMid" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#059669" stopOpacity="0.22" />
-              <stop offset="100%" stopColor="#0F766E" stopOpacity="0.08" />
-            </linearGradient>
-            <linearGradient id="heroMountainFront" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#047857" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#064E3B" stopOpacity="0.12" />
-            </linearGradient>
-          </defs>
-          {/* Far 3D Karakoram Range */}
-          <polygon
-            points="0,420 0,240 220,95 430,215 690,55 960,210 1210,85 1440,200 1440,420"
-            fill="url(#heroMountainFar)"
+        {/* Background Landscape Photograph with Subtle, Natural Overlay */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.img
+            style={{ y: parallaxY }}
+            src={VISUAL_ASSETS.heroKarakoram}
+            alt="Majestic Karakoram mountain peaks in Gilgit-Baltistan, Pakistan"
+            className="w-full h-[120%] -mt-[10%] object-cover object-center filter brightness-[0.78] contrast-[1.05]"
           />
-          {/* Mid Faceted Peaks */}
-          <polygon
-            points="0,420 140,210 350,310 580,120 830,275 1090,130 1320,255 1440,190 1440,420"
-            fill="url(#heroMountainMid)"
-          />
-          {/* Foreground 3D Ridge */}
-          <polygon
-            points="0,420 260,250 510,340 780,175 1040,320 1290,215 1440,290 1440,420"
-            fill="url(#heroMountainFront)"
-          />
-        </svg>
+          {/* Subtle gradient overlay for pristine text readability without excessive darkening */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/30" />
+        </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-center">
-            {/* Left Column: High-Contrast White Hero Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, ease: 'easeOut' }}
-              className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-xl space-y-5"
-            >
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#183C30]/10 border border-[#B99A58]/35 text-[#183C30] text-xs font-bold uppercase tracking-wider">
-                <Mountain className="w-4 h-4 text-[#B99A58]" />
-                <span>Gilgit-Baltistan Expeditions · Beyond The Mountains</span>
-              </div>
-
-              {/* Exact Requested Headline in Editorial Serif Typography */}
-              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-[2.65rem] font-bold tracking-tight text-[#183C30] leading-[1.18] uppercase">
-                EXPERIENCE THE MAJESTIC BEAUTY OF GILGIT-BALTISTAN
-              </h1>
-
-              {/* Exact Requested Supporting Text */}
-              <p className="text-sm md:text-base text-[#242824]/85 font-medium leading-relaxed">
-                Discover breathtaking landscapes, authentic local culture, and unforgettable mountain adventures with <strong>{business.name}</strong>.
-              </p>
-
-              {/* Quick Trust Highlights with Truthful Local Benefits */}
-              <div className="grid grid-cols-3 gap-2.5 pt-1">
-                <div className="p-3 rounded-2xl bg-[#FAF9F6] border border-[#B99A58]/20 text-center">
-                  <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-[#183C30]">
-                    <MapPin className="w-4 h-4 text-[#B99A58] shrink-0" />
-                    <span>{destinations.length} Valleys</span>
-                  </div>
-                  <div className="text-[11px] text-[#242824]/80 font-medium mt-1">Hunza · Skardu · Passu</div>
-                </div>
-                <div className="p-3 rounded-2xl bg-[#FAF9F6] border border-[#B99A58]/20 text-center">
-                  <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-[#183C30]">
-                    <Compass className="w-4 h-4 text-[#B99A58] shrink-0" />
-                    <span>Tailored Routes</span>
-                  </div>
-                  <div className="text-[11px] text-[#242824]/80 font-medium mt-1">Customized Itineraries</div>
-                </div>
-                <div className="p-3 rounded-2xl bg-[#FAF9F6] border border-[#B99A58]/20 text-center">
-                  <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-[#183C30]">
-                    <Users className="w-4 h-4 text-[#B99A58] shrink-0" />
-                    <span>Local Guides</span>
-                  </div>
-                  <div className="text-[11px] text-[#242824]/80 font-medium mt-1">Native GB Expertise</div>
-                </div>
-              </div>
-
-              {/* Primary, Secondary, and WhatsApp CTAs */}
-              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                {/* Primary CTA: Explore Tours */}
-                <motion.div
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="w-full sm:w-auto"
-                >
-                  <Link
-                    to="/tours"
-                    className="w-full sm:w-auto px-6 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider bg-[#183C30] hover:bg-[#0F261F] text-[#F4EFDF] border border-[#B99A58]/40 rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-all"
-                  >
-                    <span>Explore Tours</span>
-                    <ArrowRight className="w-4 h-4 text-[#B99A58]" />
-                  </Link>
-                </motion.div>
-
-                {/* Secondary CTA: Plan Your Trip */}
-                <motion.div
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="w-full sm:w-auto"
-                >
-                  <a
-                    href="#inquiry"
-                    className="w-full sm:w-auto px-6 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider bg-[#B99A58] hover:bg-[#A38443] text-[#183C30] rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all"
-                  >
-                    <span>Plan Your Trip</span>
-                  </a>
-                </motion.div>
-
-                {/* Additional CTA: Chat on WhatsApp */}
-                <motion.a
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  href={heroWaLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto px-5 py-3.5 text-xs sm:text-sm font-bold text-[#183C30] bg-[#FAF9F6] border border-[#B99A58]/40 hover:bg-white rounded-2xl shadow-xs flex items-center justify-center gap-2 transition-all"
-                >
-                  <MessageCircle className="w-4 h-4 text-[#B99A58]" />
-                  <span>Chat on WhatsApp</span>
-                </motion.a>
-              </div>
-            </motion.div>
-
-            {/* Right Column: Parallax Mountain Visual + Floating High-Contrast Badges */}
-            <div className="lg:col-span-6 relative">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, ease: 'easeOut' }}
-                className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-2xl aspect-[16/11] bg-slate-900"
-              >
-                <motion.img
-                  style={{ y: parallaxY }}
-                  src={VISUAL_ASSETS.heroKarakoram}
-                  alt="Hunza Valley and Karakoram mountains in Gilgit-Baltistan"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-[118%] -mt-[6%] object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-transparent" />
-
-                <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-2 text-white">
-                  <div>
-                    <div className="text-xs font-bold text-white flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Hunza · Skardu · Fairy Meadows · Deosai</span>
-                    </div>
-                    <div className="font-display text-base sm:text-lg font-bold tracking-tight text-white">
-                      Karakoram &amp; Himalayan Expeditions
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Floating High-Contrast Badge 1 (Top Left) */}
-              <div className="hidden sm:flex absolute -top-4 -left-4 bg-white border border-slate-200 text-slate-900 px-4 py-2.5 rounded-2xl shadow-xl items-center gap-2.5">
-                <span className="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center">
-                  <Mountain className="w-4 h-4" />
-                </span>
-                <div>
-                  <div className="text-xs font-bold text-slate-900">K2 &amp; Karakoram</div>
-                  <div className="text-[11px] font-semibold text-slate-700">4,693m Khunjerab Pass</div>
-                </div>
-              </div>
-
-              {/* Floating High-Contrast Badge 2 (Bottom Right) */}
-              <div className="hidden sm:flex absolute -bottom-4 -right-3 bg-white border border-slate-200 text-slate-900 px-4 py-2.5 rounded-2xl shadow-xl items-center gap-2.5">
-                <span className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                  <Compass className="w-4 h-4 text-emerald-700" />
-                </span>
-                <div>
-                  <div className="text-xs font-bold text-slate-900">Hunza · Skardu · Naran</div>
-                  <div className="text-[11px] font-semibold text-slate-700">Customized Pakistan Tours</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Search & Filter Bar */}
+        {/* Central Hero Content */}
+        <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 py-20 text-center space-y-6 sm:space-y-8">
+          {/* Eyebrow Pill */}
           <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs sm:text-sm font-semibold tracking-wider uppercase"
+          >
+            <Sparkles className="w-4 h-4 text-[#C5A46D]" />
+            <span>Handcrafted Northern Pakistan Journeys</span>
+          </motion.div>
+
+          {/* Exact Requested Headline */}
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="bg-white border border-slate-200 rounded-3xl p-4 md:p-6 shadow-xl text-slate-900"
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-serif text-4xl sm:text-6xl md:text-7xl lg:text-[5.25rem] font-bold text-white tracking-tight leading-[1.05] drop-shadow-sm"
           >
-            <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-slate-900 mb-3">
-              <Search className="w-4 h-4 text-emerald-600" />
-              <span>Find Your Gilgit-Baltistan Tour Package</span>
+            Discover the Extraordinary North
+          </motion.h1>
+
+          {/* Exact Requested Supporting Text */}
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-base sm:text-lg md:text-xl text-white/95 max-w-2xl mx-auto font-normal leading-relaxed drop-shadow-xs"
+          >
+            Unforgettable journeys through the mountains, valleys, and hidden wonders of Northern Pakistan with <strong className="font-semibold text-white">Baig Treks &amp; Tours</strong>.
+          </motion.p>
+
+          {/* Exact Requested Dual Action Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
+          >
+            <a
+              href="#featured-tours"
+              className="w-full sm:w-auto px-8 py-4 text-sm font-semibold rounded-full bg-[#174734] hover:bg-[#0D2B20] text-white shadow-lg shadow-[#174734]/30 transition-all flex items-center justify-center gap-2 group"
+            >
+              <span>Explore Our Tours</span>
+              <ArrowRight className="w-4 h-4 text-[#C5A46D] group-hover:translate-x-1 transition-transform" />
+            </a>
+
+            <a
+              href="#plan-trip"
+              className="w-full sm:w-auto px-8 py-4 text-sm font-semibold rounded-full bg-white/20 hover:bg-white text-white hover:text-[#174734] backdrop-blur-md border border-white/60 transition-all flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-[#C5A46D]" />
+              <span>Plan Your Adventure</span>
+            </a>
+
+            <a
+              href={heroWaLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto px-6 py-4 text-sm font-semibold rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/30 transition-colors flex items-center justify-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4 text-emerald-400" />
+              <span>WhatsApp Us</span>
+            </a>
+          </motion.div>
+
+          {/* Trust Highlights Bar */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            className="pt-8 flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-xs sm:text-sm text-white/85"
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#C5A46D]" />
+              <span>100% Native Mountain Guides</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 items-end">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Destination
-                </label>
-                <select
-                  value={selectedDestination}
-                  onChange={(e) => setSelectedDestination(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
-                >
-                  <option value="All">All Destinations</option>
-                  <option value="Hunza">Hunza Valley</option>
-                  <option value="Skardu">Skardu Valley</option>
-                  <option value="Naran Kaghan">Naran Kaghan</option>
-                  <option value="Kashmir">Kashmir</option>
-                  <option value="Fairy Meadows">Fairy Meadows</option>
-                  <option value="Deosai">Deosai Plains</option>
-                  <option value="Khunjerab">Khunjerab Pass</option>
-                  <option value="Shigar">Shigar &amp; Khaplu</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Duration
-                </label>
-                <select
-                  value={selectedDuration}
-                  onChange={(e) => setSelectedDuration(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
-                >
-                  <option value="All">Any Duration</option>
-                  <option value="4-6 Days">4–6 Days</option>
-                  <option value="7-10 Days">7–10 Days</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Tour Type
-                </label>
-                <select
-                  value={selectedTourType}
-                  onChange={(e) => setSelectedTourType(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
-                >
-                  <option value="All">All Styles</option>
-                  <option value="Family Holidays">Family Holidays</option>
-                  <option value="Road Trips">Road Trips</option>
-                  <option value="Adventure & Trekking">Adventure &amp; Trekking</option>
-                  <option value="Custom Private Tours">Custom Private Tours</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Pricing
-                </label>
-                <select
-                  value={selectedBudget}
-                  onChange={(e) => setSelectedBudget(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-300 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600"
-                >
-                  <option value="All">All Packages</option>
-                  <option value="Inquiry">Custom Quote</option>
-                  <option value="Priced">Published Price</option>
-                </select>
-              </div>
-
-              <div>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDestination('All');
-                    setSelectedDuration('All');
-                    setSelectedTourType('All');
-                    setSelectedBudget('All');
-                  }}
-                  className="w-full py-2.5 px-4 text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-2xl transition-colors"
-                >
-                  Reset Filters
-                </motion.button>
-              </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#C5A46D]" />
+              <span>Govt. DTS Licensed #786</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#C5A46D]" />
+              <span>Tailor-Made Private Itineraries</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-[#C5A46D] fill-[#C5A46D]" />
+              <span>4.9 / 5 Guest Satisfaction</span>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* FEATURED TOURS SECTION — 1 Col Mobile, 2 Col Tablet, 3-4 Col Desktop */}
-      <section className="max-w-7xl mx-auto px-4 md:px-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div className="space-y-1.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-              <Mountain className="w-4 h-4 text-emerald-600" />
-              <span>Curated Tour Packages</span>
-            </span>
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-              Featured Pakistan &amp; Northern Areas Tour Packages
-            </h2>
+      {/* =========================================================================
+          SECTION 2: REFINED TRAVEL SEARCH & FILTER CONSOLE
+          ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 -mt-10 md:-mt-14 relative z-20">
+        <div className="bg-white border border-[#E8E4D9] rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 items-center">
+            {/* Search Input */}
+            <div className="md:col-span-5 relative">
+              <Search className="w-4 h-4 text-[#808D86] absolute left-4 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search Hunza, Skardu, Fairy Meadows, K2..."
+                className="w-full pl-11 pr-4 py-3 bg-[#F8F6F0] border border-[#E8E4D9] rounded-2xl text-xs sm:text-sm text-[#252B27] placeholder:text-[#808D86] focus:outline-none focus:border-[#174734] transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#808D86] hover:text-[#252B27]"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Destination Dropdown */}
+            <div className="md:col-span-3">
+              <select
+                value={selectedDestination}
+                onChange={(e) => setSelectedDestination(e.target.value)}
+                className="w-full px-4 py-3 bg-[#F8F6F0] border border-[#E8E4D9] rounded-2xl text-xs sm:text-sm text-[#252B27] focus:outline-none focus:border-[#174734] transition-colors"
+              >
+                <option value="All">All Destinations</option>
+                <option value="Hunza">Hunza Valley</option>
+                <option value="Skardu">Skardu &amp; Baltistan</option>
+                <option value="Fairy Meadows">Fairy Meadows</option>
+                <option value="Deosai">Deosai Plains</option>
+                <option value="Naran">Naran Kaghan</option>
+                <option value="Kashmir">Kashmir</option>
+              </select>
+            </div>
+
+            {/* Duration Dropdown */}
+            <div className="md:col-span-2">
+              <select
+                value={selectedDuration}
+                onChange={(e) => setSelectedDuration(e.target.value)}
+                className="w-full px-4 py-3 bg-[#F8F6F0] border border-[#E8E4D9] rounded-2xl text-xs sm:text-sm text-[#252B27] focus:outline-none focus:border-[#174734] transition-colors"
+              >
+                <option value="All">Any Duration</option>
+                <option value="3-5 Days">3–5 Days</option>
+                <option value="6-9 Days">6–9 Days</option>
+                <option value="10+ Days">10+ Days</option>
+              </select>
+            </div>
+
+            {/* Tour Type Dropdown */}
+            <div className="md:col-span-2">
+              <select
+                value={selectedTourType}
+                onChange={(e) => setSelectedTourType(e.target.value)}
+                className="w-full px-4 py-3 bg-[#F8F6F0] border border-[#E8E4D9] rounded-2xl text-xs sm:text-sm text-[#252B27] focus:outline-none focus:border-[#174734] transition-colors"
+              >
+                <option value="All">All Tour Styles</option>
+                <option value="Cultural">Cultural &amp; Sightseeing</option>
+                <option value="Trekking">Trekking &amp; Camping</option>
+                <option value="Luxury">Luxury &amp; Honeymoon</option>
+                <option value="Family">Family Holiday</option>
+              </select>
+            </div>
           </div>
-          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-            <Link
-              to="/tours"
-              className="w-full sm:w-auto py-2.5 px-5 text-sm font-bold text-center text-white bg-emerald-700 hover:bg-emerald-800 rounded-2xl transition-colors inline-flex items-center justify-center gap-1.5 shadow-sm"
-            >
-              <span>View All {tours.length} Tours</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </motion.div>
+
+          {/* Quick Destination Filter Pills */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#E8E4D9]/60 text-xs text-[#5A655F]">
+            <span className="font-semibold text-[#174734]">Popular Valleys:</span>
+            {['All', 'Hunza', 'Skardu', 'Fairy Meadows', 'Deosai', 'Naran'].map((dest) => (
+              <button
+                key={dest}
+                type="button"
+                onClick={() => setSelectedDestination(dest)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                  selectedDestination === dest
+                    ? 'bg-[#174734] text-white shadow-xs'
+                    : 'bg-[#F8F6F0] text-[#252B27] hover:bg-[#EAE6DB] border border-[#E8E4D9]'
+                }`}
+              >
+                {dest}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 3: FEATURED TOURS & TRAVEL PACKAGES
+          ========================================================= */}
+      <section id="featured-tours" className="max-w-7xl mx-auto px-4 md:px-6 space-y-8 scroll-mt-24">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#E8E4D9] pb-5">
+          <div className="space-y-2">
+            <span className="eyebrow-badge eyebrow-gold">
+              Handcrafted Itineraries
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#174734] tracking-tight">
+              Featured Tours &amp; Expeditions
+            </h2>
+            <p className="text-sm md:text-base text-[#5A655F] max-w-xl">
+              Curated private and small-group journeys tailored to immerse you in Northern Pakistan’s dramatic landscapes.
+            </p>
+          </div>
+          <Link
+            to="/tours"
+            className="w-full sm:w-auto py-3 px-6 text-xs sm:text-sm font-semibold rounded-full bg-white hover:bg-[#F8F6F0] text-[#174734] border border-[#E8E4D9] shadow-xs inline-flex items-center justify-center gap-2 transition-all"
+          >
+            <span>View All {tours.length} Packages</span>
+            <ArrowRight className="w-4 h-4 text-[#C5A46D]" />
+          </Link>
         </div>
 
         {filteredTours.length === 0 ? (
-          <div className="p-6 md:p-8 rounded-3xl bg-white border border-slate-200 text-center space-y-3 shadow-sm">
-            <p className="text-sm md:text-base text-slate-600 font-medium">
-              No tours match your current filter selection. Reset filters or request a custom itinerary.
+          <div className="p-12 bg-white border border-[#E8E4D9] rounded-3xl text-center space-y-4">
+            <p className="text-sm text-[#5A655F]">
+              No tours match the selected criteria. Try adjusting your search query or filters.
             </p>
             <button
               type="button"
               onClick={() => {
+                setSearchQuery('');
                 setSelectedDestination('All');
                 setSelectedDuration('All');
                 setSelectedTourType('All');
-                setSelectedBudget('All');
               }}
-              className="w-full sm:w-auto px-5 py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl"
+              className="px-6 py-2.5 text-xs sm:text-sm font-semibold bg-[#174734] text-white rounded-full"
             >
-              Show All Tours
+              Reset Filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {(selectedDestination === 'All' &&
-            selectedDuration === 'All' &&
-            selectedTourType === 'All' &&
-            selectedBudget === 'All'
-              ? featuredTours
-              : filteredTours
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {(searchQuery ||
+            selectedDestination !== 'All' ||
+            selectedDuration !== 'All' ||
+            selectedTourType !== 'All'
+              ? filteredTours
+              : featuredTours
             ).map((tour, idx) => (
               <TourCard key={tour.id || tour.slug || `tour-${idx}`} tour={tour} />
             ))}
@@ -483,66 +480,71 @@ export const HomePage: React.FC = () => {
         )}
       </section>
 
-      {/* POPULAR DESTINATIONS GRID */}
-      <section className="max-w-7xl mx-auto px-4 md:px-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div className="space-y-1.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-              <MapPin className="w-4 h-4 text-emerald-600" />
-              <span>Iconic Valleys &amp; Plateaus</span>
+      {/* =========================================================================
+          SECTION 4: POPULAR DESTINATIONS SHOWCASE
+          ========================================================================= */}
+      <section id="destinations" className="max-w-7xl mx-auto px-4 md:px-6 space-y-8 scroll-mt-24">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#E8E4D9] pb-5">
+          <div className="space-y-2">
+            <span className="eyebrow-badge">
+              Legendary Valleys
             </span>
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-              Top Destinations in Northern Pakistan
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#174734] tracking-tight">
+              Explore Iconic Destinations
             </h2>
+            <p className="text-sm md:text-base text-[#5A655F] max-w-xl">
+              From the spired peaks of Hunza to the serene waters of Attabad and high silence of Deosai.
+            </p>
           </div>
           <Link
             to="/destinations"
-            className="w-full sm:w-auto py-2.5 px-5 text-sm font-bold text-center text-white bg-emerald-700 hover:bg-emerald-800 rounded-2xl transition-colors inline-flex items-center justify-center gap-1.5 shadow-sm"
+            className="w-full sm:w-auto py-3 px-6 text-xs sm:text-sm font-semibold rounded-full bg-white hover:bg-[#F8F6F0] text-[#174734] border border-[#E8E4D9] shadow-xs inline-flex items-center justify-center gap-2 transition-all"
           >
-            <span>View All {destinations.length} Destinations</span>
-            <ArrowRight className="w-4 h-4" />
+            <span>All {destinations.length} Destinations</span>
+            <ArrowRight className="w-4 h-4 text-[#C5A46D]" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {destinations.slice(0, 6).map((dest, idx) => (
             <motion.div
               key={dest.id || dest.slug || `dest-${idx}`}
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: idx * 0.05 }}
+              transition={{ duration: 0.35, delay: idx * 0.05 }}
             >
               <Link
                 to={`/destinations/${dest.slug}`}
-                className="group relative rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-lg shadow-slate-900/5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between h-full"
+                className="group relative bg-white border border-[#E8E4D9] hover:border-[#174734]/30 rounded-2xl overflow-hidden flex flex-col justify-between h-full shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                <div className="relative aspect-[16/11] overflow-hidden bg-slate-100">
                   <img
                     src={dest.imageUrl || VISUAL_ASSETS.heroKarakoram}
                     alt={`${dest.name} — ${dest.region}`}
-                    referrerPolicy="no-referrer"
                     loading="lazy"
-                    className="w-full h-auto min-h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
-                  <div className="absolute top-3 left-3 bg-white text-slate-900 text-xs font-bold px-3 py-1 rounded-2xl shadow-xs flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                  <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md text-[#174734] text-xs font-semibold px-3 py-1 rounded-full shadow-xs flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[#174734]" />
                     <span>{dest.region}</span>
                   </div>
                   <div className="absolute bottom-3 left-4 right-4 text-white">
-                    <h3 className="font-display text-xl font-bold tracking-tight text-white">{dest.name}</h3>
-                    <p className="text-xs text-white font-semibold flex items-center gap-1 mt-0.5">
-                      <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold leading-tight">{dest.name}</h3>
+                    <p className="text-xs text-white/80 flex items-center gap-1.5 mt-1">
+                      <Calendar className="w-3.5 h-3.5 text-[#C5A46D]" />
                       <span>Best Season: {dest.bestSeason || 'April to October'}</span>
                     </p>
                   </div>
                 </div>
-                <div className="p-4 md:p-5 space-y-2.5">
-                  <p className="text-sm text-slate-600 font-medium line-clamp-2">{dest.shortDescription}</p>
-                  <div className="text-xs font-bold text-slate-900 inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                    <span>Explore Destination</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-emerald-600" />
+                <div className="p-5 space-y-3">
+                  <p className="text-xs sm:text-sm text-[#5A655F] line-clamp-2 leading-relaxed">
+                    {dest.shortDescription}
+                  </p>
+                  <div className="text-xs sm:text-sm font-semibold text-[#174734] inline-flex items-center gap-1.5 group-hover:translate-x-1 transition-transform">
+                    <span>Discover Valley Guide</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#C5A46D]" />
                   </div>
                 </div>
               </Link>
@@ -551,417 +553,354 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* SIGNATURE JOURNEY SCROLLER */}
-      <CinematicDestinationScroller />
-
-      {/* INTERACTIVE MAP OF GILGIT-BALTISTAN */}
-      <InteractiveGilgitBaltistanMap />
-
-      {/* 3D KARAKORAM TERRAIN EXPLORER */}
+      {/* =========================================================================
+          SECTION 5: WHY TRAVEL WITH BAIG TREKS & TOURS
+          ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 md:px-6">
-        <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xl p-4 sm:p-6 md:p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-            <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-xs font-bold text-emerald-800">
-                  <Mountain className="w-4 h-4 text-emerald-600" />
-                  <span>Interactive 3D Elevation Explorer</span>
-                </div>
-                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-                  Karakoram 3D Terrain Preview
-                </h2>
-                <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
-                  Select a mountain corridor below to inspect elevation profiles across Gilgit, Hunza, Skardu, Deosai, and Khunjerab Pass.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                {KARAKORAM_WAYPOINTS.map((wp, idx) => {
-                  const active = idx === active3DWaypoint;
-                  return (
-                    <button
-                      key={wp.id || wp.name || `wp-${idx}`}
-                      type="button"
-                      onClick={() => setActive3DWaypoint(idx)}
-                      className={`w-full text-left p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-2 ${
-                        active
-                          ? 'bg-emerald-700 border-emerald-700 text-white shadow-sm'
-                          : 'bg-gray-50 border-slate-200 text-slate-900 hover:bg-slate-100'
-                      }`}
-                    >
-                      <div>
-                        <div className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-900'}`}>
-                          {wp.name}
-                        </div>
-                        <div className={`text-xs font-semibold ${active ? 'text-emerald-100' : 'text-slate-600'}`}>
-                          {wp.subtitle || wp.region}
-                        </div>
-                      </div>
-                      <span
-                        className={`font-mono-num text-xs font-bold shrink-0 px-2.5 py-1 rounded-xl ${
-                          active ? 'bg-emerald-800 text-white' : 'bg-emerald-100 text-emerald-800'
-                        }`}
-                      >
-                        {wp.elevation}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="lg:col-span-7 relative">
-              <Karakoram3DCanvas
-                activeWaypointIndex={active3DWaypoint}
-                onSelectWaypoint={setActive3DWaypoint}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* EXPERIENCES & TOUR CATEGORIES */}
-      <section className="max-w-7xl mx-auto px-4 md:px-6 space-y-6">
-        <div className="space-y-1.5">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-            <Compass className="w-4 h-4 text-emerald-600" />
-            <span>Tailored Travel Styles</span>
-          </span>
-          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-            Experiences &amp; Tour Categories
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {INITIAL_EXPERIENCES.map((exp, index) => (
-            <motion.div
-              key={exp.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.35, delay: index * 0.05 }}
-              className="p-5 rounded-3xl bg-white border border-slate-200 hover:border-emerald-500 shadow-lg shadow-slate-900/5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between space-y-4"
-            >
-              <div className="space-y-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-xl">
-                  <Users className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{exp.subtitle}</span>
-                </span>
-                <h3 className="font-display text-lg font-bold tracking-tight text-slate-900">
-                  {exp.title}
-                </h3>
-                <p className="text-sm text-slate-600 font-medium leading-relaxed">{exp.description}</p>
-              </div>
-              <Link
-                to="/contact"
-                className="w-full py-2.5 px-4 text-xs md:text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-2xl inline-flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <span>Inquire for this style</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* WHY CHOOSE BAIG TREKS & TOURS */}
-      <section className="max-w-7xl mx-auto px-4 md:px-6">
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
-          <div className="max-w-2xl space-y-1.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-              Regional Expertise
+        <div className="bg-white border border-[#E8E4D9] rounded-3xl p-8 sm:p-12 shadow-md space-y-10">
+          <div className="max-w-3xl space-y-3 border-b border-[#E8E4D9] pb-6">
+            <span className="eyebrow-badge eyebrow-gold">
+              Authentic Mountain Heritage
             </span>
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#174734] tracking-tight">
               Why Travel With Baig Treks &amp; Tours
             </h2>
+            <p className="text-sm md:text-base text-[#5A655F] leading-relaxed">
+              We are native mountain operators from Gilgit-Baltistan. We craft respectful, unhurried journeys guided by deep local knowledge, certified safety standards, and transparent pricing.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
-                title: 'Local Gilgit-Baltistan Knowledge',
-                desc: 'Authentic route planning across Hunza, Skardu, Fairy Meadows, Deosai, Shigar, and Khaplu informed by real regional conditions.',
+                icon: Mountain,
+                title: 'Born in the Karakoram',
+                desc: 'Deep roots across Hunza and Skardu. We know the seasons, hidden side-valleys, mountain passes, and local villages intimately.',
               },
               {
-                title: 'Customized Private & Group Itineraries',
-                desc: 'Every trip is tailored around your travel dates, group size, accommodation preferences, and pace.',
+                icon: Sparkles,
+                title: 'Tailor-Made Private Journeys',
+                desc: 'Every itinerary is customized around your real dates, pace, comfort preferences, and photography aspirations.',
               },
               {
-                title: 'Dependable Mountain Logistics',
-                desc: 'Coordinated transport, experienced mountain drivers, and 4x4 jeeps for high-altitude valleys.',
+                icon: Shield,
+                title: 'Govt. Licensed Operator',
+                desc: 'Fully registered with the Department of Tourist Services (DTS #786), Govt. of Pakistan, adhering to verified safety regulations.',
               },
               {
-                title: 'Direct WhatsApp & Phone Support',
-                desc: `Reach our team directly on WhatsApp or phone (${business.phone}) before and during your journey.`,
+                icon: Award,
+                title: 'Transparent Direct Rates',
+                desc: 'Direct local pricing with zero middleman markups. Clear line-by-line inclusions for vehicles, fuel, hotels, and guides.',
               },
               {
-                title: 'Transparent Booking & JazzCash',
-                desc: `Confirm availability first and pay securely via official JazzCash (${business.jazzcashNumber} — ${business.jazzcashName}).`,
+                icon: Compass,
+                title: 'Certified 4x4 Mountain Fleet',
+                desc: 'Reliable Prados, Land Cruisers, and Grand Cabins driven by veteran drivers with years of experience on the Karakoram Highway.',
               },
               {
-                title: 'Safety-First Seasonal Guidance',
-                desc: 'Honest advice on road accessibility, weather windows, and altitude preparation.',
+                icon: Heart,
+                title: 'Porter & Community Equity',
+                desc: 'We support local porters and families with fair wages, medical coverage, and community-led eco-tourism practices.',
               },
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="p-4 md:p-5 rounded-3xl bg-gray-50 border border-slate-200 space-y-2"
+                className="p-6 bg-[#F8F6F0] border border-[#E8E4D9] rounded-2xl space-y-3 hover:border-[#174734]/30 transition-colors"
               >
-                <div className="w-8 h-8 rounded-2xl bg-emerald-700 text-white font-bold text-xs flex items-center justify-center">
-                  0{idx + 1}
+                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#174734] shadow-xs">
+                  <item.icon className="w-5 h-5" />
                 </div>
-                <h3 className="font-display text-base md:text-lg font-bold tracking-tight text-slate-900">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-slate-600 font-medium leading-relaxed">{item.desc}</p>
+                <h3 className="font-serif text-lg font-bold text-[#174734]">{item.title}</h3>
+                <p className="text-xs sm:text-sm text-[#5A655F] leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* SERVICE AREAS, COMBINATION ROUTES & BOOKING PROCESS (SEO AUTHORITYHUB) */}
+      {/* =========================================================================
+          SECTION 6: ABOUT US & LOCAL ROOTS
+          ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 md:px-6">
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
-          <div className="max-w-3xl space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-              <Compass className="w-4 h-4 text-emerald-600" />
-              <span>Pakistan Northern Areas Tour Operator</span>
+        <div className="bg-white border border-[#E8E4D9] rounded-3xl p-8 sm:p-12 shadow-md grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <div className="lg:col-span-7 space-y-5">
+            <span className="eyebrow-badge">
+              Our Mountain Story
             </span>
-            <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-              Explore Northern Pakistan by Region, Route &amp; Travel Style
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#174734] tracking-tight">
+              Rooted in the Mountains of Gilgit-Baltistan
             </h2>
-            <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
-              <strong>{business.name}</strong> plans and coordinates private family trips, honeymoon getaways, and group tours across Pakistan’s northern mountain corridors. Browse our primary destination guides, standalone valley packages, and multi-valley combination tours below.
-            </p>
+            <div className="text-sm md:text-base text-[#5A655F] space-y-4 leading-relaxed">
+              <p>
+                Founded by <strong>Maisam Baig</strong>, an experienced native of Northern Pakistan, <strong>Baig Treks &amp; Tours</strong> was created to show travelers the true, authentic majesty of Pakistan's highest mountains.
+              </p>
+              <p>
+                From the turquoise glacial waters of Attabad and Passu in Upper Hunza to the historic stone palaces of Khaplu and the silent heights of the Deosai plateau, our mission is to craft journeys that inspire, respect local communities, and create lifelong memories.
+              </p>
+            </div>
+            <div className="pt-2 flex flex-wrap gap-4 text-xs sm:text-sm">
+              <div className="px-5 py-3 bg-[#F8F6F0] rounded-xl border border-[#E8E4D9]">
+                <div className="font-bold text-[#174734] text-base">Skardu &amp; Gilgit</div>
+                <div className="text-[#808D86] text-xs">Field Bases in GB</div>
+              </div>
+              <div className="px-5 py-3 bg-[#F8F6F0] rounded-xl border border-[#E8E4D9]">
+                <div className="font-bold text-[#174734] text-base">10+ Years</div>
+                <div className="text-[#808D86] text-xs">Alpine Experience</div>
+              </div>
+              <div className="px-5 py-3 bg-[#F8F6F0] rounded-xl border border-[#E8E4D9]">
+                <div className="font-bold text-[#174734] text-base">100% Native</div>
+                <div className="text-[#808D86] text-xs">Balti &amp; Hunza Guides</div>
+              </div>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            <div className="p-4 sm:p-5 rounded-3xl bg-gray-50 border border-slate-200 space-y-3">
-              <h3 className="font-display text-base sm:text-lg font-bold text-slate-900">
-                Primary Destination Guides
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-600 font-medium">
-                Read detailed seasonal guides, attractions, and road access tips for our core service regions:
-              </p>
-              <ul className="space-y-2 text-xs sm:text-sm font-semibold">
-                <li>
-                  <Link to="/destinations/hunza" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Hunza Valley Tour Guide</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/destinations/skardu" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Skardu &amp; Baltistan Travel Guide</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/destinations/naran-kaghan" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Naran Kaghan &amp; Babusar Top Guide</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/destinations/kashmir" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Kashmir &amp; Neelum Valley Guide</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/destinations/northern-areas" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Northern Areas of Pakistan Overview</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div className="p-4 sm:p-5 rounded-3xl bg-gray-50 border border-slate-200 space-y-3">
-              <h3 className="font-display text-base sm:text-lg font-bold text-slate-900">
-                Standalone &amp; Combination Tour Packages
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-600 font-medium">
-                Choose a single-valley holiday or combine multiple northern corridors into one trip:
-              </p>
-              <ul className="space-y-2 text-xs sm:text-sm font-semibold">
-                <li>
-                  <Link to="/tours/hunza-tour-packages" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Hunza Valley Tour Packages</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/tours/skardu-tour-packages" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Skardu &amp; Deosai Tour Packages</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/tours/naran-kaghan-tour-packages" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Naran Kaghan Tour Packages</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/tours/kashmir-tour-packages" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Kashmir &amp; Neelum Valley Tours</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/tours/hunza-skardu-tour" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Hunza &amp; Skardu Combined Tour</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/tours/naran-hunza-tour" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Naran &amp; Hunza Overland Tour</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/tours/naran-skardu-tour" className="text-emerald-800 hover:underline flex items-center justify-between">
-                    <span>Naran, Babusar &amp; Skardu Tour</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div className="p-4 sm:p-5 rounded-3xl bg-gray-50 border border-slate-200 space-y-3">
-              <h3 className="font-display text-base sm:text-lg font-bold text-slate-900">
-                How Booking Works
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-600 font-medium">
-                Every tour is confirmed around your real dates, group size, and seasonal road status:
-              </p>
-              <ol className="space-y-2.5 text-xs sm:text-sm text-slate-700 font-medium">
-                <li>
-                  <strong className="text-slate-900">1. Share Trip Details:</strong> Message us on WhatsApp ({business.phone}) or use our{' '}
-                  <Link to="/contact" className="text-emerald-800 hover:underline font-semibold">
-                    online inquiry form
-                  </Link>{' '}
-                  with your dates, travelers, and preferred destinations.
-                </li>
-                <li>
-                  <strong className="text-slate-900">2. Customize Route &amp; Hotels:</strong> Receive a tailored route plan, vehicle recommendation, hotel options, and custom quote.
-                </li>
-                <li>
-                  <strong className="text-slate-900">3. Confirm Reservation:</strong> Finalize your booking directly with our team and complete advance payment via official JazzCash ({business.jazzcashNumber} — {business.jazzcashName}).
-                </li>
-              </ol>
+          <div className="lg:col-span-5 relative">
+            <div className="rounded-2xl overflow-hidden border border-[#E8E4D9] shadow-lg">
+              <img
+                src={VISUAL_ASSETS.heroKarakoram}
+                alt="Baig Treks & Tours landscape"
+                className="w-full aspect-[4/3] object-cover"
+              />
             </div>
           </div>
         </div>
       </section>
 
-      {/* TRAVEL GUIDES */}
-      <section className="max-w-7xl mx-auto px-4 md:px-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div className="space-y-1.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-              Visual Stories &amp; Guides
-            </span>
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-              Pakistan Northern Areas Travel Guides
-            </h2>
-          </div>
-          <Link
-            to="/guides"
-            className="w-full sm:w-auto py-2.5 px-5 text-sm font-bold text-center text-white bg-emerald-700 hover:bg-emerald-800 rounded-2xl transition-colors inline-flex items-center justify-center gap-1.5 shadow-sm"
-          >
-            <span>Read All {blogPosts.length} Guides</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+      {/* =========================================================================
+          SECTION 7: INTERACTIVE GILGIT-BALTISTAN MAP
+          ========================================================================= */}
+      <section id="map-section" className="max-w-7xl mx-auto px-4 md:px-6 space-y-6 scroll-mt-24">
+        <div className="space-y-2 border-b border-[#E8E4D9] pb-4">
+          <span className="eyebrow-badge">
+            Interactive Map
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#174734] tracking-tight">
+            Explore the Valleys of Gilgit-Baltistan
+          </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          {blogPosts.slice(0, 3).map((post, idx) => (
-            <article
-              key={post.id || post.slug || `post-${idx}`}
-              className="bg-white border border-slate-200 rounded-3xl overflow-hidden flex flex-col justify-between shadow-lg shadow-slate-900/5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+        <InteractiveGilgitBaltistanMap />
+      </section>
+
+      {/* =========================================================================
+          SECTION 8: PHOTOGRAPHY GALLERY WITH LIGHTBOX
+          ========================================================================= */}
+      <section id="gallery" className="max-w-7xl mx-auto px-4 md:px-6 space-y-8 scroll-mt-24">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#E8E4D9] pb-5">
+          <div className="space-y-2">
+            <span className="eyebrow-badge eyebrow-gold">
+              Captured Moments
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#174734] tracking-tight">
+              Northern Pakistan Photography Gallery
+            </h2>
+            <p className="text-sm md:text-base text-[#5A655F] max-w-xl">
+              Authentic views of the Karakoram, Himalaya, and Hindu Kush mountain ranges.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {['All', 'Hunza', 'Skardu', 'Trekking'].map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setGalleryFilter(cat)}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  galleryFilter === cat
+                    ? 'bg-[#174734] text-white shadow-xs'
+                    : 'bg-white hover:bg-[#F8F6F0] text-[#252B27] border border-[#E8E4D9]'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {homepageGalleryItems.map((item, idx) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.35, delay: idx * 0.05 }}
+              onClick={() => setActiveLightboxImg(idx)}
+              className="group relative bg-white border border-[#E8E4D9] hover:border-[#174734]/30 rounded-2xl cursor-pointer overflow-hidden shadow-xs hover:shadow-lg transition-all"
             >
-              <div>
-                <div className="aspect-[16/10] overflow-hidden bg-slate-100">
-                  <img
-                    src={post.imageUrl}
-                    alt={post.title}
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
-                    className="w-full h-auto min-h-full object-cover transition-transform duration-500 hover:scale-105"
-                  />
+              <div className="relative aspect-[16/11] overflow-hidden bg-slate-100">
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+                <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md text-[#174734] text-xs font-semibold px-3 py-1 rounded-full shadow-xs flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-[#174734]" />
+                  <span>{item.location}</span>
                 </div>
-                <div className="p-4 md:p-5 space-y-2">
-                  <div className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>
-                      {post.category} · {post.readTime}
-                    </span>
-                  </div>
-                  <h3 className="font-display text-lg font-bold tracking-tight text-slate-900 leading-snug">
-                    <Link
-                      to={`/guides/${post.slug}`}
-                      className="hover:text-emerald-800 transition-colors"
-                    >
-                      {post.title}
-                    </Link>
-                  </h3>
-                  <p className="text-sm text-slate-600 font-medium line-clamp-2">{post.excerpt}</p>
+                <div className="absolute top-3 right-3 text-xs text-white font-medium bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20">
+                  {item.elevation}
+                </div>
+                <div className="absolute bottom-3 left-4 right-4 text-white">
+                  <h3 className="font-serif text-base sm:text-lg font-bold leading-snug line-clamp-1">{item.title}</h3>
                 </div>
               </div>
-              <div className="px-4 md:px-5 pb-4 md:pb-5 pt-2">
-                <Link
-                  to={`/guides/${post.slug}`}
-                  className="w-full py-2.5 px-4 text-xs md:text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-2xl inline-flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <span>Read Full Guide</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </article>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* FAQ ACCORDION SECTION */}
-      <section id="faqs" className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 scroll-mt-24">
-        <div className="text-center space-y-1.5">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#183C30]/10 border border-[#B99A58]/30 text-[#183C30] text-xs font-bold uppercase tracking-wider">
-            Helpful Information
+      {/* LIGHTBOX MODAL */}
+      <AnimatePresence>
+        {activeLightboxImg !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <button
+              type="button"
+              onClick={() => setActiveLightboxImg(null)}
+              className="absolute top-6 right-6 p-2.5 text-white bg-white/10 hover:bg-white hover:text-[#174734] rounded-full transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setActiveLightboxImg((prev) =>
+                  prev !== null
+                    ? (prev - 1 + homepageGalleryItems.length) % homepageGalleryItems.length
+                    : 0
+                )
+              }
+              className="absolute left-4 sm:left-8 p-3 text-white bg-black/70 rounded-full hover:bg-white hover:text-[#174734] transition-colors"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setActiveLightboxImg((prev) =>
+                  prev !== null ? (prev + 1) % homepageGalleryItems.length : 0
+                )
+              }
+              className="absolute right-4 sm:right-8 p-3 text-white bg-black/70 rounded-full hover:bg-white hover:text-[#174734] transition-colors"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+
+            <div className="max-w-4xl max-h-[85vh] flex flex-col items-center">
+              <img
+                src={homepageGalleryItems[activeLightboxImg].imageUrl}
+                alt={homepageGalleryItems[activeLightboxImg].title}
+                className="max-h-[70vh] w-auto object-contain rounded-2xl shadow-2xl"
+              />
+              <div className="mt-4 text-center text-white space-y-1">
+                <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#C5A46D]">
+                  {homepageGalleryItems[activeLightboxImg].title}
+                </h3>
+                <p className="text-xs sm:text-sm text-white/80 max-w-xl mx-auto">
+                  {homepageGalleryItems[activeLightboxImg].description}
+                </p>
+                <p className="text-xs text-white/60">
+                  {homepageGalleryItems[activeLightboxImg].location} · Elevation: {homepageGalleryItems[activeLightboxImg].elevation}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          SECTION 9: TESTIMONIALS / GUEST REVIEWS
+          ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+        <div className="space-y-2 border-b border-[#E8E4D9] pb-4">
+          <span className="eyebrow-badge eyebrow-gold">
+            Traveler Feedback
           </span>
-          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-[#183C30]">
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#174734] tracking-tight">
+            What Our Travelers Say
+          </h2>
+          <p className="text-sm md:text-base text-[#5A655F] max-w-xl">
+            Real feedback from guests who explored Northern Pakistan with Baig Treks &amp; Tours.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {reviews.slice(0, 3).map((rev) => (
+            <div
+              key={rev.id}
+              className="p-6 bg-white border border-[#E8E4D9] rounded-2xl shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center gap-1 text-[#C5A46D]">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-[#C5A46D]" />
+                  ))}
+                </div>
+                <p className="text-xs sm:text-sm text-[#252B27] leading-relaxed italic">
+                  "{rev.reviewText}"
+                </p>
+              </div>
+              <div className="pt-4 border-t border-[#E8E4D9] flex items-center justify-between text-xs">
+                <div>
+                  <div className="font-serif font-bold text-sm text-[#174734]">{rev.customerName}</div>
+                  <div className="text-[#808D86] text-[11px]">{rev.dateText || rev.date || 'Verified Guest'}</div>
+                </div>
+                <span className="text-[11px] text-[#174734] font-semibold bg-[#F8F6F0] px-2.5 py-1 rounded-full border border-[#E8E4D9]">
+                  Verified Tour
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 10: FREQUENTLY ASKED QUESTIONS
+          ========================================================================= */}
+      <section id="faq" className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 scroll-mt-24">
+        <div className="text-center space-y-2 border-b border-[#E8E4D9] pb-4">
+          <span className="eyebrow-badge">
+            Helpful Advice
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#174734] tracking-tight">
             Frequently Asked Questions
           </h2>
+          <p className="text-xs sm:text-sm text-[#5A655F]">
+            Common questions regarding visas, seasons, fitness levels, and custom packages.
+          </p>
         </div>
 
         <div className="space-y-3">
-          {faqs.map((faq, idx) => {
-            const faqKey = faq.id || `faq-${idx}`;
-            const isOpen = openFaqId === faqKey;
+          {faqs.map((faq) => {
+            const isOpen = openFaqId === faq.id;
             return (
               <div
-                key={faqKey}
-                className="rounded-3xl bg-white border border-[#B99A58]/25 overflow-hidden shadow-sm"
+                key={faq.id}
+                className="bg-white border border-[#E8E4D9] rounded-2xl overflow-hidden shadow-xs"
               >
                 <button
                   type="button"
-                  onClick={() => setOpenFaqId(isOpen ? null : faqKey)}
-                  className="w-full px-4 md:px-6 py-4 text-left flex items-center justify-between gap-4 hover:bg-[#FAF9F6] transition-colors"
+                  onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
+                  className="w-full p-5 text-left flex items-center justify-between gap-4 transition-colors hover:bg-[#F8F6F0]"
                 >
-                  <span className="font-serif text-sm sm:text-base font-bold text-[#183C30]">
+                  <span className="font-serif text-base sm:text-lg font-bold text-[#174734]">
                     {faq.question}
                   </span>
                   <ChevronDown
-                    className={`w-4 h-4 text-[#B99A58] shrink-0 transition-transform duration-200 ${
+                    className={`w-4 h-4 text-[#174734] shrink-0 transition-transform duration-200 ${
                       isOpen ? 'rotate-180' : ''
                     }`}
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-4 md:px-6 pb-5 text-sm md:text-base text-[#242824]/80 font-normal leading-relaxed border-t border-[#FAF9F6] pt-3">
+                  <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-[#5A655F] leading-relaxed border-t border-[#E8E4D9]/60">
                     {faq.answer}
                   </div>
                 )}
@@ -971,64 +910,11 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* CUSTOM TOUR INQUIRY & JAZZCASH SECTION */}
-      <section id="inquiry" className="max-w-7xl mx-auto px-4 md:px-6 scroll-mt-24">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
-          <div className="lg:col-span-5 space-y-5 bg-white border border-[#B99A58]/25 rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl shadow-slate-900/5">
-            <div className="space-y-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#183C30]/10 border border-[#B99A58]/30 text-[#183C30] text-xs font-bold uppercase tracking-wider">
-                Direct Booking Support
-              </span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#183C30]">
-                Start Planning With Baig Treks &amp; Tours
-              </h2>
-              <p className="text-sm md:text-base text-[#242824]/80 font-normal leading-relaxed">
-                Reach out on WhatsApp, phone, or email, or submit the trip inquiry form for a customized itinerary.
-              </p>
-            </div>
-
-            <div className="space-y-2.5 text-sm">
-              <a
-                href={heroWaLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white transition-colors"
-              >
-                <MessageCircle className="w-5 h-5 text-white shrink-0" />
-                <div>
-                  <div className="text-xs text-white/90 font-semibold">WhatsApp Direct</div>
-                  <div className="font-mono-num font-bold text-white">{business.phone}</div>
-                </div>
-              </a>
-
-              <a
-                href={`tel:+92${business.phone.replace(/^0/, '')}`}
-                className="flex items-center gap-3 p-3.5 rounded-2xl bg-gray-50 border border-slate-200 text-slate-900 hover:bg-slate-100 transition-colors"
-              >
-                <Phone className="w-5 h-5 text-emerald-600 shrink-0" />
-                <div>
-                  <div className="text-xs text-slate-700 font-semibold">Phone Call</div>
-                  <div className="font-mono-num font-bold text-slate-900">{business.phone}</div>
-                </div>
-              </a>
-
-              <a
-                href={`mailto:${business.email}`}
-                className="flex items-center gap-3 p-3.5 rounded-2xl bg-gray-50 border border-slate-200 text-slate-900 hover:bg-slate-100 transition-colors break-all"
-              >
-                <Mail className="w-5 h-5 text-emerald-600 shrink-0" />
-                <div>
-                  <div className="text-xs text-slate-700 font-semibold">Email</div>
-                  <div className="font-bold text-slate-900">{business.email}</div>
-                </div>
-              </a>
-            </div>
-          </div>
-
-          <div className="lg:col-span-7">
-            <InquiryFormSection />
-          </div>
-        </div>
+      {/* =========================================================================
+          SECTION 11: PLAN YOUR ADVENTURE / INQUIRY FORM
+          ========================================================================= */}
+      <section id="plan-trip" className="max-w-4xl mx-auto px-4 md:px-6 scroll-mt-24">
+        <InquiryFormSection />
       </section>
     </div>
   );

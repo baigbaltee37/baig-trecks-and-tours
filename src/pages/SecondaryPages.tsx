@@ -147,7 +147,7 @@ export const AboutPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Link
               to="/tours"
-              className="w-full sm:w-auto px-6 py-3 text-sm font-bold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm"
+              className="w-full sm:w-auto px-6 py-3 text-sm font-bold text-center bg-[#183C30] hover:bg-[#0F261F] text-[#FAF9F6] border border-[#B99A58]/40 rounded-2xl shadow-sm transition-colors"
             >
               Explore Our Tours
             </Link>
@@ -155,9 +155,9 @@ export const AboutPage: React.FC = () => {
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto px-6 py-3 text-sm font-bold text-center bg-slate-900 hover:bg-slate-800 text-white rounded-2xl flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 text-sm font-bold text-center bg-[#FAF9F6] hover:bg-white text-[#183C30] border border-[#B99A58]/35 rounded-2xl flex items-center justify-center gap-2 transition-colors"
             >
-              <MessageCircle className="w-4 h-4 text-emerald-400" />
+              <MessageCircle className="w-4 h-4 text-[#B99A58]" />
               <span>Chat on WhatsApp</span>
             </a>
           </div>
@@ -254,7 +254,7 @@ export const GalleryPage: React.FC = () => {
               onClick={() => setSelectedCategory(cat)}
               className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-colors ${
                 selectedCategory === cat
-                  ? 'bg-emerald-700 text-white shadow-xs'
+                  ? 'bg-[#183C30] text-[#FAF9F6] border border-[#B99A58]/40 shadow-xs'
                   : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
               }`}
             >

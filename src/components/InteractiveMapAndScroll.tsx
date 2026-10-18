@@ -15,6 +15,7 @@ import {
   Users,
   Mountain,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { TourItem, VISUAL_ASSETS } from '../data/initialData';
@@ -106,28 +107,28 @@ export const TourCard: React.FC<{ tour: TourItem }> = ({ tour }) => {
           rotateX: tilt.rotateX,
           rotateY: tilt.rotateY,
         }}
-        className="group bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl overflow-hidden flex flex-col justify-between shadow-lg shadow-slate-900/5 hover:shadow-xl hover:border-emerald-500/40 transition-shadow duration-300"
+        className="group bg-white border border-[#E8E4D9] hover:border-[#174734]/30 rounded-2xl overflow-hidden flex flex-col justify-between shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
       >
         <div>
           {/* Image Container with Zoom on Hover, Price Badge & Star Rating */}
-          <div className="relative overflow-hidden bg-slate-100 aspect-[4/3]">
+          <div className="relative overflow-hidden bg-slate-100 aspect-[16/10]">
             <img
               src={tour.imageUrl || VISUAL_ASSETS.heroKarakoram}
               alt={`${tour.title} — ${tour.destination} in Gilgit-Baltistan`}
               referrerPolicy="no-referrer"
               loading="lazy"
-              className="w-full h-auto min-h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/15 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
 
             {/* Top Left Location & Optional Badge */}
             <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5">
-              <span className="bg-white/90 backdrop-blur-md text-slate-900 text-xs font-semibold px-3 py-1 rounded-2xl shadow-xs flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-emerald-700" />
+              <span className="bg-white/95 backdrop-blur-md border border-[#E8E4D9] text-[#174734] text-xs font-semibold px-3 py-1 rounded-full shadow-xs flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#174734]" />
                 <span>{tour.destination}</span>
               </span>
               {tour.badge && (
-                <span className="bg-emerald-800/95 backdrop-blur-md text-white text-xs font-semibold px-3 py-1 rounded-2xl shadow-xs">
+                <span className="bg-[#C5A46D] text-[#0D2B20] text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-xs">
                   {tour.badge}
                 </span>
               )}
@@ -139,10 +140,10 @@ export const TourCard: React.FC<{ tour: TourItem }> = ({ tour }) => {
                 type="button"
                 onClick={() => toggleSaveTour(tour.id)}
                 aria-label={isSaved ? 'Remove from saved tours' : 'Save tour'}
-                className={`absolute top-3 right-3 p-2 rounded-2xl border transition-all duration-200 ${
+                className={`absolute top-3 right-3 p-2 rounded-full border transition-all duration-150 ${
                   isSaved
-                    ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                    : 'bg-white/90 backdrop-blur-md text-slate-700 border-white/60 hover:bg-white'
+                    ? 'bg-[#174734] text-white border-[#174734]'
+                    : 'bg-white/90 text-[#252B27] border-[#E8E4D9] hover:bg-white'
                 }`}
               >
                 <Bookmark className="w-4 h-4 fill-current" />
@@ -151,69 +152,67 @@ export const TourCard: React.FC<{ tour: TourItem }> = ({ tour }) => {
 
             {/* Price Badge & Star Rating on Image Bottom */}
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
-              <span className="bg-white/95 backdrop-blur-md text-slate-900 text-xs font-bold px-3 py-1.5 rounded-2xl shadow-sm">
+              <span className="bg-white/95 backdrop-blur-md text-[#174734] text-xs font-bold px-3 py-1 rounded-full shadow-xs border border-[#E8E4D9]">
                 {tour.pricePerPerson > 0
                   ? `PKR ${tour.pricePerPerson.toLocaleString()}`
                   : 'Custom Quote'}
               </span>
-              <span className="bg-slate-900/85 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-2xl flex items-center gap-1">
-                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+              <span className="bg-white/95 backdrop-blur-md text-[#252B27] text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-xs border border-[#E8E4D9]">
+                <Star className="w-3.5 h-3.5 text-[#C5A46D] fill-[#C5A46D]" />
                 <span>4.9</span>
               </span>
             </div>
           </div>
 
           {/* Card Body */}
-          <div className="p-4 md:p-5 space-y-2.5">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-700 font-semibold">
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+          <div className="p-5 space-y-2.5">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-[#5A655F]">
+              <span className="inline-flex items-center gap-1 font-medium">
+                <Calendar className="w-3.5 h-3.5 text-[#174734]" />
                 <span>{tour.duration}</span>
               </span>
-              <span aria-hidden="true">·</span>
-              <span className="inline-flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-emerald-600" />
+              <span aria-hidden="true" className="text-[#808D86]/40">·</span>
+              <span className="inline-flex items-center gap-1 font-medium">
+                <Mountain className="w-3.5 h-3.5 text-[#174734]" />
+                <span>{tour.difficulty || 'Moderate'}</span>
+              </span>
+              <span aria-hidden="true" className="text-[#808D86]/40">·</span>
+              <span className="inline-flex items-center gap-1 font-medium">
+                <Users className="w-3.5 h-3.5 text-[#174734]" />
                 <span>{tour.tourType}</span>
               </span>
             </div>
 
-            <h3 className="font-display text-lg md:text-xl font-bold tracking-tight text-slate-900 leading-snug">
-              <Link
-                to={`/tours/${tour.slug}`}
-                className="hover:text-emerald-800 transition-colors"
-              >
+            <h3 className="font-serif text-lg sm:text-xl font-bold text-[#174734] group-hover:text-[#0D2B20] transition-colors leading-snug">
+              <Link to={`/tours/${tour.slug}`}>
                 {tour.title}
               </Link>
             </h3>
 
-            <p className="text-sm text-slate-600 font-medium line-clamp-2 leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#5A655F] line-clamp-2 leading-relaxed">
               {tour.shortDescription}
             </p>
           </div>
         </div>
 
-        {/* Card Footer — Full Width Buttons on Mobile */}
-        <div className="px-4 md:px-5 pb-4 md:pb-5 pt-3 border-t border-slate-100 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link
-                to={`/tours/${tour.slug}`}
-                className="w-full py-2.5 px-3 text-sm font-bold text-center text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-colors block"
-              >
-                View Details
-              </Link>
-            </motion.div>
+        {/* Card Footer — Action Buttons */}
+        <div className="px-5 pb-5 pt-3 border-t border-[#E8E4D9]/70 space-y-3">
+          <div className="grid grid-cols-2 gap-2.5">
+            <Link
+              to={`/tours/${tour.slug}`}
+              className="py-2.5 px-3 text-xs sm:text-sm font-semibold text-center text-[#174734] bg-[#F8F6F0] hover:bg-[#EAE6DB] border border-[#E8E4D9] rounded-full transition-colors block"
+            >
+              View Tour
+            </Link>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            <button
               type="button"
               onClick={handleBookNowClick}
-              className="w-full py-2.5 px-3 text-sm font-bold text-center bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm flex items-center justify-center gap-1.5"
+              className="py-2.5 px-3 text-xs sm:text-sm font-semibold text-center bg-[#174734] hover:bg-[#0D2B20] text-white rounded-full shadow-xs flex items-center justify-center gap-1.5 transition-all"
             >
-              <span>Book Now</span>
-              <ArrowRight className="w-4 h-4" />
-            </motion.button>
+              <span>Book Trip</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* Inline Admin Controls visible when isAdmin=true */}
@@ -895,61 +894,60 @@ export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDes
   );
 
   return (
-    <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl shadow-slate-900/5">
+    <div className="bg-white border border-[#E8E4D9] rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg text-[#252B27]">
       {submitted ? (
-        <div className="space-y-4 py-6 text-center max-w-lg mx-auto">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-6 h-6" />
+        <div className="space-y-4 py-8 text-center max-w-lg mx-auto">
+          <div className="w-14 h-14 bg-emerald-100 text-[#174734] rounded-full flex items-center justify-center mx-auto shadow-xs">
+            <CheckCircle2 className="w-7 h-7 text-[#174734]" />
           </div>
-          <h3 className="font-display text-2xl font-bold tracking-tight text-slate-900">
-            Inquiry Received by {business.name}
+          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#174734]">
+            Inquiry Received
           </h3>
-          <p className="text-sm md:text-base text-slate-600">
-            Your trip request for <strong className="text-slate-900">{destination}</strong> has been saved. Our team will respond via WhatsApp or email with a tailored itinerary.
+          <p className="text-sm text-[#5A655F] leading-relaxed">
+            Thank you! Your travel request for <strong className="text-[#174734] font-semibold">{destination}</strong> has reached our local mountain team in Gilgit &amp; Skardu. We will formulate a personalized itinerary for you shortly.
           </p>
-          <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3">
+          <div className="pt-3 flex flex-col sm:flex-row justify-center gap-3">
             <a
               href={directWaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto px-5 py-3 text-sm font-semibold bg-emerald-700 text-white hover:bg-emerald-800 rounded-2xl flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 text-xs sm:text-sm font-semibold rounded-full bg-[#174734] text-white hover:bg-[#0D2B20] shadow-sm flex items-center justify-center gap-2"
             >
-              <MessageCircle className="w-4 h-4" />
+              <MessageCircle className="w-4 h-4 text-[#C5A46D]" />
               <span>Continue on WhatsApp ({business.phone})</span>
             </a>
             <button
               type="button"
               onClick={() => setSubmitted(false)}
-              className="w-full sm:w-auto px-5 py-3 text-sm font-semibold bg-slate-100 text-slate-800 hover:bg-slate-200 rounded-2xl"
+              className="w-full sm:w-auto px-5 py-3 text-xs sm:text-sm font-medium rounded-full bg-[#F8F6F0] text-[#174734] border border-[#E8E4D9] hover:bg-[#EAE6DB]"
             >
               Send Another Inquiry
             </button>
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold">
-              <Compass className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Custom Itinerary &amp; Quote Request</span>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-1.5 pb-4 border-b border-[#E8E4D9]">
+            <span className="eyebrow-badge eyebrow-gold">
+              Personalized Travel
             </span>
-            <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-              Plan Your Gilgit-Baltistan Trip
+            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#174734]">
+              Plan Your Adventure in Northern Pakistan
             </h3>
-            <p className="text-sm text-slate-600 font-medium">
-              Share your travel preferences below or message us directly on WhatsApp at {business.phone}.
+            <p className="text-xs sm:text-sm text-[#5A655F]">
+              Tell us your preferences below, or message us directly on WhatsApp at {business.phone} for immediate assistance.
             </p>
           </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-700">
+            <div className="p-3 bg-red-50 border border-red-200 text-xs text-red-700 rounded-xl">
               {errorMsg}
             </div>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[#252B27] mb-1.5">
                 Full Name *
               </label>
               <input
@@ -957,12 +955,12 @@ export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDes
                 required
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Your full name"
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
+                placeholder="e.g. John Doe"
+                className="w-full px-4 py-2.5 bg-[#F8F6F0] border border-[#E8E4D9] rounded-xl text-xs sm:text-sm text-[#252B27] focus:outline-none focus:border-[#174734] focus:ring-1 focus:ring-[#174734] transition-colors"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[#252B27] mb-1.5">
                 WhatsApp / Phone Number *
               </label>
               <input
@@ -970,15 +968,15 @@ export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDes
                 required
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="e.g. 03155449778"
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
+                placeholder="e.g. +92 315 5449778"
+                className="w-full px-4 py-2.5 bg-[#F8F6F0] border border-[#E8E4D9] rounded-xl text-xs sm:text-sm text-[#252B27] focus:outline-none focus:border-[#174734] focus:ring-1 focus:ring-[#174734] transition-colors"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[#252B27] mb-1.5">
                 Email Address
               </label>
               <input
@@ -986,17 +984,17 @@ export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDes
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
+                className="w-full px-4 py-2.5 bg-[#F8F6F0] border border-[#E8E4D9] rounded-xl text-xs sm:text-sm text-[#252B27] focus:outline-none focus:border-[#174734] focus:ring-1 focus:ring-[#174734] transition-colors"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Destination
+              <label className="block text-xs font-semibold text-[#252B27] mb-1.5">
+                Destination of Choice
               </label>
               <select
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
+                className="w-full px-4 py-2.5 bg-[#F8F6F0] border border-[#E8E4D9] rounded-xl text-xs sm:text-sm text-[#252B27] focus:outline-none focus:border-[#174734] focus:ring-1 focus:ring-[#174734] transition-colors"
               >
                 <option value="Hunza Valley">Hunza Valley</option>
                 <option value="Skardu & Baltistan">Skardu &amp; Baltistan</option>
@@ -1010,7 +1008,7 @@ export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDes
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[#252B27] mb-1.5">
                 Number of Travelers
               </label>
               <input
@@ -1019,32 +1017,32 @@ export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDes
                 max={100}
                 value={travelers}
                 onChange={(e) => setTravelers(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
+                className="w-full px-4 py-2.5 bg-[#F8F6F0] border border-[#E8E4D9] rounded-xl text-xs sm:text-sm text-[#252B27] focus:outline-none focus:border-[#174734] focus:ring-1 focus:ring-[#174734] transition-colors"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Preferred Travel Dates / Month
+              <label className="block text-xs font-semibold text-[#252B27] mb-1.5">
+                Preferred Travel Window / Dates
               </label>
               <input
                 type="text"
                 value={preferredDates}
                 onChange={(e) => setPreferredDates(e.target.value)}
-                placeholder="e.g. May 15 - May 22 or Flexible"
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
+                placeholder="e.g. May – June 2026 or Flexible"
+                className="w-full px-4 py-2.5 bg-[#F8F6F0] border border-[#E8E4D9] rounded-xl text-xs sm:text-sm text-[#252B27] focus:outline-none focus:border-[#174734] focus:ring-1 focus:ring-[#174734] transition-colors"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Experience Type
+              <label className="block text-xs font-semibold text-[#252B27] mb-1.5">
+                Trip Style
               </label>
               <select
                 value={tourType}
                 onChange={(e) => setTourType(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
+                className="w-full px-4 py-2.5 bg-[#F8F6F0] border border-[#E8E4D9] rounded-xl text-xs sm:text-sm text-[#252B27] focus:outline-none focus:border-[#174734] focus:ring-1 focus:ring-[#174734] transition-colors"
               >
                 <option value="Private Customized Tour">Private Customized Tour</option>
                 <option value="Family Holiday">Family Holiday</option>
@@ -1057,39 +1055,36 @@ export const InquiryFormSection: React.FC<{ defaultTourSlug?: string; defaultDes
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Trip Notes or Special Requests
+            <label className="block text-xs font-semibold text-[#252B27] mb-1.5">
+              Special Requests / Itinerary Notes
             </label>
             <textarea
               rows={3}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Tell us your departure city, hotel preference, or places you want to include..."
-              className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-colors"
+              placeholder="Departure city (e.g. Islamabad, Lahore, Karachi), hotel preferences, specific spots you wish to see..."
+              className="w-full px-4 py-2.5 bg-[#F8F6F0] border border-[#E8E4D9] rounded-xl text-xs sm:text-sm text-[#252B27] focus:outline-none focus:border-[#174734] focus:ring-1 focus:ring-[#174734] transition-colors"
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-3">
+            <button
               type="submit"
               disabled={submitting}
-              className="w-full sm:w-auto px-6 py-3 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl shadow-sm transition-all disabled:opacity-50"
+              className="px-8 py-3.5 text-xs sm:text-sm font-semibold rounded-full bg-[#174734] hover:bg-[#0D2B20] text-white shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {submitting ? 'Submitting Request...' : 'Send Trip Inquiry'}
-            </motion.button>
-            <motion.a
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              <Sparkles className="w-4 h-4 text-[#C5A46D]" />
+              <span>{submitting ? 'Submitting...' : 'Submit Inquiry'}</span>
+            </button>
+            <a
               href={directWaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto px-5 py-3 text-sm font-bold bg-emerald-800 hover:bg-emerald-900 text-white rounded-2xl transition-colors flex items-center justify-center gap-2"
+              className="px-6 py-3.5 text-xs sm:text-sm font-semibold rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors flex items-center justify-center gap-2"
             >
-              <MessageCircle className="w-4 h-4" />
-              <span>Instant WhatsApp Quote</span>
-            </motion.a>
+              <MessageCircle className="w-4 h-4 text-emerald-700" />
+              <span>Direct WhatsApp Chat</span>
+            </a>
           </div>
         </form>
       )}

@@ -19,8 +19,11 @@ import {
   ArrowRight,
   MapPin,
   CheckCircle2,
+  Mountain,
+  Heart,
+  Globe,
 } from 'lucide-react';
-import { useApp, ADMIN_EMAIL } from '../context/AppContext';
+import { useApp } from '../context/AppContext';
 import { buildWhatsAppLink } from '../config/business';
 import { BrandLogo } from './BrandLogo';
 import { SEOHead } from './SEOHead';
@@ -49,7 +52,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }, [location.pathname]);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
+    const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -65,17 +68,17 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }, []);
 
   const navItems = [
-    { label: 'Home', to: '/' },
-    { label: 'Tours', to: '/tours' },
+    { label: 'Tours & Packages', to: '/tours' },
     { label: 'Destinations', to: '/destinations' },
+    { label: 'Experiences', to: '/experiences' },
     { label: 'About Us', to: '/about' },
     { label: 'Gallery', to: '/gallery' },
-    { label: 'FAQs', to: '/#faqs' },
+    { label: 'Travel Guides', to: '/travel-guides' },
     { label: 'Contact', to: '/contact' },
   ];
 
   const defaultWaLink = buildWhatsAppLink(
-    `Hello Baig Treks & Tours, I would like to inquire about Gilgit-Baltistan tours and expeditions.`,
+    `Hello Baig Treks & Tours, I would like to inquire about private tours and custom itineraries in Northern Pakistan.`,
     business.whatsapp
   );
 
@@ -90,82 +93,82 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-[#242824] overflow-x-hidden pb-16 md:pb-0">
+    <div className="min-h-screen flex flex-col bg-[#F8F6F0] text-[#252B27] overflow-x-hidden selection:bg-[#174734] selection:text-[#F8F6F0]">
       <SEOHead />
 
-      {/* TOP ANNOUNCEMENT BAR: Local Expertise & 24/7 WhatsApp Assistance */}
-      <div className="bg-[#0F261F] text-[#F4EFDF] border-b border-[#B99A58]/25 text-xs py-2 px-4 hidden sm:block">
+      {/* REFINED TOP CONTACT & ANNOUNCEMENT BAR */}
+      <div className="bg-[#102B24] text-white/90 text-xs py-2 px-4 hidden sm:block border-b border-[#174734]">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#B99A58] animate-pulse" />
-            <span className="font-medium tracking-wide">
-              Beyond the Mountains · Authentic Gilgit-Baltistan Expeditions with Local Guides
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 text-xs text-[#C5A46D] font-medium">
+              <Mountain className="w-3.5 h-3.5" />
+              <span>Certified Local Guides · Gilgit-Baltistan &amp; Northern Pakistan</span>
             </span>
           </div>
-          <div className="flex items-center gap-4 text-[#F4EFDF]/85">
+
+          <div className="flex items-center gap-5 text-xs">
+            <a
+              href={`tel:${business.phoneInternational}`}
+              className="hover:text-[#C5A46D] flex items-center gap-1.5 transition-colors"
+            >
+              <Phone className="w-3 h-3 text-[#C5A46D]" />
+              <span>{business.phone}</span>
+            </a>
+            <span className="text-white/20">|</span>
+            <a
+              href={`mailto:${business.email}`}
+              className="hover:text-[#C5A46D] flex items-center gap-1.5 transition-colors"
+            >
+              <Mail className="w-3 h-3 text-[#C5A46D]" />
+              <span>{business.email}</span>
+            </a>
+            <span className="text-white/20">|</span>
             <a
               href={defaultWaLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-[#B99A58] flex items-center gap-1.5 transition-colors font-medium"
+              className="hover:text-[#C5A46D] flex items-center gap-1.5 transition-colors font-medium text-[#C5A46D]"
             >
-              <MessageCircle className="w-3.5 h-3.5 text-[#B99A58]" />
-              <span>WhatsApp: {business.phone}</span>
-            </a>
-            <span className="text-[#B99A58]/40">|</span>
-            <a
-              href={`mailto:${business.email}`}
-              className="hover:text-[#B99A58] flex items-center gap-1.5 transition-colors"
-            >
-              <Mail className="w-3.5 h-3.5 text-[#B99A58]" />
-              <span>{business.email}</span>
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>WhatsApp Us</span>
             </a>
           </div>
         </div>
       </div>
 
-      {/* LUXURY FOREST GREEN STICKY HEADER */}
+      {/* REFINED WARM IVORY NAVBAR HEADER */}
       <header
         className={`sticky top-0 z-40 transition-all duration-300 ${
           scrolled
-            ? 'bg-[#183C30]/95 backdrop-blur-xl border-b border-[#B99A58]/30 shadow-xl shadow-[#0F261F]/20'
-            : 'bg-[#183C30] border-b border-[#B99A58]/20'
+            ? 'bg-[#F8F6F0]/95 backdrop-blur-md border-b border-[#E8E4D9] shadow-md shadow-[#174734]/5'
+            : 'bg-[#F8F6F0] border-b border-[#E8E4D9]/80'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-18 md:h-20 flex items-center justify-between gap-3">
-          {/* Logo with Karakoram Emblem & BAIG TREKS & TOURS Wordmark */}
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 md:h-22 flex items-center justify-between gap-4">
+          {/* Brand Logo with Mountain Emblem & Elegant Serif Wordmark */}
           <Link
             to="/"
-            className="shrink-0 focus:outline-none focus:ring-2 focus:ring-[#B99A58] rounded-2xl p-1 -m-1"
+            className="shrink-0 focus:outline-none focus:ring-2 focus:ring-[#174734]/20 rounded-xl p-1 -m-1"
             aria-label="Baig Treks & Tours Homepage"
           >
-            <BrandLogo layout="horizontal" variant="dark" size="sm" showTagline={true} />
+            <BrandLogo layout="horizontal" variant="light" size="sm" showTagline={true} />
           </Link>
 
-          {/* Desktop Navigation Links */}
+          {/* Clean Desktop Navigation Links */}
           <nav
             aria-label="Main Navigation"
-            className="hidden lg:flex items-center gap-1 xl:gap-2 text-sm font-medium text-[#F4EFDF]"
+            className="hidden lg:flex items-center gap-1 xl:gap-2 text-sm font-medium text-[#252B27]"
           >
             {navItems.map((item) => {
-              const isFaq = item.to.startsWith('/#');
-              const active = !isFaq && location.pathname === item.to;
-              return isFaq ? (
-                <a
-                  key={item.to}
-                  href={item.to}
-                  className="px-3.5 py-2 rounded-xl text-[#F4EFDF]/90 hover:text-white hover:bg-[#24342D]/70 transition-all duration-200 whitespace-nowrap"
-                >
-                  {item.label}
-                </a>
-              ) : (
+              const active = location.pathname === item.to;
+              return (
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`px-3.5 py-2 rounded-xl transition-all duration-200 whitespace-nowrap ${
+                  className={`px-3 py-2 rounded-full transition-all duration-200 whitespace-nowrap ${
                     active
-                      ? 'text-white bg-[#24342D] border border-[#B99A58]/40 font-semibold shadow-xs'
-                      : 'text-[#F4EFDF]/90 hover:text-white hover:bg-[#24342D]/70'
+                      ? 'text-[#174734] font-bold bg-[#EAE6DB]'
+                      : 'text-[#252B27]/85 hover:text-[#174734] hover:bg-[#F0EDE4]'
                   }`}
                 >
                   {item.label}
@@ -175,42 +178,32 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </nav>
 
           {/* Right Header Actions */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
               {/* Admin Quick Link */}
               {isAdmin && (
-                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                  <Link
-                    to="/admin"
-                    className="px-3 py-2 text-xs font-bold text-[#F4EFDF] bg-[#24342D] border border-[#B99A58]/50 hover:border-[#B99A58] rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-[#B99A58]" />
-                    <span>Admin</span>
-                  </Link>
-                </motion.div>
+                <Link
+                  to="/admin"
+                  className="px-3 py-1.5 text-xs font-semibold text-[#174734] bg-[#EAE6DB] hover:bg-[#DED7C8] rounded-full border border-[#D9D3C3] transition-colors flex items-center gap-1.5"
+                >
+                  <Shield className="w-3.5 h-3.5 text-[#174734]" />
+                  <span>Admin</span>
+                </Link>
               )}
 
-              {/* User Dropdown or Sign In */}
+              {/* User Account Dropdown */}
               {isLoggedIn ? (
                 <div className="relative" ref={dropdownRef}>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                  <button
                     type="button"
-                    onClick={() => setUserDropdownOpen((prev) => !prev)}
-                    className="px-3 py-2 text-xs font-semibold text-[#F4EFDF] bg-[#24342D] border border-[#B99A58]/30 hover:border-[#B99A58]/70 rounded-xl shadow-xs flex items-center gap-2 transition-all"
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-[#174734] bg-white border border-[#E8E4D9] rounded-full hover:border-[#174734]/30 shadow-xs transition-colors"
                   >
-                    <span className="w-5 h-5 rounded-full bg-[#B99A58] text-[#183C30] text-[10px] font-bold flex items-center justify-center">
-                      {displayName.charAt(0).toUpperCase()}
-                    </span>
-                    <span className="max-w-[100px] truncate">{displayName}</span>
-                    <ChevronDown
-                      className={`w-3.5 h-3.5 text-[#B99A58] transition-transform duration-200 ${
-                        userDropdownOpen ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </motion.button>
+                    <User className="w-4 h-4 text-[#174734]" />
+                    <span className="max-w-[120px] truncate">{displayName}</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-[#808D86]" />
+                  </button>
 
                   <AnimatePresence>
                     {userDropdownOpen && (
@@ -218,52 +211,50 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         initial={{ opacity: 0, y: 8, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                        transition={{ duration: 0.18 }}
-                        className="absolute right-0 mt-2 w-56 bg-[#183C30] border border-[#B99A58]/40 rounded-2xl shadow-2xl p-2 z-50 space-y-1 text-[#F4EFDF]"
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 w-56 bg-white border border-[#E8E4D9] rounded-2xl shadow-xl py-2 z-50 text-sm"
                       >
-                        <div className="px-3 py-2 border-b border-[#24342D]">
-                          <div className="text-xs font-bold text-white truncate">
-                            {displayName}
-                          </div>
-                          <div className="text-[11px] text-[#F4EFDF]/70 truncate">
-                            {user?.email || profile?.email || ADMIN_EMAIL}
-                          </div>
+                        <div className="px-4 py-2 border-b border-[#E8E4D9]/60">
+                          <p className="text-xs text-[#808D86]">Signed in as</p>
+                          <p className="font-semibold text-[#174734] truncate">
+                            {user?.email || (isAdmin ? 'Admin' : displayName)}
+                          </p>
                         </div>
 
                         <Link
                           to="/my-bookings"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="w-full px-3 py-2 text-xs font-medium text-[#F4EFDF] hover:text-white hover:bg-[#24342D] rounded-xl flex items-center gap-2.5 transition-colors"
+                          className="w-full px-4 py-2.5 text-[#252B27] hover:bg-[#F8F6F0] hover:text-[#174734] flex items-center gap-2.5 transition-colors"
                         >
-                          <Calendar className="w-4 h-4 text-[#B99A58]" />
+                          <Calendar className="w-4 h-4 text-[#C5A46D]" />
                           <span>My Bookings</span>
                         </Link>
 
                         <Link
                           to="/profile"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="w-full px-3 py-2 text-xs font-medium text-[#F4EFDF] hover:text-white hover:bg-[#24342D] rounded-xl flex items-center gap-2.5 transition-colors"
+                          className="w-full px-4 py-2.5 text-[#252B27] hover:bg-[#F8F6F0] hover:text-[#174734] flex items-center gap-2.5 transition-colors"
                         >
-                          <Settings className="w-4 h-4 text-[#B99A58]" />
-                          <span>Profile Settings</span>
+                          <Settings className="w-4 h-4 text-[#C5A46D]" />
+                          <span>Profile &amp; Settings</span>
                         </Link>
 
                         {isAdmin && (
                           <Link
                             to="/admin"
                             onClick={() => setUserDropdownOpen(false)}
-                            className="w-full px-3 py-2 text-xs font-semibold text-[#B99A58] bg-[#24342D] hover:bg-[#24342D]/80 rounded-xl flex items-center gap-2.5 transition-colors"
+                            className="w-full px-4 py-2.5 font-medium text-[#174734] hover:bg-[#F8F6F0] flex items-center gap-2.5 transition-colors"
                           >
-                            <Shield className="w-4 h-4 text-[#B99A58]" />
-                            <span>Admin Dashboard</span>
+                            <Shield className="w-4 h-4 text-[#174734]" />
+                            <span>Admin Portal</span>
                           </Link>
                         )}
 
-                        <div className="pt-1 border-t border-[#24342D]">
+                        <div className="pt-1 mt-1 border-t border-[#E8E4D9]/60">
                           <button
                             type="button"
                             onClick={handleLogout}
-                            className="w-full px-3 py-2 text-xs font-semibold text-rose-300 hover:bg-rose-950/40 rounded-xl flex items-center gap-2.5 transition-colors"
+                            className="w-full px-4 py-2 text-red-600 hover:bg-red-50 flex items-center gap-2.5 transition-colors text-left"
                           >
                             <LogOut className="w-4 h-4" />
                             <span>Sign Out</span>
@@ -274,23 +265,21 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   </AnimatePresence>
                 </div>
               ) : (
-                <div className="flex items-center gap-1 text-xs font-medium">
-                  <Link
-                    to="/login"
-                    className="px-3 py-2 text-[#F4EFDF] hover:text-white hover:bg-[#24342D]/60 rounded-xl transition-colors"
-                  >
-                    Login
-                  </Link>
-                </div>
+                <Link
+                  to="/login"
+                  className="px-3.5 py-2 text-sm font-medium text-[#252B27] hover:text-[#174734] transition-colors"
+                >
+                  Sign In
+                </Link>
               )}
 
-              {/* PRIMARY CTA: Plan Your Trip (Gold Luxury Button) */}
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              {/* TASTEFUL DEEP FOREST GREEN PRIMARY CTA */}
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <a
-                  href="/#inquiry"
-                  className="px-4 py-2.5 text-xs font-bold uppercase tracking-wider bg-[#B99A58] hover:bg-[#A38443] text-[#183C30] rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                  href="/#plan-trip"
+                  className="px-5 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#174734] hover:bg-[#0D2B20] rounded-full shadow-sm hover:shadow-md transition-all flex items-center gap-2"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#C5A46D]" />
                   <span>Plan Your Trip</span>
                 </a>
               </motion.div>
@@ -302,9 +291,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 href={defaultWaLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                title={`Chat on WhatsApp (${business.phone})`}
-                aria-label="Chat on WhatsApp"
-                className="p-2.5 bg-[#24342D] hover:bg-[#1E4D3E] border border-[#B99A58]/40 text-[#B99A58] hover:text-white rounded-xl shadow-xs transition-colors"
+                title={`Chat with us on WhatsApp (${business.phone})`}
+                aria-label="Direct WhatsApp Chat"
+                className="p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-full border border-emerald-200 transition-colors"
               >
                 <MessageCircle className="w-4 h-4" />
               </motion.a>
@@ -314,9 +303,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             {isLoggedIn && (
               <Link
                 to="/my-bookings"
-                className="md:hidden px-2 py-1.5 text-xs font-semibold text-[#F4EFDF] bg-[#24342D] border border-[#B99A58]/30 rounded-lg flex items-center gap-1"
+                className="md:hidden px-2.5 py-1.5 text-xs font-semibold text-[#174734] bg-white border border-[#E8E4D9] rounded-full flex items-center gap-1"
               >
-                <User className="w-3.5 h-3.5 text-[#B99A58]" />
+                <User className="w-3.5 h-3.5 text-[#174734]" />
                 <span className="max-w-[70px] truncate">{displayName}</span>
               </Link>
             )}
@@ -324,111 +313,89 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle navigation menu"
-              aria-expanded={mobileMenuOpen}
-              className="lg:hidden p-2 text-[#F4EFDF] hover:text-white bg-[#24342D] hover:bg-[#1E4D3E] border border-[#B99A58]/30 rounded-xl transition-colors"
+              className="lg:hidden p-2.5 text-[#174734] bg-white hover:bg-[#F0EDE4] border border-[#E8E4D9] rounded-full transition-colors focus:outline-none"
+              aria-label={mobileMenuOpen ? 'Close Menu' : 'Open Menu'}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
-        {/* ACCESSIBLE MOBILE MENU DRAWER */}
+        {/* Mobile Navigation Drawer */}
         <AnimatePresence>
           {mobileMenuOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
-              className="lg:hidden bg-[#183C30] border-t border-[#B99A58]/25 shadow-2xl overflow-hidden"
+              transition={{ duration: 0.25 }}
+              className="lg:hidden bg-[#F8F6F0] border-b border-[#E8E4D9] shadow-xl overflow-hidden"
             >
-              <div className="px-4 py-5 space-y-4">
+              <div className="px-5 py-5 space-y-4">
+                {/* Mobile Drawer Brand Logo Header */}
+                <div className="pb-3 border-b border-[#E8E4D9] flex items-center justify-between">
+                  <BrandLogo layout="horizontal" variant="light" size="sm" showTagline={false} />
+                  <span className="text-[11px] font-semibold text-[#174734] bg-white px-2.5 py-1 rounded-full border border-[#E8E4D9]">
+                    Verified DTS
+                  </span>
+                </div>
+
                 <nav className="grid grid-cols-1 gap-1">
                   {navItems.map((item) => {
-                    const isFaq = item.to.startsWith('/#');
-                    const active = !isFaq && location.pathname === item.to;
-                    return isFaq ? (
-                      <a
-                        key={item.to}
-                        href={item.to}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="px-4 py-3 rounded-xl text-sm font-medium text-[#F4EFDF] hover:bg-[#24342D] transition-colors flex items-center justify-between"
-                      >
-                        <span>{item.label}</span>
-                      </a>
-                    ) : (
+                    const active = location.pathname === item.to;
+                    return (
                       <Link
                         key={item.to}
                         to={item.to}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`px-4 py-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-between ${
+                        className={`px-4 py-3 text-sm font-medium rounded-xl transition-all flex items-center justify-between ${
                           active
-                            ? 'bg-[#24342D] text-white font-bold border-l-4 border-[#B99A58]'
-                            : 'text-[#F4EFDF] hover:bg-[#24342D]'
+                            ? 'bg-[#174734] text-white font-semibold shadow-xs'
+                            : 'text-[#252B27] hover:bg-white hover:text-[#174734]'
                         }`}
                       >
                         <span>{item.label}</span>
-                        {active && <span className="w-2 h-2 rounded-full bg-[#B99A58]" />}
+                        <ArrowRight className="w-4 h-4 opacity-40" />
                       </Link>
                     );
                   })}
                 </nav>
 
-                <div className="pt-3 border-t border-[#B99A58]/20 flex flex-col gap-2.5">
+                <div className="pt-3 border-t border-[#E8E4D9] space-y-2.5">
                   <a
-                    href="/#inquiry"
+                    href="/#plan-trip"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full py-3 px-4 text-xs font-bold uppercase tracking-wider text-center bg-[#B99A58] hover:bg-[#A38443] text-[#183C30] rounded-xl flex items-center justify-center gap-2 shadow-md"
+                    className="w-full py-3 px-4 text-sm font-semibold rounded-full bg-[#174734] text-white shadow-sm flex items-center justify-center gap-2"
                   >
-                    <Sparkles className="w-4 h-4" />
-                    <span>Plan Your Trip</span>
+                    <Sparkles className="w-4 h-4 text-[#C5A46D]" />
+                    <span>Plan Your Adventure</span>
                   </a>
 
                   <a
                     href={defaultWaLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full py-3 px-4 text-xs font-bold text-center bg-[#24342D] hover:bg-[#1E4D3E] text-[#F4EFDF] border border-[#B99A58]/40 rounded-xl flex items-center justify-center gap-2 shadow-xs"
+                    className="w-full py-2.5 px-4 text-sm font-medium rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center gap-2"
                   >
-                    <MessageCircle className="w-4 h-4 text-[#B99A58]" />
-                    <span>Chat on WhatsApp ({business.phone})</span>
+                    <MessageCircle className="w-4 h-4 text-emerald-700" />
+                    <span>WhatsApp: {business.phone}</span>
                   </a>
 
-                  {isLoggedIn ? (
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <Link
-                        to="/my-bookings"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="py-2.5 px-3 text-xs font-semibold text-center bg-[#24342D] text-[#F4EFDF] rounded-xl flex items-center justify-center gap-1.5"
-                      >
-                        <Calendar className="w-3.5 h-3.5 text-[#B99A58]" />
-                        <span>Bookings</span>
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="py-2.5 px-3 text-xs font-semibold text-center bg-rose-950/40 text-rose-300 border border-rose-900/50 rounded-xl flex items-center justify-center gap-1.5"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span>Sign Out</span>
-                      </button>
-                    </div>
-                  ) : (
+                  {!isLoggedIn && (
                     <div className="grid grid-cols-2 gap-2 pt-1">
                       <Link
                         to="/login"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="py-2.5 px-3 text-xs font-semibold text-center bg-[#24342D] text-[#F4EFDF] rounded-xl"
+                        className="py-2.5 px-3 text-xs font-semibold rounded-full text-center bg-white border border-[#E8E4D9] text-[#252B27]"
                       >
-                        Login
+                        Sign In
                       </Link>
                       <Link
                         to="/signup"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="py-2.5 px-3 text-xs font-semibold text-center bg-[#F4EFDF] text-[#183C30] rounded-xl font-bold"
+                        className="py-2.5 px-3 text-xs font-semibold rounded-full text-center bg-[#174734] text-white"
                       >
-                        Sign Up
+                        Register
                       </Link>
                     </div>
                   )}
@@ -437,10 +404,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     <Link
                       to="/admin"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="w-full py-2.5 px-4 text-xs font-bold text-center bg-[#24342D] border border-[#B99A58] text-[#B99A58] rounded-xl flex items-center justify-center gap-2"
+                      className="w-full py-2.5 px-4 text-xs font-semibold rounded-full text-center bg-[#EAE6DB] text-[#174734] border border-[#D9D3C3] flex items-center justify-center gap-2"
                     >
                       <Shield className="w-4 h-4" />
-                      <span>Admin Portal</span>
+                      <span>Admin Console</span>
                     </Link>
                   )}
                 </div>
@@ -452,16 +419,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
       {/* Notification Banner */}
       {signupNotificationNote && (
-        <div className="bg-[#183C30] text-[#F4EFDF] border-b border-[#B99A58]/30 px-4 py-2.5 text-xs">
+        <div className="bg-[#174734] text-white px-4 py-2.5 text-xs">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <span className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#B99A58] shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-[#C5A46D] shrink-0" />
               <span>{signupNotificationNote}</span>
             </span>
             <button
               type="button"
               onClick={clearSignupNotificationNote}
-              className="text-[#B99A58] hover:text-white font-semibold underline underline-offset-2 shrink-0"
+              className="text-[#C5A46D] hover:text-white font-semibold underline underline-offset-2 shrink-0 text-xs"
             >
               Dismiss
             </button>
@@ -472,124 +439,162 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 w-full overflow-x-hidden">{children}</main>
 
-      {/* LUXURY FOOTER: Deep Pine Background & Gold Accents */}
-      <footer className="bg-[#12261E] text-[#F4EFDF] pt-14 md:pt-20 pb-12 border-t border-[#B99A58]/20">
+      {/* REFINED LUXURY FOOTER (Deep Forest Green #102B24) */}
+      <footer className="bg-[#102B24] text-white pt-16 pb-12 border-t border-[#174734]">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 md:gap-12 pb-12 border-b border-[#24342D]">
-            {/* Brand Column */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 md:gap-12 pb-12 border-b border-white/10">
+            {/* Brand Column with Photo Emblem */}
             <div className="lg:col-span-4 space-y-4">
               <Link to="/" className="inline-block">
                 <BrandLogo layout="stacked" variant="dark" size="md" showTagline={false} />
               </Link>
-              <p className="text-xs sm:text-sm text-[#F4EFDF]/80 leading-relaxed font-normal">
-                A premium local travel company specializing in authentic journeys through Gilgit-Baltistan, Pakistan.
+              <p className="text-xs sm:text-sm text-white/75 leading-relaxed">
+                BAIG TREKS &amp; TOURS is a licensed expedition and travel operator based in Skardu &amp; Gilgit, crafting unforgettable, respectful journeys through Hunza, Skardu, Fairy Meadows, and the Karakoram mountains of Northern Pakistan.
               </p>
-              <div className="pt-2 p-3.5 rounded-2xl bg-[#183C30]/70 border border-[#B99A58]/25 text-xs space-y-1.5">
-                <div className="font-serif italic text-[#B99A58] text-sm font-semibold">
-                  “Beyond the Mountains. Discover Gilgit-Baltistan.”
+              <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-xs space-y-1.5">
+                <div className="text-[#C5A46D] font-semibold text-xs flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>Licensed Department of Tourist Services (DTS)</span>
                 </div>
-                <div className="text-[11px] text-[#F4EFDF]/75">
-                  Authentic journeys. Extraordinary landscapes. Local expertise.
+                <div className="text-white/65 leading-relaxed">
+                  Govt. of Pakistan Certified Alpine &amp; Cultural Guides. Over a decade of native mountain hospitality.
                 </div>
               </div>
             </div>
 
-            {/* Quick Links & Tour Destinations */}
+            {/* Popular Destinations */}
             <div className="lg:col-span-3 space-y-3">
-              <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-[#B99A58]">
-                Expeditions &amp; Valleys
+              <h3 className="font-serif text-base font-semibold text-[#C5A46D] tracking-wide">
+                Popular Destinations
               </h3>
-              <ul className="grid grid-cols-2 gap-2 text-xs text-[#F4EFDF]/80">
+              <ul className="grid grid-cols-1 gap-2 text-xs sm:text-sm text-white/75">
                 <li>
-                  <Link to="/tours" className="hover:text-[#B99A58] transition-colors">
-                    All Tour Packages
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/destinations" className="hover:text-[#B99A58] transition-colors">
-                    Destinations
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/destinations/hunza" className="hover:text-[#B99A58] transition-colors">
+                  <Link to="/destinations/hunza" className="hover:text-[#C5A46D] transition-colors">
                     Hunza Valley
                   </Link>
                 </li>
                 <li>
-                  <Link to="/destinations/skardu" className="hover:text-[#B99A58] transition-colors">
+                  <Link to="/destinations/skardu" className="hover:text-[#C5A46D] transition-colors">
                     Skardu &amp; Baltistan
                   </Link>
                 </li>
                 <li>
-                  <Link to="/destinations/passu" className="hover:text-[#B99A58] transition-colors">
-                    Passu Cones
+                  <Link to="/destinations/fairy-meadows" className="hover:text-[#C5A46D] transition-colors">
+                    Fairy Meadows &amp; Nanga Parbat
                   </Link>
                 </li>
                 <li>
-                  <Link to="/destinations/attabad-lake" className="hover:text-[#B99A58] transition-colors">
-                    Attabad Lake
+                  <Link to="/destinations/deosai" className="hover:text-[#C5A46D] transition-colors">
+                    Deosai National Park
                   </Link>
                 </li>
                 <li>
-                  <Link to="/destinations/fairy-meadows" className="hover:text-[#B99A58] transition-colors">
-                    Fairy Meadows
+                  <Link to="/destinations/attabad-lake" className="hover:text-[#C5A46D] transition-colors">
+                    Attabad Lake &amp; Upper Hunza
                   </Link>
                 </li>
                 <li>
-                  <Link to="/destinations/deosai" className="hover:text-[#B99A58] transition-colors">
-                    Deosai Plains
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/destinations/khaplu" className="hover:text-[#B99A58] transition-colors">
-                    Khaplu Palace
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/destinations/shigar" className="hover:text-[#B99A58] transition-colors">
-                    Shigar Fort
+                  <Link to="/destinations/khaplu" className="hover:text-[#C5A46D] transition-colors">
+                    Khaplu Palace &amp; Shigar
                   </Link>
                 </li>
               </ul>
             </div>
 
-            {/* Verified Contact Details & Social */}
-            <div className="lg:col-span-3 space-y-3">
-              <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-[#B99A58]">
-                Contact &amp; Inquiries
+            {/* Quick Links & Info */}
+            <div className="lg:col-span-2 space-y-3">
+              <h3 className="font-serif text-base font-semibold text-[#C5A46D] tracking-wide">
+                Explore &amp; Company
               </h3>
-              <div className="space-y-2.5 text-xs">
+              <ul className="space-y-2 text-xs sm:text-sm text-white/75">
+                <li>
+                  <Link to="/tours" className="hover:text-[#C5A46D] transition-colors">
+                    Tour Packages
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/destinations" className="hover:text-[#C5A46D] transition-colors">
+                    All Destinations
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/experiences" className="hover:text-[#C5A46D] transition-colors">
+                    Signature Experiences
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/about" className="hover:text-[#C5A46D] transition-colors">
+                    About Baig Treks
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/gallery" className="hover:text-[#C5A46D] transition-colors">
+                    Photo Gallery
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/travel-guides" className="hover:text-[#C5A46D] transition-colors">
+                    Travel Guides &amp; Tips
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/contact" className="hover:text-[#C5A46D] transition-colors">
+                    Contact &amp; Bookings
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Verified Contact Details & Advisory */}
+            <div className="lg:col-span-3 space-y-3">
+              <h3 className="font-serif text-base font-semibold text-[#C5A46D] tracking-wide">
+                Get in Touch
+              </h3>
+              <div className="space-y-2.5 text-xs sm:text-sm">
                 <a
                   href={defaultWaLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-[#F4EFDF] hover:text-[#B99A58] transition-colors"
+                  className="flex items-center gap-2 text-white/90 hover:text-[#C5A46D] transition-colors"
                 >
-                  <MessageCircle className="w-4 h-4 text-[#B99A58] shrink-0" />
+                  <MessageCircle className="w-4 h-4 text-[#C5A46D] shrink-0" />
                   <span>WhatsApp: {business.phone}</span>
                 </a>
                 <a
                   href={`tel:${business.phoneInternational}`}
-                  className="flex items-center gap-2 text-[#F4EFDF] hover:text-[#B99A58] transition-colors"
+                  className="flex items-center gap-2 text-white/90 hover:text-[#C5A46D] transition-colors"
                 >
-                  <Phone className="w-4 h-4 text-[#B99A58] shrink-0" />
+                  <Phone className="w-4 h-4 text-[#C5A46D] shrink-0" />
                   <span>Direct: {business.phone}</span>
                 </a>
                 <a
                   href={`mailto:${business.email}`}
-                  className="flex items-center gap-2 text-[#F4EFDF] hover:text-[#B99A58] transition-colors break-all"
+                  className="flex items-center gap-2 text-white/90 hover:text-[#C5A46D] transition-colors break-all"
                 >
-                  <Mail className="w-4 h-4 text-[#B99A58] shrink-0" />
+                  <Mail className="w-4 h-4 text-[#C5A46D] shrink-0" />
                   <span>{business.email}</span>
                 </a>
-                <div className="flex items-center gap-2 text-[#F4EFDF]/75">
-                  <MapPin className="w-4 h-4 text-[#B99A58] shrink-0" />
-                  <span>Gilgit &amp; Skardu, Gilgit-Baltistan</span>
+                <div className="flex items-center gap-2 text-white/70">
+                  <MapPin className="w-4 h-4 text-[#C5A46D] shrink-0" />
+                  <span>Skardu &amp; Gilgit, Gilgit-Baltistan</span>
                 </div>
 
-                <div className="pt-2 border-t border-[#24342D] space-y-1.5">
-                  <div className="text-[11px] font-semibold text-[#B99A58] uppercase tracking-wider">
-                    Official Instagram
+                {/* Verified Payment Advisory */}
+                <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-1 text-xs mt-3">
+                  <div className="text-[#C5A46D] font-semibold text-[11px] uppercase tracking-wider">
+                    Official JazzCash Account
+                  </div>
+                  <div className="text-white/80">
+                    Number: <strong className="text-white">{business.jazzcashNumber}</strong>
+                  </div>
+                  <div className="text-white/80">
+                    Title: <span className="text-white font-medium">{business.jazzcashName}</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 space-y-1.5">
+                  <div className="text-xs font-semibold text-[#C5A46D]">
+                    Follow Our Adventures
                   </div>
                   {business.instagram.map((ig) => (
                     <a
@@ -597,70 +602,45 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                       href={ig.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[#F4EFDF]/80 hover:text-white transition-colors"
+                      className="flex items-center gap-2 text-white/70 hover:text-white transition-colors text-xs"
                     >
-                      <Instagram className="w-3.5 h-3.5 text-[#B99A58] shrink-0" />
+                      <Instagram className="w-3.5 h-3.5 text-[#C5A46D] shrink-0" />
                       <span>{ig.handle}</span>
                     </a>
                   ))}
                 </div>
               </div>
             </div>
-
-            {/* Official Payment Security & JazzCash Card */}
-            <div className="lg:col-span-2 space-y-3">
-              <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-[#B99A58]">
-                Payment Advisory
-              </h3>
-              <div className="p-3.5 rounded-2xl bg-[#183C30]/80 border border-[#B99A58]/30 space-y-2 text-xs">
-                <div className="text-[#B99A58] font-bold text-[11px] tracking-wide uppercase">
-                  JazzCash Official Account
-                </div>
-                <div className="text-[#F4EFDF]/90">
-                  Number:{' '}
-                  <span className="font-mono-num text-white font-bold tracking-wider">
-                    {business.jazzcashNumber}
-                  </span>
-                </div>
-                <div className="text-[#F4EFDF]/90">
-                  Title:{' '}
-                  <span className="text-white font-semibold">{business.jazzcashName}</span>
-                </div>
-                <p className="text-[10px] text-[#F4EFDF]/70 pt-1 leading-normal border-t border-[#24342D]">
-                  Verify dates with our team via WhatsApp prior to sending advances.
-                </p>
-              </div>
-            </div>
           </div>
 
-          {/* Bottom Legal & Copyright Bar */}
-          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#F4EFDF]/70 text-center sm:text-left">
+          {/* Bottom Legal Bar */}
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/60 text-center sm:text-left">
             <div>
-              © 2026 <strong className="text-[#F4EFDF]">Baig Treks &amp; Tours</strong>. All rights reserved.
+              © 2026 <strong className="text-white">Baig Treks &amp; Tours</strong>. Handcrafted with pride in Northern Pakistan.
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link to="/about" className="hover:text-[#B99A58] transition-colors">
+            <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
+              <Link to="/about" className="hover:text-[#C5A46D] transition-colors">
                 About Us
               </Link>
-              <span aria-hidden="true">·</span>
-              <Link to="/contact" className="hover:text-[#B99A58] transition-colors">
-                Contact &amp; Location
+              <span>·</span>
+              <Link to="/contact" className="hover:text-[#C5A46D] transition-colors">
+                Contact
               </Link>
-              <span aria-hidden="true">·</span>
+              <span>·</span>
               <a
                 href={defaultWaLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#B99A58] hover:underline font-semibold"
+                className="text-[#C5A46D] hover:underline"
               >
-                WhatsApp: {business.phone}
+                Direct WhatsApp Support
               </a>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* DESKTOP FLOATING WHATSAPP BUTTON (Forest Green + Gold Accent) */}
+      {/* FLOATING WHATSAPP PILL BUTTON (Refined Emerald & White) */}
       <motion.a
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -668,52 +648,52 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat with Baig Treks & Tours on WhatsApp"
-        className="hidden md:flex fixed bottom-6 right-6 z-40 items-center gap-2.5 px-4 py-3 rounded-2xl bg-[#183C30] hover:bg-[#0F261F] text-[#F4EFDF] border border-[#B99A58] text-xs font-bold uppercase tracking-wider shadow-2xl shadow-black/40 transition-all"
+        className="hidden md:flex fixed bottom-6 right-6 z-40 items-center gap-2.5 px-4 py-3 bg-[#174734] hover:bg-[#0D2B20] text-white text-xs font-semibold rounded-full shadow-lg border border-white/20 transition-all"
       >
         <span className="relative flex h-2.5 w-2.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B99A58] opacity-75" />
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#B99A58]" />
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C5A46D] opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#C5A46D]" />
         </span>
-        <MessageCircle className="w-4 h-4 text-[#B99A58]" />
+        <MessageCircle className="w-4 h-4 text-[#C5A46D]" />
         <span>Chat on WhatsApp</span>
       </motion.a>
 
-      {/* MOBILE BOTTOM FLOATING NAVIGATION BAR */}
+      {/* MOBILE BOTTOM NAVIGATION BAR */}
       <div
-        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#183C30]/95 backdrop-blur-xl border-t border-[#B99A58]/25 grid ${
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#F8F6F0]/95 backdrop-blur-md border-t border-[#E8E4D9] grid ${
           isLoggedIn ? 'grid-cols-4' : 'grid-cols-3'
-        } h-15 text-[11px] font-semibold text-[#F4EFDF] shadow-2xl`}
+        } h-16 text-[11px] font-semibold text-[#252B27] shadow-lg`}
       >
         <Link
           to="/tours"
-          className="flex flex-col items-center justify-center gap-0.5 hover:text-[#B99A58] border-r border-[#24342D]"
+          className="flex flex-col items-center justify-center gap-0.5 hover:text-[#174734] border-r border-[#E8E4D9]"
         >
-          <Compass className="w-4 h-4 text-[#B99A58]" />
+          <Compass className="w-4 h-4 text-[#174734]" />
           <span>Tours</span>
         </Link>
         {isLoggedIn && (
           <Link
             to="/my-bookings"
-            className="flex flex-col items-center justify-center gap-0.5 text-white bg-[#24342D]/50 border-r border-[#24342D]"
+            className="flex flex-col items-center justify-center gap-0.5 text-[#174734] border-r border-[#E8E4D9]"
           >
-            <Calendar className="w-4 h-4 text-[#B99A58]" />
+            <Calendar className="w-4 h-4 text-[#174734]" />
             <span>Bookings</span>
           </Link>
         )}
         <a
-          href="/#inquiry"
-          className="flex flex-col items-center justify-center gap-0.5 hover:text-[#B99A58] border-r border-[#24342D]"
+          href="/#plan-trip"
+          className="flex flex-col items-center justify-center gap-0.5 hover:text-[#174734] border-r border-[#E8E4D9]"
         >
-          <Sparkles className="w-4 h-4 text-[#B99A58]" />
+          <Sparkles className="w-4 h-4 text-[#C5A46D]" />
           <span>Plan Trip</span>
         </a>
         <a
           href={defaultWaLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex flex-col items-center justify-center gap-0.5 bg-[#B99A58] text-[#183C30] font-bold"
+          className="flex flex-col items-center justify-center gap-0.5 bg-[#174734] text-white font-semibold"
         >
-          <MessageCircle className="w-4 h-4" />
+          <MessageCircle className="w-4 h-4 text-[#C5A46D]" />
           <span>WhatsApp</span>
         </a>
       </div>

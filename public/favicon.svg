@@ -1,19 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <rect x="2" y="2" width="96" height="96" rx="22" fill="#183C30" stroke="#B99A58" stroke-width="3"/>
-  <!-- Main Peak Left Shadow -->
-  <path d="M50 18L18 72H50V18Z" fill="#0F261F"/>
-  <!-- Main Peak Right Sunlit Facet (Mountain Gold) -->
-  <path d="M50 18L82 72H50V18Z" fill="#B99A58"/>
-  <!-- Ridge Line -->
-  <path d="M50 18V72" stroke="#F4EFDF" stroke-width="2" stroke-linecap="round"/>
-  <!-- Snow Cap Crest -->
-  <path d="M50 18L38 38L44 36L50 42L56 36L62 38L50 18Z" fill="#FFFFFF"/>
-  <!-- Foreground Spur -->
-  <path d="M32 44L14 74H36L32 44Z" fill="#183C30"/>
-  <path d="M32 44L46 74H36L32 44Z" fill="#D4AF37"/>
-  <!-- Eastern Spur -->
-  <path d="M68 44L56 74H74L68 44Z" fill="#24342D"/>
-  <path d="M68 44L84 74H74L68 44Z" fill="#A38443"/>
-  <!-- Base Horizon Line -->
-  <path d="M16 76H84" stroke="#B99A58" stroke-width="3" stroke-linecap="round"/>
+  <!-- Container with Forest Green background and Muted Gold stroke -->
+  <rect x="3" y="3" width="94" height="94" rx="22" fill="#183C30" stroke="#B99A58" stroke-width="3"/>
+  <!-- Sun accent -->
+  <circle cx="72" cy="32" r="9" fill="#B99A58" fill-opacity="0.4"/>
+  <!-- Secondary Peak (Left) -->
+  <path d="M20 74L38 42L54 74H20Z" fill="#24342D"/>
+  <path d="M38 42L33 51L38 53L43 51L38 42Z" fill="#FAF9F6"/>
+  <!-- Primary Mountain Peak (Center-Right) -->
+  <path d="M58 20L34 74H58V20Z" fill="#FAF9F6"/>
+  <path d="M58 20L82 74H58V20Z" fill="#B99A58"/>
+  <path d="M58 20V74" stroke="#FAF9F6" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Foreground Foothill -->
+  <path d="M14 75L28 62L46 75H14Z" fill="#0F261F"/>
+  <!-- Mountain Trail Winding to High Pass -->
+  <path d="M52 86C45 82 40 78 46 72C52 66 48 61 44 57" stroke="#B99A58" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M52 86C45 82 40 78 46 72C52 66 48 61 44 57" stroke="#FAF9F6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2.5 2.5"/>
+  <!-- Baseline -->
+  <path d="M14 86H86" stroke="#B99A58" stroke-width="2.5" stroke-linecap="round"/>
 </svg>
