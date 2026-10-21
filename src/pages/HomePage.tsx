@@ -27,6 +27,7 @@ import {
   Heart,
   Globe,
   Award,
+  ShoppingBag,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { VISUAL_ASSETS } from '../data/initialData';
@@ -660,6 +661,83 @@ export const HomePage: React.FC = () => {
                 alt="Baig Treks & Tours landscape"
                 className="w-full aspect-[4/3] object-cover"
               />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 6.5: ORGANIC MOUNTAIN DRY FRUITS SPOTLIGHT
+          ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6">
+        <div className="bg-[#102B24] text-white rounded-3xl p-8 sm:p-12 md:p-14 border border-[#174734] shadow-xl relative overflow-hidden">
+          <div className="absolute -right-20 -bottom-20 w-96 h-96 rounded-full bg-[#C5A46D]/10 blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            <div className="lg:col-span-7 space-y-5">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/10 text-[#C5A46D] border border-[#C5A46D]/30 text-xs font-semibold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Handpicked Mountain Harvest</span>
+              </span>
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#F8F6F0]">
+                Premium Dry Fruits, Naturally Better
+              </h2>
+              <p className="text-white/80 text-sm sm:text-base leading-relaxed">
+                Discover quality dry fruits handpicked for freshness, taste, and everyday wellness. From Skardu Kaghzi walnuts and Hunza organic apricots to roasted Karakoram pistachios and Giri almonds — delivered fresh across Pakistan.
+              </p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <div className="text-[#C5A46D] font-bold text-sm">100% Pure</div>
+                  <div className="text-white/70 text-[11px]">Sun-Dried &amp; Organic</div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <div className="text-[#C5A46D] font-bold text-sm">Nationwide</div>
+                  <div className="text-white/70 text-[11px]">Delivery Across Pakistan</div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10 col-span-2 sm:col-span-1">
+                  <div className="text-[#C5A46D] font-bold text-sm">WhatsApp</div>
+                  <div className="text-white/70 text-[11px]">Direct Order Prefilled</div>
+                </div>
+              </div>
+
+              <div className="pt-3 flex flex-wrap items-center gap-4">
+                <Link
+                  to="/dry-fruits"
+                  className="px-6 py-3.5 rounded-full bg-[#C5A46D] hover:bg-[#b5925a] text-[#0D2B20] font-bold text-sm shadow-md transition-all flex items-center gap-2 group"
+                >
+                  <ShoppingBag className="w-4 h-4 text-[#0D2B20]" />
+                  <span>Explore Dry Fruits Store</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link
+                  to="/dry-fruits"
+                  className="px-6 py-3.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all"
+                >
+                  View Sample Prices
+                </Link>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5">
+              <div className="relative rounded-2xl overflow-hidden border border-white/20 shadow-2xl group">
+                <img
+                  src="https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80"
+                  alt="Premium assorted dry fruits"
+                  className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-end p-5">
+                  <div className="text-[#C5A46D] text-xs font-semibold uppercase tracking-wider">
+                    Fresh Harvest Selection
+                  </div>
+                  <div className="text-white font-serif text-lg font-bold">
+                    Almonds · Walnuts · Pistachios · Dates · Figs
+                  </div>
+                  <div className="text-white/70 text-xs mt-1">
+                    Sample prices starting from PKR 550 / 250g
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -6,11 +6,13 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import { CartProvider } from './context/CartContext';
 import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
 import { ToursPage } from './pages/ToursPage';
 import { TourDetailPage } from './pages/TourDetailPage';
 import { DestinationsPage, DestinationDetailPage } from './pages/DestinationsPage';
+import { DryFruitsPage } from './pages/DryFruitsPage';
 import {
   ExperiencesPage,
   AboutPage,
@@ -31,15 +33,18 @@ import { AdminLoginPage, AdminDashboardPage } from './pages/AdminPages';
 export default function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/tours" element={<ToursPage />} />
-            <Route path="/tours/:slug" element={<TourDetailPage />} />
-            <Route path="/destinations" element={<DestinationsPage />} />
-            <Route path="/destinations/:slug" element={<DestinationDetailPage />} />
-            <Route path="/experiences" element={<ExperiencesPage />} />
+      <CartProvider>
+        <BrowserRouter>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/tours" element={<ToursPage />} />
+              <Route path="/tours/:slug" element={<TourDetailPage />} />
+              <Route path="/destinations" element={<DestinationsPage />} />
+              <Route path="/destinations/:slug" element={<DestinationDetailPage />} />
+              <Route path="/dry-fruits" element={<DryFruitsPage />} />
+              <Route path="/shop" element={<DryFruitsPage />} />
+              <Route path="/experiences" element={<ExperiencesPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/gallery" element={<GalleryPage />} />
             <Route path="/guides" element={<TravelGuidesPage />} />
@@ -76,6 +81,7 @@ export default function App() {
           </Routes>
         </Layout>
       </BrowserRouter>
+      </CartProvider>
     </AppProvider>
   );
 }

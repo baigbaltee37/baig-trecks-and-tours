@@ -22,11 +22,15 @@ import {
   Mountain,
   Heart,
   Globe,
+  ShoppingBag,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useCart } from '../context/CartContext';
 import { buildWhatsAppLink } from '../config/business';
 import { BrandLogo } from './BrandLogo';
 import { SEOHead } from './SEOHead';
+import { CartDrawer } from './dryfruits/CartDrawer';
+import { WhatsAppCheckoutModal } from './dryfruits/WhatsAppCheckoutModal';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
@@ -38,6 +42,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     signupNotificationNote,
     clearSignupNotificationNote,
   } = useApp();
+  const { openCart, cartCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -70,6 +75,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const navItems = [
     { label: 'Tours & Packages', to: '/tours' },
     { label: 'Destinations', to: '/destinations' },
+    { label: 'Dry Fruits', to: '/dry-fruits', badge: 'Fresh Harvest' },
     { label: 'Experiences', to: '/experiences' },
     { label: 'About Us', to: '/about' },
     { label: 'Gallery', to: '/gallery' },
@@ -165,13 +171,18 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`px-3 py-2 rounded-full transition-all duration-200 whitespace-nowrap ${
+                  className={`px-3 py-2 rounded-full transition-all duration-200 whitespace-nowrap inline-flex items-center gap-1.5 ${
                     active
                       ? 'text-[#174734] font-bold bg-[#EAE6DB]'
                       : 'text-[#252B27]/85 hover:text-[#174734] hover:bg-[#F0EDE4]'
                   }`}
                 >
-                  {item.label}
+                  <span>{item.label}</span>
+                  {item.badge && (
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-[#174734] text-white">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -273,6 +284,24 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 </Link>
               )}
 
+              {/* Dry Fruits Basket Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={openCart}
+                aria-label="View Dry Fruits Basket"
+                title="Dry Fruits Cart"
+                className="relative p-2.5 bg-white hover:bg-[#F0EDE4] text-[#174734] rounded-full border border-[#E8E4D9] hover:border-[#174734]/40 shadow-xs transition-colors flex items-center justify-center cursor-pointer"
+              >
+                <ShoppingBag className="w-4 h-4 text-[#174734]" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#174734] text-white text-[10px] font-bold flex items-center justify-center shadow-xs">
+                    {cartCount > 9 ? '9+' : cartCount}
+                  </span>
+                )}
+              </motion.button>
+
               {/* TASTEFUL DEEP FOREST GREEN PRIMARY CTA */}
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <a
@@ -298,6 +327,21 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <MessageCircle className="w-4 h-4" />
               </motion.a>
             </div>
+
+            {/* Mobile Dry Fruits Basket Trigger */}
+            <button
+              type="button"
+              onClick={openCart}
+              aria-label="Open Dry Fruits Cart"
+              className="lg:hidden relative p-2.5 text-[#174734] bg-white hover:bg-[#F0EDE4] border border-[#E8E4D9] rounded-full transition-colors focus:outline-none cursor-pointer"
+            >
+              <ShoppingBag className="w-4 h-4 text-[#174734]" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#174734] text-white text-[10px] font-bold flex items-center justify-center">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </button>
 
             {/* Mobile & Tablet User Icon + Hamburger */}
             {isLoggedIn && (
@@ -542,6 +586,18 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     Contact &amp; Bookings
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    to="/dry-fruits"
+                    className="text-[#C5A46D] hover:underline font-semibold flex items-center gap-1.5 pt-1 border-t border-white/10"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5 text-[#C5A46D]" />
+                    <span>Dry Fruits Store</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#C5A46D]/20 text-[#C5A46D] border border-[#C5A46D]/40">
+                      Fresh
+                    </span>
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -659,11 +715,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       </motion.a>
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
-      <div
-        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#F8F6F0]/95 backdrop-blur-md border-t border-[#E8E4D9] grid ${
-          isLoggedIn ? 'grid-cols-4' : 'grid-cols-3'
-        } h-16 text-[11px] font-semibold text-[#252B27] shadow-lg`}
-      >
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#F8F6F0]/95 backdrop-blur-md border-t border-[#E8E4D9] grid grid-cols-4 h-16 text-[11px] font-semibold text-[#252B27] shadow-lg">
         <Link
           to="/tours"
           className="flex flex-col items-center justify-center gap-0.5 hover:text-[#174734] border-r border-[#E8E4D9]"
@@ -671,15 +723,20 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <Compass className="w-4 h-4 text-[#174734]" />
           <span>Tours</span>
         </Link>
-        {isLoggedIn && (
-          <Link
-            to="/my-bookings"
-            className="flex flex-col items-center justify-center gap-0.5 text-[#174734] border-r border-[#E8E4D9]"
-          >
-            <Calendar className="w-4 h-4 text-[#174734]" />
-            <span>Bookings</span>
-          </Link>
-        )}
+        <Link
+          to="/dry-fruits"
+          className="relative flex flex-col items-center justify-center gap-0.5 hover:text-[#174734] border-r border-[#E8E4D9]"
+        >
+          <div className="relative">
+            <ShoppingBag className="w-4 h-4 text-[#174734]" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-0.5 rounded-full bg-[#174734] text-white text-[9px] font-bold flex items-center justify-center">
+                {cartCount > 9 ? '9+' : cartCount}
+              </span>
+            )}
+          </div>
+          <span>Dry Fruits</span>
+        </Link>
         <a
           href="/#plan-trip"
           className="flex flex-col items-center justify-center gap-0.5 hover:text-[#174734] border-r border-[#E8E4D9]"
@@ -697,6 +754,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <span>WhatsApp</span>
         </a>
       </div>
+
+      {/* DRY FRUITS SHOPPING CART DRAWER & WHATSAPP CHECKOUT MODAL */}
+      <CartDrawer />
+      <WhatsAppCheckoutModal />
     </div>
   );
 };
