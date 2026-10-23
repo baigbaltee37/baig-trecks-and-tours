@@ -25,6 +25,7 @@ import {
   INITIAL_GALLERY,
   INITIAL_FAQS,
 } from '../data/initialData';
+import { DryFruitProduct, INITIAL_DRY_FRUITS } from '../data/dryFruitsData';
 
 export type UserRoleType = 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN' | 'customer' | 'admin';
 
@@ -214,6 +215,7 @@ const LS_KEYS = {
   SETTINGS: 'btt_site_settings',
   AUDIT_LOGS: 'btt_audit_logs',
   ADMIN_USERS: 'btt_admin_users',
+  DRY_FRUITS: 'btt_dry_fruits',
   SYNC_TS: 'btt_last_sync_ts',
 };
 
@@ -569,6 +571,8 @@ interface AppContextValue {
   allGallery: GalleryImageItem[];
   reviews: ReviewItem[];
   allReviews: ReviewItem[];
+  dryFruits: DryFruitProduct[];
+  allDryFruits: DryFruitProduct[];
   faqs: FAQItem[];
   inquiries: InquiryRecord[];
   bookings: BookingRecord[];
@@ -645,6 +649,12 @@ interface AppContextValue {
   saveReviewAdmin: (rev: ReviewItem) => Promise<void>;
   deleteReviewAdmin: (revId: string) => Promise<void>;
   togglePublishReviewAdmin: (revId: string) => Promise<void>;
+  saveDryFruitAdmin: (product: DryFruitProduct) => Promise<{ success: boolean; error?: string }>;
+  deleteDryFruitAdmin: (productId: string) => Promise<{ success: boolean; error?: string }>;
+  togglePublishDryFruitAdmin: (productId: string) => Promise<{ success: boolean; error?: string }>;
+  toggleStockDryFruitAdmin: (productId: string) => Promise<{ success: boolean; error?: string }>;
+  toggleFeatureDryFruitAdmin: (productId: string) => Promise<{ success: boolean; error?: string }>;
+  resetDryFruitsToDefault: () => Promise<{ success: boolean; error?: string }>;
   updateInquiryAdmin: (
     inquiryId: string,
     status: InquiryRecord['status'],
@@ -936,6 +946,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       published: r.published ?? true,
     }))
   );
+  const [allDryFruits, setAllDryFruits] = useState<DryFruitProduct[]>(() =>
+    readStorage<DryFruitProduct[]>(LS_KEYS.DRY_FRUITS, INITIAL_DRY_FRUITS).map((p) => ({
+      ...p,
+      published: p.published ?? true,
+      inStock: p.inStock ?? true,
+    }))
+  );
   const [faqs] = useState<FAQItem[]>(INITIAL_FAQS);
   const [inquiries, setInquiries] = useState<InquiryRecord[]>(() =>
     readStorage<InquiryRecord[]>(LS_KEYS.INQUIRIES, [])
@@ -1076,6 +1093,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             writeStorage(LS_KEYS.REVIEWS, remote.reviews, false);
             setAllReviews(remote.reviews);
           }
+          if (Array.isArray(remote.dryFruits) && remote.dryFruits.length > 0) {
+            writeStorage(LS_KEYS.DRY_FRUITS, remote.dryFruits, false);
+            setAllDryFruits(remote.dryFruits);
+          }
           if (Array.isArray(remote.inquiries)) {
             writeStorage(LS_KEYS.INQUIRIES, remote.inquiries, false);
             setInquiries(remote.inquiries);
@@ -1111,6 +1132,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             blogPosts: readStorage(LS_KEYS.BLOG, INITIAL_BLOG_POSTS),
             gallery: readStorage(LS_KEYS.GALLERY, INITIAL_GALLERY),
             reviews: readStorage(LS_KEYS.REVIEWS, []),
+            dryFruits: readStorage(LS_KEYS.DRY_FRUITS, INITIAL_DRY_FRUITS),
             inquiries: readStorage(LS_KEYS.INQUIRIES, []),
             bookings: readMergedBookings(),
             users: readMergedUsers(),
@@ -1155,6 +1177,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           published: r.published ?? true,
         }))
       );
+      setAllDryFruits(
+        readStorage<DryFruitProduct[]>(LS_KEYS.DRY_FRUITS, INITIAL_DRY_FRUITS).map((p) => ({
+          ...p,
+          published: p.published ?? true,
+          inStock: p.inStock ?? true,
+        }))
+      );
       setInquiries(readStorage<InquiryRecord[]>(LS_KEYS.INQUIRIES, []));
       setBookings(readMergedBookings());
       setAllUsers(readMergedUsers());
@@ -1173,6 +1202,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const blogPosts = allBlogPosts.filter((p) => p.published !== false);
   const gallery = allGallery.filter((g) => g.published !== false);
   const reviews = allReviews.filter((r) => r.published !== false);
+  const dryFruits = allDryFruits.filter((p) => p.published !== false);
 
   const profile: UserProfileData | null = user
     ? {
@@ -2427,6 +2457,218 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const saveDryFruitAdmin = async (product: DryFruitProduct): Promise<{ success: boolean; error?: string }> => {
+    assertAdmin();
+    const cleanId = sanitizeId(product.id || product.name);
+    const isExisting = allDryFruits.some((p) => p.id === cleanId || p.id === product.id);
+    const nowIso = new Date().toISOString();
+
+    const normalized: DryFruitProduct = {
+      ...product,
+      id: cleanId,
+      name: product.name.trim(),
+      urduName: (product.urduName || '').trim(),
+      category: product.category || 'Nuts & Kernels',
+      tagline: (product.tagline || '').trim(),
+      description: (product.description || '').trim(),
+      healthBenefits: Array.isArray(product.healthBenefits) ? product.healthBenefits : [],
+      origin: (product.origin || 'Gilgit-Baltistan & Northern Pakistan').trim(),
+      badge: product.badge || '',
+      imageUrl: product.imageUrl.trim(),
+      fallbackImageUrl: product.fallbackImageUrl || product.imageUrl.trim(),
+      pricing: {
+        '250g': Math.max(0, Number(product.pricing['250g']) || 0),
+        '500g': Math.max(0, Number(product.pricing['500g']) || 0),
+        '1kg': Math.max(0, Number(product.pricing['1kg']) || 0),
+      },
+      originalPricing: product.originalPricing
+        ? {
+            '250g': Math.max(0, Number(product.originalPricing['250g']) || 0),
+            '500g': Math.max(0, Number(product.originalPricing['500g']) || 0),
+            '1kg': Math.max(0, Number(product.originalPricing['1kg']) || 0),
+          }
+        : undefined,
+      discountPercent: Math.max(0, Math.min(100, Number(product.discountPercent) || 0)),
+      stockQuantity: Math.max(0, Number(product.stockQuantity) || 0),
+      inStock: product.inStock !== false,
+      featured: Boolean(product.featured),
+      published: product.published !== false,
+      rating: Number(product.rating) || 5.0,
+      reviewsCount: Number(product.reviewsCount) || 1,
+      createdAt:
+        product.createdAt ||
+        (isExisting ? allDryFruits.find((p) => p.id === cleanId)?.createdAt : nowIso) ||
+        nowIso,
+      updatedAt: nowIso,
+    };
+
+    const idx = allDryFruits.findIndex((p) => p.id === cleanId || p.id === product.id);
+    const updated =
+      idx >= 0
+        ? allDryFruits.map((p, i) => (i === idx ? normalized : p))
+        : [normalized, ...allDryFruits];
+
+    setAllDryFruits(updated);
+    writeStorage(LS_KEYS.DRY_FRUITS, updated);
+
+    // Call REST endpoint
+    try {
+      const token = getAdminToken();
+      await fetch('/api/admin/dry-fruits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(normalized),
+      });
+    } catch (e) {
+      console.warn('[DryFruits] REST save error:', e);
+    }
+
+    await syncAuditWithServer(
+      { dryFruits: updated },
+      {
+        action: isExisting ? 'Dry fruit product edited' : 'Dry fruit product created',
+        targetType: 'DryFruit',
+        targetId: cleanId,
+        targetName: normalized.name,
+        details: `${isExisting ? 'Updated' : 'Created'} product "${normalized.name}" (PKR ${
+          normalized.pricing['500g']
+        }/500g, Stock: ${normalized.stockQuantity}, InStock: ${normalized.inStock})`,
+      }
+    );
+
+    return { success: true };
+  };
+
+  const deleteDryFruitAdmin = async (productId: string): Promise<{ success: boolean; error?: string }> => {
+    assertAdmin();
+    const target = allDryFruits.find((p) => p.id === productId);
+    const updated = allDryFruits.filter((p) => p.id !== productId);
+    setAllDryFruits(updated);
+    writeStorage(LS_KEYS.DRY_FRUITS, updated);
+
+    try {
+      const token = getAdminToken();
+      await fetch(`/api/admin/dry-fruits/${encodeURIComponent(productId)}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+    } catch (e) {
+      console.warn('[DryFruits] REST delete error:', e);
+    }
+
+    await syncAuditWithServer(
+      { dryFruits: updated },
+      {
+        action: 'Dry fruit product deleted',
+        targetType: 'DryFruit',
+        targetId: productId,
+        targetName: target?.name || productId,
+        details: `Deleted product "${target?.name || productId}"`,
+      }
+    );
+
+    return { success: true };
+  };
+
+  const togglePublishDryFruitAdmin = async (productId: string): Promise<{ success: boolean; error?: string }> => {
+    assertAdmin();
+    const target = allDryFruits.find((p) => p.id === productId);
+    if (!target) return { success: false, error: 'Product not found' };
+    const nextPublished = target.published === false;
+    const updated = allDryFruits.map((p) =>
+      p.id === productId ? { ...p, published: nextPublished, updatedAt: new Date().toISOString() } : p
+    );
+    setAllDryFruits(updated);
+    writeStorage(LS_KEYS.DRY_FRUITS, updated);
+
+    await syncAuditWithServer(
+      { dryFruits: updated },
+      {
+        action: nextPublished ? 'Dry fruit product published' : 'Dry fruit product unpublished',
+        targetType: 'DryFruit',
+        targetId: productId,
+        targetName: target.name,
+        details: `${nextPublished ? 'Published' : 'Unpublished'} product "${target.name}"`,
+      }
+    );
+
+    return { success: true };
+  };
+
+  const toggleStockDryFruitAdmin = async (productId: string): Promise<{ success: boolean; error?: string }> => {
+    assertAdmin();
+    const target = allDryFruits.find((p) => p.id === productId);
+    if (!target) return { success: false, error: 'Product not found' };
+    const nextInStock = !target.inStock;
+    const updated = allDryFruits.map((p) =>
+      p.id === productId ? { ...p, inStock: nextInStock, updatedAt: new Date().toISOString() } : p
+    );
+    setAllDryFruits(updated);
+    writeStorage(LS_KEYS.DRY_FRUITS, updated);
+
+    await syncAuditWithServer(
+      { dryFruits: updated },
+      {
+        action: nextInStock ? 'Product marked in-stock' : 'Product marked out-of-stock',
+        targetType: 'DryFruit',
+        targetId: productId,
+        targetName: target.name,
+        details: `Toggled in-stock status for "${target.name}" to ${nextInStock ? 'Available' : 'Out of Stock'}`,
+      }
+    );
+
+    return { success: true };
+  };
+
+  const toggleFeatureDryFruitAdmin = async (productId: string): Promise<{ success: boolean; error?: string }> => {
+    assertAdmin();
+    const target = allDryFruits.find((p) => p.id === productId);
+    if (!target) return { success: false, error: 'Product not found' };
+    const nextFeatured = !target.featured;
+    const updated = allDryFruits.map((p) =>
+      p.id === productId ? { ...p, featured: nextFeatured, updatedAt: new Date().toISOString() } : p
+    );
+    setAllDryFruits(updated);
+    writeStorage(LS_KEYS.DRY_FRUITS, updated);
+
+    await syncAuditWithServer(
+      { dryFruits: updated },
+      {
+        action: nextFeatured ? 'Product featured' : 'Product unfeatured',
+        targetType: 'DryFruit',
+        targetId: productId,
+        targetName: target.name,
+        details: `${nextFeatured ? 'Featured' : 'Unfeatured'} product "${target.name}"`,
+      }
+    );
+
+    return { success: true };
+  };
+
+  const resetDryFruitsToDefault = async (): Promise<{ success: boolean; error?: string }> => {
+    assertAdmin();
+    setAllDryFruits(INITIAL_DRY_FRUITS);
+    writeStorage(LS_KEYS.DRY_FRUITS, INITIAL_DRY_FRUITS);
+
+    await syncAuditWithServer(
+      { dryFruits: INITIAL_DRY_FRUITS },
+      {
+        action: 'Dry fruits catalog reset',
+        targetType: 'DryFruit',
+        targetId: 'all',
+        targetName: 'Seed Catalog',
+        details: 'Reset dry fruits catalog to original harvest defaults',
+      }
+    );
+
+    return { success: true };
+  };
+
   const updateInquiryAdmin = async (
     inquiryId: string,
     status: InquiryRecord['status'],
@@ -2859,19 +3101,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setBlogPosts(INITIAL_BLOG_POSTS);
     writeStorage(LS_KEYS.GALLERY, INITIAL_GALLERY);
     setAllGallery(INITIAL_GALLERY);
+    writeStorage(LS_KEYS.DRY_FRUITS, INITIAL_DRY_FRUITS);
+    setAllDryFruits(INITIAL_DRY_FRUITS);
     await syncAuditWithServer(
       {
         tours: INITIAL_TOURS,
         destinations: INITIAL_DESTINATIONS,
         blogPosts: INITIAL_BLOG_POSTS,
         gallery: INITIAL_GALLERY,
+        dryFruits: INITIAL_DRY_FRUITS,
       },
       {
         action: 'Catalog reset to defaults',
         targetType: 'System',
         targetId: 'all_collections',
         targetName: 'Initial Catalog',
-        details: 'Restored default tours, destinations, guides, and gallery',
+        details: 'Restored default tours, destinations, guides, gallery, and dry fruits catalog',
       }
     );
   };
@@ -2913,6 +3158,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         faqs,
         inquiries,
         bookings,
+        dryFruits,
+        allDryFruits,
         allUsers: sanitizedCustomerUsers,
         adminUsers,
         auditLogs,
@@ -2947,6 +3194,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         saveReviewAdmin,
         deleteReviewAdmin,
         togglePublishReviewAdmin,
+        saveDryFruitAdmin,
+        deleteDryFruitAdmin,
+        togglePublishDryFruitAdmin,
+        toggleStockDryFruitAdmin,
+        toggleFeatureDryFruitAdmin,
+        resetDryFruitsToDefault,
         updateInquiryAdmin,
         deleteInquiryAdmin,
         createBookingAdmin,

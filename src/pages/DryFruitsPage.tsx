@@ -19,7 +19,6 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import {
-  INITIAL_DRY_FRUITS,
   DRY_FRUITS_CATEGORIES,
   SAMPLE_DRY_FRUIT_REVIEWS,
   DRY_FRUIT_FAQS,
@@ -28,9 +27,11 @@ import {
 } from '../data/dryFruitsData';
 import { DryFruitCard } from '../components/dryfruits/DryFruitCard';
 import { useCart } from '../context/CartContext';
+import { useApp } from '../context/AppContext';
 import { buildWhatsAppLink } from '../config/business';
 
 export const DryFruitsPage: React.FC = () => {
+  const { dryFruits } = useApp();
   const { openCart, cartCount, openCheckout } = useCart();
   const productsRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +40,7 @@ export const DryFruitsPage: React.FC = () => {
   const [openFaqId, setOpenFaqId] = useState<string | null>(DRY_FRUIT_FAQS[0]?.id || null);
 
   const filteredProducts = useMemo(() => {
-    return INITIAL_DRY_FRUITS.filter((product) => {
+    return dryFruits.filter((product) => {
       const q = searchQuery.toLowerCase().trim();
       const matchQuery =
         !q ||
@@ -53,11 +54,11 @@ export const DryFruitsPage: React.FC = () => {
 
       return matchQuery && matchCategory;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [dryFruits, searchQuery, selectedCategory]);
 
   const bestSellers = useMemo(() => {
-    return INITIAL_DRY_FRUITS.filter((p) => p.badge === 'Bestseller' || p.featured).slice(0, 4);
-  }, []);
+    return dryFruits.filter((p) => p.badge === 'Bestseller' || p.featured).slice(0, 4);
+  }, [dryFruits]);
 
   const scrollToProducts = () => {
     productsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });

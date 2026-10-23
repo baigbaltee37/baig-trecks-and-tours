@@ -553,5 +553,13 @@ service cloud.firestore {
         isAdmin();
       allow delete: if isValidId(settingId) && isAdmin();
     }
+
+    // 11. /dryFruits/{productId} (Dry Fruits Catalog, Admin Managed)
+    match /dryFruits/{productId} {
+      allow get: if isValidId(productId);
+      allow list: if resource.data.name is string;
+      allow create, update, delete: if isValidId(productId) && isAdmin();
+    }
   }
 }
+

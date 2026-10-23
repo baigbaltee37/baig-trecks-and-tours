@@ -61,6 +61,7 @@ interface SharedAppState {
   settings?: Record<string, unknown>;
   adminUsers?: ServerAdminAccount[];
   auditLogs?: AuditLogEntry[];
+  dryFruits?: Record<string, unknown>[];
 }
 
 const revokedTokens = new Set<string>();
@@ -1130,6 +1131,7 @@ function registerRoutes(app: express.Express) {
         users: sanitizeUsersForClient(state.users || [], true),
         adminUsers: sanitizeAdminUsersForClient(ensureInitialSuperAdmin(state.adminUsers)),
         auditLogs: state.auditLogs || [],
+        dryFruits: state.dryFruits || [],
       });
       return;
     }
@@ -1149,6 +1151,7 @@ function registerRoutes(app: express.Express) {
       bookings: state.bookings || [],
       users: sanitizeUsersForClient(state.users || [], false),
       settings: state.settings,
+      dryFruits: (state.dryFruits || []).filter((p: any) => p && p.published !== false),
     });
   });
 
@@ -1167,6 +1170,7 @@ function registerRoutes(app: express.Express) {
       'settings',
       'adminUsers',
       'auditLogs',
+      'dryFruits',
     ];
     const touchesAdminCollection = adminOnlyKeys.some((k) => k in incoming);
 
@@ -1189,6 +1193,7 @@ function registerRoutes(app: express.Express) {
       if (Array.isArray(incoming.blogPosts)) merged.blogPosts = incoming.blogPosts;
       if (Array.isArray(incoming.gallery)) merged.gallery = incoming.gallery;
       if (Array.isArray(incoming.reviews)) merged.reviews = incoming.reviews;
+      if (Array.isArray(incoming.dryFruits)) merged.dryFruits = incoming.dryFruits;
       if (incoming.settings && typeof incoming.settings === 'object') {
         merged.settings = incoming.settings;
       }
@@ -1314,6 +1319,343 @@ function registerRoutes(app: express.Express) {
       ok: true,
       updatedAt: merged.updatedAt,
       auditLogs: verifiedAdmin ? merged.auditLogs : undefined,
+    });
+  });
+
+  // ============================================================================
+  // DRY FRUITS STORE API (Public & Admin Endpoints)
+  // ============================================================================
+
+  const DEFAULT_SERVER_DRY_FRUITS = [
+    {
+      id: 'almonds-badam',
+      name: 'Giri Almonds',
+      urduName: 'بادام گرئی (Badam)',
+      category: 'Nuts & Kernels',
+      tagline: 'Sweet, crisp, and high-oil kernels harvested from Northern orchards.',
+      description: 'Grown in the high sunlit valleys of Gilgit-Baltistan and Kaghan, these premium sweet almonds are naturally rich in Vitamin E, magnesium, and healthy dietary fats.',
+      healthBenefits: ['Sharpens memory & cognitive focus', 'Supports glowing skin & hair', 'Natural sustained energy'],
+      origin: 'Gilgit-Baltistan & Swat Valley',
+      badge: 'Bestseller',
+      imageUrl: 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?auto=format&fit=crop&w=800&q=80',
+      fallbackImageUrl: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80',
+      pricing: { '250g': 850, '500g': 1650, '1kg': 3100 },
+      originalPricing: { '250g': 1000, '500g': 1900, '1kg': 3600 },
+      discountPercent: 15,
+      stockQuantity: 45,
+      inStock: true,
+      published: true,
+      featured: true,
+      rating: 4.9,
+      reviewsCount: 38,
+    },
+    {
+      id: 'cashews-kaju',
+      name: 'Jumbo Whole Cashews',
+      urduName: 'کاجو ثابت (Kaju)',
+      category: 'Nuts & Kernels',
+      tagline: 'Large buttery-white whole cashews, delicately roasted for extra crispiness.',
+      description: 'Selected W240 grade jumbo whole cashews with a rich, buttery melt-in-mouth texture.',
+      healthBenefits: ['Rich in heart-healthy unsaturated fats', 'Great source of plant protein', 'High in zinc & iron'],
+      origin: 'Selected Premium Import / Northern Packing',
+      badge: 'Royal Reserve',
+      imageUrl: 'https://images.unsplash.com/photo-1536591375315-0b82f07d2c36?auto=format&fit=crop&w=800&q=80',
+      fallbackImageUrl: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80',
+      pricing: { '250g': 1050, '500g': 2000, '1kg': 3800 },
+      originalPricing: { '250g': 1200, '500g': 2300, '1kg': 4400 },
+      discountPercent: 13,
+      stockQuantity: 30,
+      inStock: true,
+      published: true,
+      featured: true,
+      rating: 4.8,
+      reviewsCount: 29,
+    },
+    {
+      id: 'pistachios-pista',
+      name: 'Roasted Karakoram Pistachios',
+      urduName: 'پستہ نمکین (Pista)',
+      category: 'Nuts & Kernels',
+      tagline: 'Lightly sea-salted, naturally opened whole roasted pistachios.',
+      description: 'Cracked open under natural sun-drying and gently toasted with Himalayan pink salt.',
+      healthBenefits: ['Loaded with lutein & eye-protecting antioxidants', 'Cardiovascular wellness', 'Fiber rich'],
+      origin: 'Balochistan & Gilgit Borders',
+      badge: 'Seasonal Harvest',
+      imageUrl: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=800&q=80',
+      fallbackImageUrl: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80',
+      pricing: { '250g': 1200, '500g': 2350, '1kg': 4500 },
+      stockQuantity: 25,
+      inStock: true,
+      published: true,
+      featured: true,
+      rating: 4.9,
+      reviewsCount: 34,
+    },
+    {
+      id: 'walnuts-akhrot',
+      name: 'Kaghzi Soft-Shell Walnuts',
+      urduName: 'کاغذی اخروٹ (Akhrot)',
+      category: 'Nuts & Kernels',
+      tagline: 'Paper-thin shell, easily cracked by hand to reveal whole golden-amber halves.',
+      description: 'Harvested from century-old walnut trees along the Hunza and Skardu river terraces.',
+      healthBenefits: ['Richest dry fruit in Omega-3 Alpha-Linolenic Acid (ALA)', 'Boosts brain function', 'Supports heart health'],
+      origin: 'Hunza & Skardu Valleys',
+      badge: 'Organic GB',
+      imageUrl: 'https://images.unsplash.com/photo-1568260411186-01292b3c58b4?auto=format&fit=crop&w=800&q=80',
+      fallbackImageUrl: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80',
+      pricing: { '250g': 650, '500g': 1250, '1kg': 2350 },
+      stockQuantity: 50,
+      inStock: true,
+      published: true,
+      featured: true,
+      rating: 5.0,
+      reviewsCount: 42,
+    },
+    {
+      id: 'dates-khajoor',
+      name: 'Royal Amber Dates',
+      urduName: 'امبر کھجور (Khajoor)',
+      category: 'Dried Fruits',
+      tagline: 'Plump, glossy, and caramel-rich dates naturally cured on the palm.',
+      description: 'Selected premium large dates with thick flesh, delicate skin, and a natural brown-sugar sweetness.',
+      healthBenefits: ['Instant natural endurance boost', 'Packed with dietary fiber & potassium', 'Aids healthy digestion'],
+      origin: 'Khairpur Sindh & Northern Distribution',
+      badge: 'Bestseller',
+      imageUrl: 'https://images.unsplash.com/photo-1594911772125-07fc7a2d8d9f?auto=format&fit=crop&w=800&q=80',
+      fallbackImageUrl: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80',
+      pricing: { '250g': 550, '500g': 1050, '1kg': 1950 },
+      stockQuantity: 40,
+      inStock: true,
+      published: true,
+      featured: true,
+      rating: 4.8,
+      reviewsCount: 27,
+    },
+    {
+      id: 'raisins-kishmish',
+      name: 'Sundried Golden Raisins',
+      urduName: 'سنہری کشمش (Kishmish)',
+      category: 'Dried Fruits',
+      tagline: 'Juicy, long golden grapes naturally dried in shade houses under crisp mountain breeze.',
+      description: 'Produced from seedless green grapes grown in high-altitude vineyards. Sweet, tangy, and translucent.',
+      healthBenefits: ['Rich in bioavailable iron', 'Contains catechins & polyphenols', 'Boosts bone density'],
+      origin: 'Chaman & Quetta Valleys',
+      imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=800&q=80',
+      fallbackImageUrl: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80',
+      pricing: { '250g': 450, '500g': 850, '1kg': 1600 },
+      stockQuantity: 60,
+      inStock: true,
+      published: true,
+      featured: false,
+      rating: 4.7,
+      reviewsCount: 19,
+    },
+    {
+      id: 'figs-anjeer',
+      name: 'Mountain Dried Figs',
+      urduName: 'خشک انجیر (Anjeer)',
+      category: 'Dried Fruits',
+      tagline: 'Large round dried figs with a delicate seed crunch and deep honey aroma.',
+      description: 'Strung onto natural cotton twine in traditional circular garlands and sun-dried without chemical sulfur.',
+      healthBenefits: ['Exceptional natural soluble fiber', 'High in calcium & iron', 'Natural blood pressure regulation'],
+      origin: 'Balochistan & Border Valleys',
+      badge: 'Organic GB',
+      imageUrl: 'https://images.unsplash.com/photo-1605651202774-7d573fd3f12d?auto=format&fit=crop&w=800&q=80',
+      fallbackImageUrl: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80',
+      pricing: { '250g': 750, '500g': 1450, '1kg': 2750 },
+      stockQuantity: 35,
+      inStock: true,
+      published: true,
+      featured: true,
+      rating: 4.9,
+      reviewsCount: 31,
+    },
+    {
+      id: 'mixed-dry-fruits',
+      name: 'Baig Royal Mixed Dry Fruits',
+      urduName: 'مکس ڈرائی فروٹ شاہی (Mixed)',
+      category: 'Specialty & Mixes',
+      tagline: 'Artisanal balanced mix of Giri Almonds, Cashews, Pistachios, Walnuts, and Golden Raisins.',
+      description: 'Our signature festive assortment combining equal measures of 5 northern favorites.',
+      healthBenefits: ['Complete daily powerhouse of vital micronutrients', 'All-in-one brain & cardiovascular tonic', 'No additives'],
+      origin: 'Curated by Baig Dry Fruits Skardu',
+      badge: 'Bestseller',
+      imageUrl: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80',
+      fallbackImageUrl: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80',
+      pricing: { '250g': 950, '500g': 1850, '1kg': 3500 },
+      originalPricing: { '250g': 1100, '500g': 2100, '1kg': 4000 },
+      discountPercent: 14,
+      stockQuantity: 80,
+      inStock: true,
+      published: true,
+      featured: true,
+      rating: 5.0,
+      reviewsCount: 56,
+    },
+  ];
+
+  // Public: Get all published dry fruits
+  app.get('/api/dry-fruits', (_req, res) => {
+    const state = readSharedStateFromDisk();
+    const list = Array.isArray(state.dryFruits) && state.dryFruits.length > 0 ? state.dryFruits : DEFAULT_SERVER_DRY_FRUITS;
+    const published = list.filter((p: any) => p && p.published !== false);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ ok: true, dryFruits: published });
+  });
+
+  // Admin: Get all dry fruits (including drafts and out-of-stock items)
+  app.get('/api/admin/dry-fruits', (req, res) => {
+    const verified = verifyAdminTokenFromHeader(req.headers.authorization);
+    if (!verified) {
+      res.status(403).json({ error: 'REQUEST DENIED: Administrator authentication required.' });
+      return;
+    }
+    const state = readSharedStateFromDisk();
+    const list = Array.isArray(state.dryFruits) && state.dryFruits.length > 0 ? state.dryFruits : DEFAULT_SERVER_DRY_FRUITS;
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ ok: true, dryFruits: list });
+  });
+
+
+  // Admin: Add or update a dry fruit product
+  app.post('/api/admin/dry-fruits', (req, res) => {
+    const verified = verifyAdminTokenFromHeader(req.headers.authorization);
+    if (!verified) {
+      res.status(403).json({ error: 'REQUEST DENIED: Administrator authentication required.' });
+      return;
+    }
+
+    const payload = req.body || {};
+    const name = String(payload.name || '').trim();
+    if (!name) {
+      res.status(400).json({ error: 'Product name is required.' });
+      return;
+    }
+
+    if (!payload.pricing || typeof payload.pricing !== 'object') {
+      res.status(400).json({ error: 'Product pricing object is required.' });
+      return;
+    }
+
+    const state = readSharedStateFromDisk();
+    const list = Array.isArray(state.dryFruits) ? [...state.dryFruits] : [];
+    const productId = payload.id ? String(payload.id).trim() : `df_${Date.now()}`;
+    const existingIdx = list.findIndex((p: any) => String(p?.id) === productId);
+
+    const nowIso = new Date().toISOString();
+    const updatedProduct = {
+      ...payload,
+      id: productId,
+      name,
+      urduName: String(payload.urduName || '').trim(),
+      category: String(payload.category || 'Nuts & Kernels').trim(),
+      description: String(payload.description || '').trim(),
+      tagline: String(payload.tagline || '').trim(),
+      origin: String(payload.origin || 'Gilgit-Baltistan & Northern Pakistan').trim(),
+      badge: String(payload.badge || '').trim(),
+      imageUrl: String(payload.imageUrl || '').trim(),
+      fallbackImageUrl: String(payload.fallbackImageUrl || payload.imageUrl || '').trim(),
+      pricing: {
+        '250g': Number(payload.pricing['250g']) || 0,
+        '500g': Number(payload.pricing['500g']) || 0,
+        '1kg': Number(payload.pricing['1kg']) || 0,
+      },
+      originalPricing: payload.originalPricing ? {
+        '250g': Number(payload.originalPricing['250g']) || 0,
+        '500g': Number(payload.originalPricing['500g']) || 0,
+        '1kg': Number(payload.originalPricing['1kg']) || 0,
+      } : undefined,
+      discountPercent: Number(payload.discountPercent) || 0,
+      stockQuantity: typeof payload.stockQuantity === 'number' ? payload.stockQuantity : Number(payload.stockQuantity) || 50,
+      inStock: payload.inStock !== false,
+      published: payload.published !== false,
+      featured: Boolean(payload.featured),
+      rating: Number(payload.rating) || 5.0,
+      reviewsCount: Number(payload.reviewsCount) || 1,
+      healthBenefits: Array.isArray(payload.healthBenefits) ? payload.healthBenefits : [],
+      updatedAt: nowIso,
+      createdAt: payload.createdAt || (existingIdx >= 0 ? (list[existingIdx] as any).createdAt : nowIso),
+    };
+
+    if (existingIdx >= 0) {
+      list[existingIdx] = updatedProduct;
+      appendAuditLog(state, {
+        adminEmail: verified.email,
+        adminRole: verified.role,
+        action: 'Dry fruit product updated',
+        targetType: 'DryFruit',
+        targetId: productId,
+        targetName: name,
+        details: `Updated product ${name} (PKR ${updatedProduct.pricing['500g']}/500g, Stock: ${updatedProduct.stockQuantity}, InStock: ${updatedProduct.inStock})`,
+      });
+    } else {
+      list.unshift(updatedProduct);
+      appendAuditLog(state, {
+        adminEmail: verified.email,
+        adminRole: verified.role,
+        action: 'Dry fruit product created',
+        targetType: 'DryFruit',
+        targetId: productId,
+        targetName: name,
+        details: `Created new product ${name} (${updatedProduct.category})`,
+      });
+    }
+
+    state.dryFruits = list;
+    state.updatedAt = Date.now();
+    writeSharedStateToDisk(state);
+
+    res.json({
+      ok: true,
+      product: updatedProduct,
+      dryFruits: list,
+      auditLogs: state.auditLogs,
+    });
+  });
+
+  // Admin: Delete a dry fruit product
+  app.delete('/api/admin/dry-fruits/:id', (req, res) => {
+    const verified = verifyAdminTokenFromHeader(req.headers.authorization);
+    if (!verified) {
+      res.status(403).json({ error: 'REQUEST DENIED: Administrator authentication required.' });
+      return;
+    }
+
+    const targetId = String(req.params.id || '').trim();
+    if (!targetId) {
+      res.status(400).json({ error: 'Product ID is required.' });
+      return;
+    }
+
+    const state = readSharedStateFromDisk();
+    const list = Array.isArray(state.dryFruits) ? [...state.dryFruits] : [];
+    const targetProduct = list.find((p: any) => String(p?.id) === targetId);
+
+    if (!targetProduct) {
+      res.status(404).json({ error: 'Product not found.' });
+      return;
+    }
+
+    state.dryFruits = list.filter((p: any) => String(p?.id) !== targetId);
+    state.updatedAt = Date.now();
+
+    appendAuditLog(state, {
+      adminEmail: verified.email,
+      adminRole: verified.role,
+      action: 'Dry fruit product deleted',
+      targetType: 'DryFruit',
+      targetId,
+      targetName: (targetProduct as any).name || targetId,
+      details: `Deleted product ${(targetProduct as any).name || targetId}`,
+    });
+
+    writeSharedStateToDisk(state);
+
+    res.json({
+      ok: true,
+      deletedId: targetId,
+      dryFruits: state.dryFruits,
+      auditLogs: state.auditLogs,
     });
   });
 

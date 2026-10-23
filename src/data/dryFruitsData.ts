@@ -10,20 +10,70 @@ export interface DryFruitProduct {
   id: string;
   name: string;
   urduName: string;
-  category: 'Nuts & Kernels' | 'Dried Fruits' | 'Specialty & Mixes' | 'Royal Gift Boxes';
+  category: 'Nuts & Kernels' | 'Dried Fruits' | 'Specialty & Mixes' | 'Royal Gift Boxes' | string;
   tagline: string;
   description: string;
   healthBenefits: string[];
   origin: string;
-  badge?: 'Bestseller' | 'Seasonal Harvest' | 'Royal Reserve' | 'Organic GB';
+  badge?: 'Bestseller' | 'Seasonal Harvest' | 'Royal Reserve' | 'Organic GB' | string;
   imageUrl: string;
-  fallbackImageUrl: string;
-  pricing: ProductPricing; // Editable sample prices in PKR
+  fallbackImageUrl?: string;
+  pricing: ProductPricing; // Current active price in PKR
+  originalPricing?: Partial<ProductPricing>; // Original price before discount in PKR
+  discountPercent?: number; // Discount percentage (e.g. 15 for 15% OFF)
+  stockQuantity?: number; // Available quantity in stock (e.g. 50 packs/units)
+  inStock: boolean; // Stock availability flag
+  featured?: boolean;
+  published?: boolean;
   rating: number;
   reviewsCount: number;
-  inStock: boolean;
-  featured?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+export const EMPTY_DRY_FRUIT_TEMPLATE: DryFruitProduct = {
+  id: '',
+  name: '',
+  urduName: '',
+  category: 'Nuts & Kernels',
+  tagline: '',
+  description: '',
+  healthBenefits: ['High in antioxidants & vital minerals', 'Natural energy & cognitive wellness'],
+  origin: 'Gilgit-Baltistan & Northern Valleys',
+  badge: '',
+  imageUrl: 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?auto=format&fit=crop&w=800&q=80',
+  fallbackImageUrl: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80',
+  pricing: {
+    '250g': 850,
+    '500g': 1650,
+    '1kg': 3100,
+  },
+  originalPricing: {
+    '250g': 0,
+    '500g': 0,
+    '1kg': 0,
+  },
+  discountPercent: 0,
+  stockQuantity: 50,
+  inStock: true,
+  featured: false,
+  published: true,
+  rating: 5.0,
+  reviewsCount: 1,
+};
+
+export const SAMPLE_DRY_FRUIT_IMAGES = [
+  { label: 'Giri Almonds (Badam)', url: 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Jumbo Cashews (Kaju)', url: 'https://images.unsplash.com/photo-1536591375315-0b82f07d2c36?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Roasted Pistachios (Pista)', url: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Kaghzi Walnuts (Akhrot)', url: 'https://images.unsplash.com/photo-1568260411186-01292b3c58b4?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Royal Dates (Khajoor)', url: 'https://images.unsplash.com/photo-1594911772125-07fc7a2d8d9f?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Golden Raisins (Kishmish)', url: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Mountain Dried Figs (Anjeer)', url: 'https://images.unsplash.com/photo-1605651202774-7d573fd3f12d?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Assorted Mixed Dry Fruits', url: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Hunza Sun-Dried Apricots', url: 'https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Chilgoza Pine Nuts', url: 'https://images.unsplash.com/photo-1509358271058-acd22cc93898?auto=format&fit=crop&w=800&q=80' },
+];
 
 export interface DryFruitReview {
   id: string;

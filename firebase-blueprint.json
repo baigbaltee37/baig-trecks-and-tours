@@ -706,6 +706,32 @@
         "paymentInstructions",
         "updatedAt"
       ]
+    },
+    "DryFruitProduct": {
+      "title": "DryFruitProduct",
+      "description": "Premium Pakistani dry fruit product with weight-based pricing, stock, and descriptions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "urduName": { "type": "string" },
+        "category": { "type": "string" },
+        "tagline": { "type": "string" },
+        "description": { "type": "string" },
+        "origin": { "type": "string" },
+        "badge": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "pricing": { "type": "object" },
+        "originalPricing": { "type": "object" },
+        "discountPercent": { "type": "number" },
+        "stockQuantity": { "type": "number" },
+        "inStock": { "type": "boolean" },
+        "featured": { "type": "boolean" },
+        "published": { "type": "boolean" },
+        "rating": { "type": "number" },
+        "reviewsCount": { "type": "number" }
+      },
+      "required": ["id", "name", "category", "pricing", "inStock"]
     }
   },
   "firestore": {
@@ -748,6 +774,10 @@
     "/settings/{settingId}": {
       "schema": { "$ref": "#/entities/SiteSettings" },
       "description": "Global business and CMS configuration managed by admins."
+    },
+    "/dryFruits/{productId}": {
+      "schema": { "$ref": "#/entities/DryFruitProduct" },
+      "description": "Dry fruits catalog items managed by administrators."
     }
   }
 }

@@ -32,6 +32,7 @@ import {
   FileText,
   UserCheck,
   BookOpen,
+  ShoppingBag,
 } from 'lucide-react';
 import { useApp, ADMIN_EMAIL } from '../context/AppContext';
 import {
@@ -51,6 +52,7 @@ import {
   AdminSettingsSection,
   AdminUsersSection,
   AdminAuditLogsSection,
+  AdminDryFruitsSection,
 } from '../components/AdminSubModules';
 
 export const AdminLoginPage: React.FC = () => {
@@ -246,6 +248,7 @@ type AdminSectionKey =
   | 'dashboard'
   | 'tours'
   | 'destinations'
+  | 'dry-fruits'
   | 'bookings'
   | 'inquiries'
   | 'customers'
@@ -259,6 +262,7 @@ type AdminSectionKey =
 function resolveSectionFromPath(pathname: string): AdminSectionKey {
   if (pathname.startsWith('/admin/tours')) return 'tours';
   if (pathname.startsWith('/admin/destinations')) return 'destinations';
+  if (pathname.startsWith('/admin/dry-fruits') || pathname.startsWith('/admin/dryfruits')) return 'dry-fruits';
   if (pathname.startsWith('/admin/bookings')) return 'bookings';
   if (pathname.startsWith('/admin/inquiries')) return 'inquiries';
   if (pathname.startsWith('/admin/customers')) return 'customers';
@@ -279,6 +283,7 @@ export const AdminDashboardPage: React.FC = () => {
     isAdmin,
     allTours,
     allDestinations,
+    allDryFruits,
     inquiries,
     bookings,
     allUsers,
@@ -444,6 +449,12 @@ export const AdminDashboardPage: React.FC = () => {
         label: 'Destinations',
         to: '/admin/destinations',
         icon: <MapPin className="w-4 h-4" />,
+      },
+      {
+        id: 'dry-fruits',
+        label: 'Manage Dry Fruits',
+        to: '/admin/dry-fruits',
+        icon: <ShoppingBag className="w-4 h-4" />,
       },
       {
         id: 'bookings',
@@ -714,11 +725,12 @@ export const AdminDashboardPage: React.FC = () => {
         {/* SECTION 1: DASHBOARD OVERVIEW & REAL STATISTICS */}
         {activeSection === 'dashboard' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
               {[
                 { label: 'Total Customers', val: totalCustomers, to: '/admin/customers' },
                 { label: 'Total Tours', val: totalTours, to: '/admin/tours' },
                 { label: 'Published Tours', val: publishedToursCount, to: '/admin/tours' },
+                { label: 'Dry Fruits Products', val: allDryFruits.length, to: '/admin/dry-fruits' },
                 { label: 'Pending Inquiries', val: pendingInquiriesCount, to: '/admin/inquiries' },
                 { label: 'Pending Bookings', val: pendingBookingsCount, to: '/admin/bookings' },
                 { label: 'Confirmed Bookings', val: confirmedBookingsCount, to: '/admin/bookings' },
@@ -1559,6 +1571,9 @@ export const AdminDashboardPage: React.FC = () => {
           </div>
         )}
 
+        {activeSection === 'dry-fruits' && (
+          <AdminDryFruitsSection notify={notify} askConfirm={askConfirm} />
+        )}
         {activeSection === 'bookings' && (
           <AdminBookingsSection notify={notify} askConfirm={askConfirm} />
         )}

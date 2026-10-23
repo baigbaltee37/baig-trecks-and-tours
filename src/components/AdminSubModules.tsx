@@ -10,9 +10,26 @@ import {
   Shield,
   KeyRound,
   UserPlus,
+  ShoppingBag,
+  Check,
+  X,
+  RotateCcw,
+  Sparkles,
+  Star,
+  Tag,
+  PackageCheck,
+  PackageX,
+  Percent,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { useApp, InquiryRecord, BookingRecord } from '../context/AppContext';
 import { GalleryImageItem, ReviewItem, BlogPostItem, VISUAL_ASSETS } from '../data/initialData';
+import {
+  DryFruitProduct,
+  EMPTY_DRY_FRUIT_TEMPLATE,
+  SAMPLE_DRY_FRUIT_IMAGES,
+  DRY_FRUITS_CATEGORIES,
+} from '../data/dryFruitsData';
 
 export interface ConfirmDialogState {
   open: boolean;
@@ -2291,3 +2308,981 @@ export const AdminAuditLogsSection: React.FC = () => {
     </div>
   );
 };
+
+export const AdminDryFruitsSection: React.FC<{
+  notify: (msg: string) => void;
+  askConfirm: (message: string, onConfirm: () => void, confirmLabel?: string) => void;
+}> = ({ notify, askConfirm }) => {
+  const {
+    allDryFruits,
+    saveDryFruitAdmin,
+    deleteDryFruitAdmin,
+    togglePublishDryFruitAdmin,
+    toggleStockDryFruitAdmin,
+    toggleFeatureDryFruitAdmin,
+    resetDryFruitsToDefault,
+  } = useApp();
+
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [stockFilter, setStockFilter] = useState<'All' | 'inStock' | 'outOfStock'>('All');
+  const [showModal, setShowModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Form State
+  const [formData, setFormData] = useState<DryFruitProduct>(EMPTY_DRY_FRUIT_TEMPLATE);
+  const [benefitsInput, setBenefitsInput] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [showSampleImages, setShowSampleImages] = useState(false);
+
+  // Filtered Products
+  const filteredProducts = allDryFruits.filter((p) => {
+    const q = search.toLowerCase().trim();
+    const matchSearch =
+      !q ||
+      p.name.toLowerCase().includes(q) ||
+      (p.urduName && p.urduName.toLowerCase().includes(q)) ||
+      (p.origin && p.origin.toLowerCase().includes(q)) ||
+      (p.description && p.description.toLowerCase().includes(q));
+
+    const matchCategory = categoryFilter === 'All' || p.category === categoryFilter;
+
+    const matchStock =
+      stockFilter === 'All' ||
+      (stockFilter === 'inStock' && p.inStock && (p.stockQuantity === undefined || p.stockQuantity > 0)) ||
+      (stockFilter === 'outOfStock' && (!p.inStock || (p.stockQuantity !== undefined && p.stockQuantity <= 0)));
+
+    return matchSearch && matchCategory && matchStock;
+  });
+
+  const totalCount = allDryFruits.length;
+  const inStockCount = allDryFruits.filter((p) => p.inStock && (p.stockQuantity === undefined || p.stockQuantity > 0)).length;
+  const outOfStockCount = totalCount - inStockCount;
+  const featuredCount = allDryFruits.filter((p) => p.featured).length;
+
+  const handleOpenAdd = () => {
+    setFormData({
+      ...EMPTY_DRY_FRUIT_TEMPLATE,
+      id: '',
+      pricing: { '250g': 850, '500g': 1650, '1kg': 3100 },
+      originalPricing: { '250g': 0, '500g': 0, '1kg': 0 },
+      discountPercent: 0,
+      stockQuantity: 50,
+      inStock: true,
+      published: true,
+      featured: false,
+    });
+    setBenefitsInput(EMPTY_DRY_FRUIT_TEMPLATE.healthBenefits.join('\n'));
+    setIsEditing(false);
+    setFormError(null);
+    setShowSampleImages(false);
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (product: DryFruitProduct) => {
+    setFormData({
+      ...product,
+      pricing: {
+        '250g': product.pricing['250g'] || 0,
+        '500g': product.pricing['500g'] || 0,
+        '1kg': product.pricing['1kg'] || 0,
+      },
+      originalPricing: {
+        '250g': product.originalPricing?.['250g'] || 0,
+        '500g': product.originalPricing?.['500g'] || 0,
+        '1kg': product.originalPricing?.['1kg'] || 0,
+      },
+      discountPercent: product.discountPercent || 0,
+      stockQuantity: product.stockQuantity !== undefined ? product.stockQuantity : 50,
+      inStock: product.inStock !== false,
+      published: product.published !== false,
+      featured: Boolean(product.featured),
+    });
+    setBenefitsInput((product.healthBenefits || []).join('\n'));
+    setIsEditing(true);
+    setFormError(null);
+    setShowSampleImages(false);
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    // Validation
+    const name = formData.name.trim();
+    if (!name) {
+      setFormError('Product Name is required.');
+      return;
+    }
+
+    const p250 = Number(formData.pricing['250g']) || 0;
+    const p500 = Number(formData.pricing['500g']) || 0;
+    const p1kg = Number(formData.pricing['1kg']) || 0;
+
+    if (p250 <= 0 || p500 <= 0 || p1kg <= 0) {
+      setFormError('Please enter valid positive PKR prices for all weight tiers (250g, 500g, and 1kg).');
+      return;
+    }
+
+    if (!formData.imageUrl.trim()) {
+      setFormError('Product image URL is required.');
+      return;
+    }
+
+    const benefits = benefitsInput
+      .split('\n')
+      .map((b) => b.trim())
+      .filter(Boolean);
+
+    const productPayload: DryFruitProduct = {
+      ...formData,
+      name,
+      urduName: formData.urduName.trim(),
+      category: formData.category || 'Nuts & Kernels',
+      tagline: formData.tagline.trim(),
+      description: formData.description.trim(),
+      healthBenefits: benefits.length > 0 ? benefits : ['Freshly harvested & natural wellness'],
+      origin: formData.origin.trim() || 'Gilgit-Baltistan & Northern Pakistan',
+      pricing: {
+        '250g': p250,
+        '500g': p500,
+        '1kg': p1kg,
+      },
+      originalPricing: {
+        '250g': Number(formData.originalPricing?.['250g']) || 0,
+        '500g': Number(formData.originalPricing?.['500g']) || 0,
+        '1kg': Number(formData.originalPricing?.['1kg']) || 0,
+      },
+      discountPercent: Math.max(0, Math.min(100, Number(formData.discountPercent) || 0)),
+      stockQuantity: Math.max(0, Number(formData.stockQuantity) || 0),
+      inStock: Boolean(formData.inStock),
+      featured: Boolean(formData.featured),
+      published: Boolean(formData.published),
+    };
+
+    setIsSubmitting(true);
+    try {
+      const res = await saveDryFruitAdmin(productPayload);
+      if (res.success) {
+        notify(isEditing ? `Updated product "${name}".` : `Created product "${name}".`);
+        setShowModal(false);
+      } else {
+        setFormError(res.error || 'Failed to save product.');
+      }
+    } catch {
+      setFormError('An unexpected error occurred while saving the product.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = (product: DryFruitProduct) => {
+    askConfirm(
+      `Delete product "${product.name}"? This will permanently remove it from the store catalog.`,
+      async () => {
+        const res = await deleteDryFruitAdmin(product.id);
+        if (res.success) {
+          notify(`Deleted product "${product.name}".`);
+        } else {
+          notify(`Error: ${res.error || 'Could not delete product.'}`);
+        }
+      },
+      'DELETE PRODUCT'
+    );
+  };
+
+  const handleResetCatalog = () => {
+    askConfirm(
+      'Reset all dry fruit products to default catalog? Any custom products or edits will be replaced with initial harvest products.',
+      async () => {
+        await resetDryFruitsToDefault();
+        notify('Dry fruits catalog restored to defaults.');
+      },
+      'RESTORE DEFAULTS'
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Top Banner / Summary Card */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="p-2 rounded-xl bg-amber-100 text-amber-900">
+                <ShoppingBag className="w-5 h-5 text-amber-800" />
+              </span>
+              <h2 className="font-display text-xl font-bold text-slate-900 tracking-tight">
+                Manage Dry Fruits Store
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Add, edit, and organize dry fruit catalog items, weight-based pricing in PKR, stock counts, discounts, and availability. Changes immediately reflect on the live customer store.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleResetCatalog}
+              className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors flex items-center gap-1.5"
+              title="Reset catalog to initial dry fruits"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <span>Reset Defaults</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="px-4 py-2 text-xs font-bold bg-[#183C30] hover:bg-[#0F261F] text-[#F4EFDF] border border-[#B99A58]/40 rounded-xl flex items-center gap-1.5 shadow-xs transition-colors"
+            >
+              <Plus className="w-4 h-4 text-[#B99A58]" />
+              <span>Add New Product</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Stats Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5 mt-5 border-t border-slate-100 text-xs">
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-slate-500 font-medium">Total Products</span>
+            <div className="text-xl font-bold font-mono-num text-slate-900 mt-0.5">{totalCount}</div>
+          </div>
+          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+            <span className="text-emerald-700 font-medium">In Stock</span>
+            <div className="text-xl font-bold font-mono-num text-emerald-900 mt-0.5">{inStockCount}</div>
+          </div>
+          <div className="p-3 bg-rose-50 rounded-xl border border-rose-100">
+            <span className="text-rose-700 font-medium">Out of Stock</span>
+            <div className="text-xl font-bold font-mono-num text-rose-900 mt-0.5">{outOfStockCount}</div>
+          </div>
+          <div className="p-3 bg-amber-50 rounded-xl border border-amber-100">
+            <span className="text-amber-800 font-medium">Featured Items</span>
+            <div className="text-xl font-bold font-mono-num text-amber-900 mt-0.5">{featuredCount}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters & Search Toolbar */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by product name, Urdu name, origin, or description..."
+            className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 placeholder-slate-400"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {/* Category Filter */}
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+          >
+            {DRY_FRUITS_CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                Category: {cat}
+              </option>
+            ))}
+          </select>
+
+          {/* Stock Filter */}
+          <select
+            value={stockFilter}
+            onChange={(e) => setStockFilter(e.target.value as 'All' | 'inStock' | 'outOfStock')}
+            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+          >
+            <option value="All">Stock: All</option>
+            <option value="inStock">In Stock Only</option>
+            <option value="outOfStock">Out of Stock Only</option>
+          </select>
+
+          {(search || categoryFilter !== 'All' || stockFilter !== 'All') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('');
+                setCategoryFilter('All');
+                setStockFilter('All');
+              }}
+              className="px-2.5 py-2 text-slate-500 hover:text-slate-800 underline font-medium"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Products Table */}
+      {filteredProducts.length === 0 ? (
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-3">
+          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+            <ShoppingBag className="w-6 h-6" />
+          </div>
+          <h3 className="font-display text-base font-bold text-slate-800">No Dry Fruit Products Found</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            No products match your current search query or filter. Adjust your search or add a new dry fruit product.
+          </p>
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add First Product</span>
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[850px]">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                  <th className="p-3.5">Product & Details</th>
+                  <th className="p-3.5">Category & Origin</th>
+                  <th className="p-3.5">Pricing in PKR (250g / 500g / 1kg)</th>
+                  <th className="p-3.5">Stock & Availability</th>
+                  <th className="p-3.5">Status</th>
+                  <th className="p-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {filteredProducts.map((p) => {
+                  const isInStock = p.inStock && (p.stockQuantity === undefined || p.stockQuantity > 0);
+                  const hasDiscount = (p.discountPercent || 0) > 0;
+
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                      {/* Product Thumbnail & Names */}
+                      <td className="p-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200 relative">
+                            <img
+                              src={p.imageUrl}
+                              alt={p.name}
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src =
+                                  p.fallbackImageUrl ||
+                                  'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&w=400&q=80';
+                              }}
+                              className="w-full h-full object-cover"
+                            />
+                            {p.badge && (
+                              <span className="absolute bottom-0 inset-x-0 bg-black/70 text-[9px] text-[#C5A46D] font-bold text-center py-0.5 truncate px-1">
+                                {p.badge}
+                              </span>
+                            )}
+                          </div>
+                          <div className="space-y-0.5 min-w-0 max-w-[200px]">
+                            <div className="font-bold text-slate-900 truncate">{p.name}</div>
+                            {p.urduName && (
+                              <div className="text-[11px] text-slate-500 font-sans truncate">{p.urduName}</div>
+                            )}
+                            <div className="text-[10px] text-slate-400 truncate">{p.tagline || p.description}</div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Category & Origin */}
+                      <td className="p-3.5">
+                        <span className="inline-block px-2.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-200/60 rounded-full text-[10px] font-semibold">
+                          {p.category}
+                        </span>
+                        <div className="text-[11px] text-slate-500 mt-1 truncate max-w-[150px]">{p.origin}</div>
+                      </td>
+
+                      {/* Pricing Tiers */}
+                      <td className="p-3.5">
+                        <div className="space-y-1 font-mono-num">
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400 text-[10px] w-8">250g:</span>
+                            <span className="font-bold text-slate-900">PKR {p.pricing['250g'].toLocaleString()}</span>
+                            {p.originalPricing?.['250g'] ? (
+                              <span className="text-slate-400 line-through text-[10px]">
+                                PKR {p.originalPricing['250g'].toLocaleString()}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400 text-[10px] w-8">500g:</span>
+                            <span className="font-bold text-emerald-800">PKR {p.pricing['500g'].toLocaleString()}</span>
+                            {p.originalPricing?.['500g'] ? (
+                              <span className="text-slate-400 line-through text-[10px]">
+                                PKR {p.originalPricing['500g'].toLocaleString()}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400 text-[10px] w-8">1kg:</span>
+                            <span className="font-bold text-slate-900">PKR {p.pricing['1kg'].toLocaleString()}</span>
+                            {p.originalPricing?.['1kg'] ? (
+                              <span className="text-slate-400 line-through text-[10px]">
+                                PKR {p.originalPricing['1kg'].toLocaleString()}
+                              </span>
+                            ) : null}
+                          </div>
+                          {hasDiscount && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded text-[10px] font-bold">
+                              <Percent className="w-2.5 h-2.5" /> {p.discountPercent}% OFF
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Stock & Availability */}
+                      <td className="p-3.5">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await toggleStockDryFruitAdmin(p.id);
+                                notify(`Product "${p.name}" marked ${p.inStock ? 'Out of Stock' : 'In Stock'}.`);
+                              }}
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 transition-colors ${
+                                isInStock
+                                  ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                  : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                              }`}
+                              title="Click to toggle stock availability"
+                            >
+                              {isInStock ? (
+                                <>
+                                  <PackageCheck className="w-3 h-3" />
+                                  <span>In Stock</span>
+                                </>
+                              ) : (
+                                <>
+                                  <PackageX className="w-3 h-3" />
+                                  <span>Out of Stock</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                          <div className="text-[11px] text-slate-500 font-mono-num">
+                            Qty: <strong className="text-slate-800">{p.stockQuantity !== undefined ? p.stockQuantity : 50}</strong> units
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Status Badges */}
+                      <td className="p-3.5">
+                        <div className="flex flex-col gap-1 items-start">
+                          {/* Publish Toggle */}
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await togglePublishDryFruitAdmin(p.id);
+                              notify(`Product "${p.name}" ${p.published !== false ? 'hidden' : 'published'}.`);
+                            }}
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold flex items-center gap-1 ${
+                              p.published !== false
+                                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                            title="Toggle public visibility"
+                          >
+                            {p.published !== false ? (
+                              <>
+                                <Eye className="w-3 h-3 text-slate-500" />
+                                <span>Live</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3 h-3 text-amber-600" />
+                                <span>Hidden</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Featured Toggle */}
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await toggleFeatureDryFruitAdmin(p.id);
+                              notify(`Product "${p.name}" ${p.featured ? 'unfeatured' : 'featured'}.`);
+                            }}
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold flex items-center gap-1 ${
+                              p.featured
+                                ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                            title="Toggle featured status on homepage"
+                          >
+                            <Star className={`w-3 h-3 ${p.featured ? 'text-amber-600 fill-amber-500' : ''}`} />
+                            <span>{p.featured ? 'Featured' : 'Standard'}</span>
+                          </button>
+                        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="p-3.5 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(p)}
+                            className="p-1.5 text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="Edit product"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(p)}
+                            className="p-1.5 text-slate-400 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete product"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Edit Product Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full p-6 shadow-2xl my-8 space-y-5 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                  <ShoppingBag className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-display text-lg font-bold text-slate-900">
+                    {isEditing ? `Edit Dry Fruit: ${formData.name}` : 'Add New Dry Fruit Product'}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Set up product information, weight-based pricing in PKR, and stock status.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Error Notification */}
+            {formError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-800 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            {/* Form Body */}
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+              {/* Product Name & Urdu Name */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">
+                    Product Name (English) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g. Giri Almonds (Badam)"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Urdu / Local Name</label>
+                  <input
+                    type="text"
+                    value={formData.urduName}
+                    onChange={(e) => setFormData({ ...formData, urduName: e.target.value })}
+                    placeholder="e.g. بادام گرئی (Badam)"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900 font-sans"
+                  />
+                </div>
+              </div>
+
+              {/* Category & Badge */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Category</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+                  >
+                    <option value="Nuts & Kernels">Nuts & Kernels</option>
+                    <option value="Dried Fruits">Dried Fruits</option>
+                    <option value="Specialty & Mixes">Specialty & Mixes</option>
+                    <option value="Royal Gift Boxes">Royal Gift Boxes</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Origin / Region</label>
+                  <input
+                    type="text"
+                    value={formData.origin}
+                    onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+                    placeholder="e.g. Hunza Valley, Gilgit-Baltistan"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Promotional Badge</label>
+                  <select
+                    value={formData.badge || ''}
+                    onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+                  >
+                    <option value="">None</option>
+                    <option value="Bestseller">Bestseller</option>
+                    <option value="Seasonal Harvest">Seasonal Harvest</option>
+                    <option value="Royal Reserve">Royal Reserve</option>
+                    <option value="Organic GB">Organic GB</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Tagline & Description */}
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">Short Tagline</label>
+                <input
+                  type="text"
+                  value={formData.tagline}
+                  onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                  placeholder="e.g. Sun-dried and hand-shelled organic almonds from Gilgit orchards"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">Full Description</label>
+                <textarea
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Enter detailed description of taste, texture, harvest season, and purity..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+                />
+              </div>
+
+              {/* PRICING SECTION (250g, 500g, 1kg) */}
+              <div className="p-4 bg-amber-50/60 border border-amber-200/80 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-950 text-xs">
+                    <Tag className="w-4 h-4 text-amber-700" />
+                    <span>Weight-Based Pricing in PKR & Discounts</span>
+                  </div>
+                  <span className="text-[11px] text-amber-800 font-medium">All 3 tiers required</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* 250g */}
+                  <div className="bg-white p-3 rounded-xl border border-amber-200 space-y-1.5">
+                    <label className="font-bold text-slate-900 block text-[11px]">250g Active Price (PKR) *</label>
+                    <input
+                      type="number"
+                      min={1}
+                      required
+                      value={formData.pricing['250g']}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          pricing: { ...formData.pricing, '250g': Number(e.target.value) || 0 },
+                        })
+                      }
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-mono-num font-bold"
+                    />
+                    <label className="text-[10px] text-slate-500 block">Original Price (optional)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={formData.originalPricing?.['250g'] || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          originalPricing: {
+                            ...formData.originalPricing,
+                            '250g': Number(e.target.value) || 0,
+                          },
+                        })
+                      }
+                      placeholder="e.g. 1000"
+                      className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-slate-600 font-mono-num text-[11px]"
+                    />
+                  </div>
+
+                  {/* 500g */}
+                  <div className="bg-white p-3 rounded-xl border border-amber-200 space-y-1.5">
+                    <label className="font-bold text-slate-900 block text-[11px]">500g Active Price (PKR) *</label>
+                    <input
+                      type="number"
+                      min={1}
+                      required
+                      value={formData.pricing['500g']}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          pricing: { ...formData.pricing, '500g': Number(e.target.value) || 0 },
+                        })
+                      }
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-emerald-800 font-mono-num font-bold"
+                    />
+                    <label className="text-[10px] text-slate-500 block">Original Price (optional)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={formData.originalPricing?.['500g'] || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          originalPricing: {
+                            ...formData.originalPricing,
+                            '500g': Number(e.target.value) || 0,
+                          },
+                        })
+                      }
+                      placeholder="e.g. 1900"
+                      className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-slate-600 font-mono-num text-[11px]"
+                    />
+                  </div>
+
+                  {/* 1kg */}
+                  <div className="bg-white p-3 rounded-xl border border-amber-200 space-y-1.5">
+                    <label className="font-bold text-slate-900 block text-[11px]">1kg Active Price (PKR) *</label>
+                    <input
+                      type="number"
+                      min={1}
+                      required
+                      value={formData.pricing['1kg']}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          pricing: { ...formData.pricing, '1kg': Number(e.target.value) || 0 },
+                        })
+                      }
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-mono-num font-bold"
+                    />
+                    <label className="text-[10px] text-slate-500 block">Original Price (optional)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={formData.originalPricing?.['1kg'] || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          originalPricing: {
+                            ...formData.originalPricing,
+                            '1kg': Number(e.target.value) || 0,
+                          },
+                        })
+                      }
+                      placeholder="e.g. 3600"
+                      className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-slate-600 font-mono-num text-[11px]"
+                    />
+                  </div>
+                </div>
+
+                {/* Discount % & Stock Quantity */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700 flex items-center gap-1">
+                      <Percent className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Discount Percentage (%)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={formData.discountPercent || 0}
+                      onChange={(e) =>
+                        setFormData({ ...formData, discountPercent: Number(e.target.value) || 0 })
+                      }
+                      placeholder="e.g. 15 for 15% OFF badge"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 font-mono-num"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700 flex items-center gap-1">
+                      <PackageCheck className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Stock Quantity (Available Packs/Units)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={formData.stockQuantity !== undefined ? formData.stockQuantity : 50}
+                      onChange={(e) =>
+                        setFormData({ ...formData, stockQuantity: Number(e.target.value) || 0 })
+                      }
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 font-mono-num font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Product Image & Sample Image Selector */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-slate-700 flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Product Image URL *</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowSampleImages(!showSampleImages)}
+                    className="text-emerald-700 hover:text-emerald-800 font-semibold underline text-[11px]"
+                  >
+                    {showSampleImages ? 'Hide sample images' : 'Choose from high-res dry fruit photos'}
+                  </button>
+                </div>
+
+                <input
+                  type="url"
+                  required
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+                />
+
+                {/* Sample Image Grid Picker */}
+                {showSampleImages && (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                    <div className="text-[11px] font-semibold text-slate-600">
+                      Click any photo below to instantly use it for this product:
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {SAMPLE_DRY_FRUIT_IMAGES.map((img, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              imageUrl: img.url,
+                              fallbackImageUrl: img.url,
+                            });
+                            setShowSampleImages(false);
+                          }}
+                          className="group relative rounded-xl overflow-hidden border-2 border-transparent hover:border-emerald-600 transition-all text-left aspect-[4/3]"
+                        >
+                          <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
+                          <div className="absolute inset-x-0 bottom-0 bg-black/75 p-1 text-[9px] text-white font-medium truncate">
+                            {img.label}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Image Live Preview */}
+                {formData.imageUrl && (
+                  <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                    <img
+                      src={formData.imageUrl}
+                      alt="Preview"
+                      className="w-12 h-12 rounded-lg object-cover bg-slate-200 border border-slate-300"
+                    />
+                    <div className="min-w-0 flex-1 text-[11px] text-slate-500 truncate">
+                      Image Preview: <span className="text-slate-800 font-mono-num">{formData.imageUrl}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Health Benefits (one per line) */}
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">Health Benefits & Key Highlights (one per line)</label>
+                <textarea
+                  rows={2}
+                  value={benefitsInput}
+                  onChange={(e) => setBenefitsInput(e.target.value)}
+                  placeholder="Rich in Vitamin E & antioxidants&#10;Supports heart and brain health&#10;100% natural, no preservatives"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+                />
+              </div>
+
+              {/* Toggles: In-Stock, Featured, Published */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.inStock}
+                    onChange={(e) => setFormData({ ...formData, inStock: e.target.checked })}
+                    className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-slate-300"
+                  />
+                  <span className="font-bold text-slate-800">In Stock for Sale</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.featured}
+                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                    className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500 border-slate-300"
+                  />
+                  <span className="font-bold text-slate-800">Featured in Highlights</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.published}
+                    onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                    className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-slate-300"
+                  />
+                  <span className="font-bold text-slate-800">Visible on Live Site</span>
+                </label>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 text-xs font-bold bg-[#183C30] hover:bg-[#0F261F] text-[#F4EFDF] border border-[#B99A58]/50 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <span>Saving...</span>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 text-[#B99A58]" />
+                      <span>{isEditing ? 'Save Product Changes' : 'Create Product'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
